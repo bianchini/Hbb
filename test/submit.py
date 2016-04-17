@@ -27,14 +27,19 @@ def submit(sample, first, last, postfix):
         outName = "tree_"+str(postfix)
     f = open(scriptName,'w')
     f.write('#!/bin/bash\n\n')
-    f.write('mkdir /scratch/bianchi/\n')
+    f.write('mkdir /scratch/bianchi/'+(sample+'/' if run=="run_tree_skimmer" else '')+'\n')
     f.write('cd $HOME/TTH-76X-heppy/CMSSW/src/Hbb/test/\n')
     f.write('source /swshare/psit3/etc/profile.d/cms_ui_env.sh\n')
     f.write('source /cvmfs/cms.cern.ch/cmsset_default.sh\n')
     f.write('eval `scramv1 runtime -sh`\n')
     f.write('\n')    
     f.write('python '+run+'.py '+sample+' '+str(first)+' '+str(last)+' '+str(postfix)+'\n')
-    f.write('mv /scratch/bianchi/'+outName+'.root ./\n')    
+    if run=="run_tree_skimmer":
+        f.write('mkdir '+sample+'\n')
+        f.write('mv /scratch/bianchi/'+sample+'/'+outName+'.root ./'+sample+'/'+'\n')    
+    else:
+        f.write('mv /scratch/bianchi/'+outName+'.root ./'+'\n')    
+
     f.close()
     os.system('chmod +x '+scriptName)
              
@@ -58,7 +63,7 @@ for sample in [
     #["HT500to700", 10, 25], 
     #["HT700to1000",10, 20], 
     #["HT1000to1500",7, 10], 
-    ["HT1500to2000",4,  14], 
+    ["HT1500to2000",4,  13], 
     #["HT2000toInf", 5,  6],
     ]:
     for it in xrange(sample[2]):
@@ -66,3 +71,4 @@ for sample in [
         first = it*sample[1]+1
         last = (it+1)*sample[1]
         submit(sample[0], first, last, postfix)
+        #exit(1)
