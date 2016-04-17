@@ -1,0 +1,18 @@
+#KEY: TH1F	signal_BTag_TT_MassFSR;1	M750: BTag_TT_MassFSR
+#KEY: TH1F	background_BTag_TT_MassFSR;1	HT100to200: BTag_TT_MassFSR
+max    1     number of categories
+jmax    1     number of samples minus one
+kmax    *     number of nuisance parameters
+-------------------------------------------------------------------------------
+shapes * * TTsigLumi.root $PROCESS $PROCESS_$SYSTEMATIC 
+-------------------------------------------------------------------------------
+bin                                            TT
+observation                                    -1
+-------------------------------------------------------------------------------
+bin                                            TT          TT
+process                                        -1           1 
+process                                        signal_BTag_TT_MassFSR          background_BTag_TT_MassFSR     
+rate                                           -1          -1     
+-------------------------------------------------------------------------------
+sig_unc lnN                                     1.10        - 
+bkg_unc lnN                                     -          1.50 
