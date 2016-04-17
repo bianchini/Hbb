@@ -1,7 +1,8 @@
 #!/bin/sh
 
 declare -a arr=(
-    HT100to200
+    Run2015D
+    #HT100to200
     #HT200to300
     #HT300to500
     #HT500to700

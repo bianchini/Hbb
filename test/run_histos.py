@@ -7,10 +7,13 @@ from ROOT import TLorentzVector
 import math
 
 def weight(ev, lumi):
+  if lumi<0:
+    return 1.0
   return ev.puWeight*abs(ev.genWeight)/ev.genWeight*lumi
 
 
 samples = {
+  "Run2015D" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21//BTagCSV//VHBB_HEPPY_V21_BTagCSV__Run2015D-16Dec2015-v1/160317_132347/0000/", -1],
   "HT100to200" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT100to200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/VHBB_HEPPY_V21_QCD_HT100to200_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_144616/0000/", 27990000],
   "HT200to300" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21//QCD_HT200to300_TuneCUETP8M1_13TeV-madgraphMLM-pythia8//VHBB_HEPPY_V21_QCD_HT200to300_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_151338/0000/", 1712000.],
   "HT300to500" :   ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/VHBB_HEPPY_V21_QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160321_090315/0000/",347700.],
@@ -19,7 +22,8 @@ samples = {
   "HT1000to1500" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT1000to1500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/VHBB_HEPPY_V21_QCD_HT1000to1500_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1//160316_151306/0000/", 1207.],
   "HT1500to2000" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT1500to2000_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/VHBB_HEPPY_V21_QCD_HT1500to2000_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1//160316_144454//0000/",119.9],
   "HT2000toInf" :  ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT2000toInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8//VHBB_HEPPY_V21_QCD_HT2000toInf_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1//160316_144521/0000/", 25.24], 
-  "M750" : ["root://eoscms.cern.ch//eos/cms/store/group/cmst3/user/degrutto/VHBBHeppyV21_add/RSGravitonTobb_kMpl001_M_750_Tune4C_13TeV_pythia8/VHBB_HEPPY_F21_add_RSGravitonTobb_kMpl001_M_750_Tune4C_13TeV_Py8__khurana-MINIAODSIM-17d438ff51ec6b3cada9e499a5a978e0/160405_155957/0000/", 1.0]
+  "M750" : ["root://eoscms.cern.ch//eos/cms/store/group/cmst3/user/degrutto/VHBBHeppyV21_add/RSGravitonTobb_kMpl001_M_750_Tune4C_13TeV_pythia8/VHBB_HEPPY_F21_add_RSGravitonTobb_kMpl001_M_750_Tune4C_13TeV_Py8__khurana-MINIAODSIM-17d438ff51ec6b3cada9e499a5a978e0/160405_155957/0000/", 1.0],
+  "HT1500to2000_pruned" : ["/scratch/bianchi/HT1500to2000/", 119.9]
 }
 
 
@@ -47,7 +51,7 @@ if is_empty:
 f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
 
 luminosity = 2500.
-lumi_factor = sample_to_process[1]*luminosity/processed
+lumi_factor = sample_to_process[1]*luminosity/processed if processed>0 else -1
 print "Luminosity: %.0f pb-1 --- xsection: %.0f pb --- Processed: %.0f ==> Lumi factor: %.2f" % (luminosity, sample_to_process[1], processed, lumi_factor)
 
 cuts_map = [ ["All", lambda ev : True] ]
@@ -131,7 +135,7 @@ for iev in range( min(int(1e+6), chain.GetEntries()) ):
         if cut[1](ev) and passall:
           if cut[0]!="All" :
             eff_map[cut[0]] += weight(ev, lumi_factor) 
-          histo_map[cut[0]]["lheHT"].Fill(ev.lheHT, weight(ev,lumi_factor))    
+          histo_map[cut[0]]["lheHT"].Fill(ev.lheHT if hasattr(ev,"lheHT") else 0., weight(ev,lumi_factor))    
           histo_map[cut[0]]["MET"].Fill(ev.met_pt, weight(ev,lumi_factor))    
           for ptcut in [30,50,70,100]:
             histo_map[cut[0]]["njet"+str(ptcut)].Fill( sum( ev.Jet_pt[j]>ptcut and abs(ev.Jet_eta[j])<2.4 for j in range(ev.nJet) ), weight(ev,lumi_factor))

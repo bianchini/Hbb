@@ -7,14 +7,15 @@
 #include "TCanvas.h"
 #include "TLegend.h"
 
-
-#define SAVE false
+#define SAVE true
 
 using namespace std;
 
+const double KFACTOR = 1.52;
+
 void plot(TString dir_name, TString h_name, TString postfix="", TString option1="HIST",  TString option2="PE", TString option3="", TString out_name="plot"){
   
-  TFile* out = TFile::Open(out_name+".root", "UPDATE");
+  TFile* out = TFile::Open("plots/"+out_name+".root", "UPDATE");
 
   THStack* s = new THStack("stack_background_"+h_name,"");
   
@@ -34,16 +35,18 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
     "HT1000to1500", 
     "HT1500to2000", 
     "HT2000toInf",
-    "M750"
+    "M750",
+    "Run2015D"
   };
   
   TH1F* signal = 0;
+  TH1F* data = 0;
   TH1F* background = 0;
 
   vector<TFile*> open_files;
   for(unsigned int ss = 0 ; ss < samples.size(); ++ss){
     TString sample = samples[ss];
-    TFile* f = TFile::Open("./"+sample+".root", "READ");
+    TFile* f = TFile::Open("./plots/"+sample+".root", "READ");
     if(f==0 || f->IsZombie()){
       cout << "Cannot find file" << endl;
       continue;
@@ -52,7 +55,16 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
     float count = ((TH1F*)f->Get("Count"))->GetBinContent(1);
     TH1F* h_sample = (TH1F*)f->Get(dir_name+h_name);
     if(h_sample!=0){
-      h_sample->Scale(1./count);
+      if(sample=="Run2015D"){
+	data = (TH1F*)h_sample->Clone("data_"+h_name);
+	data->SetMarkerColor(kBlack);
+	data->SetMarkerSize(1.2);
+	data->SetMarkerStyle(kFullCircle);
+	data->SetFillColor(0);
+	cout << ss << ", " << h_sample->Integral() << "==>" << data->Integral() << endl;
+	continue;
+      }
+      h_sample->Scale(1./count*KFACTOR);
       if(string(sample.Data()).find("HT")==string::npos){
 	signal = (TH1F*)h_sample->Clone("signal_"+h_name);
 	signal->SetLineColor(kRed);
@@ -68,12 +80,14 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
       s->Add(h_sample);
       if(background==0){
 	background = (TH1F*)h_sample->Clone("background_"+h_name);
-	background->SetMarkerColor(kBlack);
-	background->SetMarkerSize(1.2);
-	background->SetMarkerStyle(kFullCircle);
+	//background->SetMarkerColor(kBlack);
+	background->SetLineColor(kBlue);
+	//background->SetMarkerSize(1.2);
+	background->SetLineWidth(2);
+	//background->SetMarkerStyle(kFullCircle);
 	background->SetFillColor(0);
 	cout << ss << ", " << h_sample->Integral() << "==>" << background->Integral() << endl;
-	leg->AddEntry(background, "Total background", "P");
+	leg->AddEntry(background, "Total background", "L");
       }
       else{
 	background->Add(h_sample, 1.0);
@@ -108,11 +122,23 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
       signal->Draw(option1+"SAME");
     }
   }
-  if(background!=0) background->Draw(option2+"SAME");
+  if(background!=0) background->Draw(option2+"ESAME");
+  if(data!=0){
+    if(string(dir_name.Data()).find("Mass")!=string::npos || 
+       (string(dir_name.Data()).find("BTag")!=string::npos &&
+	string(h_name.Data()).find("Mass")!=string::npos) ){
+      data->Reset();
+      data->Add(background, 1.0);
+      leg->AddEntry(data, "Data = MC (blinded)", "P");
+    }
+    data->Draw("PESAME");
+    leg->AddEntry(data, "Data", "P");
+  }
   out->cd();
   s->Write("", TObject::kOverwrite);
   if(signal!=0) signal->Write("", TObject::kOverwrite);
   if(background!=0) background->Write("", TObject::kOverwrite);
+  if(data!=0) data->Write("", TObject::kOverwrite);
   out->Close();
 
   leg->Draw();
@@ -133,35 +159,35 @@ void plot_all(){
 
   vector<TString> dirs = {
     //"Vtype",
-    //"HLT",
-    //"HLT_Offline_OR",
-    //"HLT_Offline_AND",
-    //"BTag_MT",
-    "BTag_TT"
-    //"Mass"
+    "HLT",
+    "HLT_Offline_OR",
+    "HLT_Offline_AND",
+    "BTag_MT",
+    "BTag_TT",
+    "Mass"
   };
 
   vector<TString> hists = {
-    //"MinJetPt",
-    //"MaxJetPt",
-    //"Mass",
-    "MassFSR"
-    //"Pt",
-    //"Eta",
-    //"DeltaEta",
-    //"DeltaPhi",
-    //"MaxJetCSV",
-    //"MinJetCSV",
-    //"Vtype",
-    //"njet30",
-    //"njet50",
-    //"njet70",
-    //"njet100",
-    //"MET",
-    //"PtBalance",
-    //"MaxJetPtoMass",
-    //"MinJetPtoMass",
-    //"MaxEta"
+    "MinJetPt",
+    "MaxJetPt",
+    "Mass",
+    "MassFSR",
+    "Pt",
+    "Eta",
+    "DeltaEta",
+    "DeltaPhi",
+    "MaxJetCSV",
+    "MinJetCSV",
+    "Vtype",
+    "njet30",
+    "njet50",
+    "njet70",
+    "njet100",
+    "MET",
+    "PtBalance",
+    "MaxJetPtoMass",
+    "MinJetPtoMass",
+    "MaxEta"
   };
 
   plot("All/","All_lheHT");
@@ -170,7 +196,7 @@ void plot_all(){
   for(unsigned int d = 0 ; d < dirs.size(); ++d){
     for(unsigned int h = 0 ; h < hists.size(); ++h){
       plot(dirs[d]+"/", dirs[d]+"_"+hists[h]);
-      plot(dirs[d]+"/", dirs[d]+"_"+hists[h], "_shape", "HIST", "PE", "Shape");
+      plot(dirs[d]+"/", dirs[d]+"_"+hists[h], "_shape", "HIST", "HIST", "Shape");
     }
   }
 }
