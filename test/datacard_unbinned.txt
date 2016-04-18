@@ -1,0 +1,33 @@
+imax 1 number of bins
+jmax 1 number of processes minus 1
+kmax * number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes bkg_mass  TT      US_workspace.root w:ch_b
+shapes data_obs  TT      US_workspace.root w:data_b
+shapes sig       TT      US_workspace.root w:buk_s #  Bukin
+#shapes sig       TT      US_workspace.root w:data_s # rooHistPdf 
+----------------------------------------------------------------------------------------------------------------------------------
+bin          TT       
+observation  21296.688858
+----------------------------------------------------------------------------------------------------------------------------------
+bin                                      TT         TT  
+process                                  sig          bkg_mass 
+process                                  -1           1  
+rate                                     153         21296.688858       
+#rate                                     153           -1
+----------------------------------------------------------------------------------------------------------------------------------
+sig_unc lnN                                     1.10        - 
+bkg_unc lnN                                     -          1.10 
+Xp   param  720.0  2
+rho1 param  0.08   0.5
+rho2 param  0.10   0.02
+sP param  60   10
+x1 param  -0.1   .1
+a0 param   14    .1
+a1 param   -2    .1
+a2 param   1.5    .1
+a3 param   0.1    .1
+a4 param   0.06    .1
+a5 param   0.06    .1
+
+
