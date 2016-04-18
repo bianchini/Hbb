@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+from sys import argv
 import commands
 import time
 import re
@@ -12,17 +14,21 @@ import FWCore.ParameterSet.Config as cms
 import sys
 sys.path.append('./')
 
-run = "run_tree_skimmer"
-#run = "run_histos"
+# options are "run_tree_skimmer" "run_histos"
+run = argv[1]
 
 ################################################################################
 
 def submit(sample, first, last, postfix):
+    print "Running: submit.py "+run
     scriptName = 'job_'+sample+'_'+str(first)+'_'+str(last)+'.sh'
     jobName    = 'job_'+sample+'_'+str(first)+'_'+str(last)
     outName = ""
     if run=="run_histos":
-        outName    = sample+'_'+str(first)+'_'+str(last)
+        if first>=0:
+            outName = sample+'_'+str(first)+'_'+str(last)
+        else:
+            outName = sample
     if run=="run_tree_skimmer":
         outName = "tree_"+str(postfix)
     f = open(scriptName,'w')
@@ -55,7 +61,7 @@ def submit(sample, first, last, postfix):
 
 # [name, files_per_sample, njobs]
 for sample in [
-    #["Run2015D",3, 71]
+    #["Run2015D",3, 71],
     #["M750",1,20], 
     #["HT100to200", 1, 50], 
     #["HT200to300", 10, 25], 
@@ -63,12 +69,23 @@ for sample in [
     #["HT500to700", 10, 25], 
     #["HT700to1000",10, 20], 
     #["HT1000to1500",7, 10], 
-    ["HT1500to2000",4,  13], 
+    #["HT1500to2000",4,  13], 
     #["HT2000toInf", 5,  6],
+
+    ["M750",-1, 1], 
+    ["HT100to200", -1, 1], 
+    ["HT200to300", -1, 1], 
+    ["HT300to500", -1, 1], 
+    ["HT500to700", -1, 1], 
+    ["HT700to1000",-1, 1], 
+    ["HT1000to1500",-1, 1], 
+    ["HT1500to2000",-1, 1], 
+    ["HT2000toInf", -1, 1],
+    ["Run2015D", -1, 1],
     ]:
     for it in xrange(sample[2]):
         postfix = it+1
         first = it*sample[1]+1
         last = (it+1)*sample[1]
-        submit(sample[0], first, last, postfix)
+        submit(sample[0], first if sample[1]>=0 else -1, last, postfix)
         #exit(1)

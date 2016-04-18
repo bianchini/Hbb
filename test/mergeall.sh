@@ -15,5 +15,5 @@ declare -a arr=(
 
 for i in ${arr[@]}
 do
-  ./merge.sh ${i}
+  ./merge.sh tree ${i}
 done
