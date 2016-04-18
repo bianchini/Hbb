@@ -2,25 +2,30 @@
 #include "TH1F.h"
 #include "TMath.h"
 #include "TFile.h"
-#include<vector>
-#include<iostream>
+#include <vector>
+#include <iostream>
 #include "TCanvas.h"
 #include "TLegend.h"
+#include "TPad.h"
+#include "TGaxis.h"
+
 
 #define SAVE true
 
 using namespace std;
 
-const double KFACTOR = 1.52;
+const double KFACTOR = 1.45;
 
-void plot(TString dir_name, TString h_name, TString postfix="", TString option1="HIST",  TString option2="PE", TString option3="", TString out_name="plot"){
+void plot(TString dir_name, TString h_name, TString postfix="", 
+	  TString option_signal="HIST",  TString option_bkg="PE", TString option_shape="", 
+	  TString out_name="plot"){
   
   TFile* out = TFile::Open("plots/"+out_name+".root", "UPDATE");
 
   THStack* s = new THStack("stack_background_"+h_name,"");
   
   TLegend* leg = new TLegend(0.64,0.75,0.80,0.88, "","brNDC");
-  leg->SetHeader("Selection: "+dir_name+", L=2.5 fb^{-1}");
+  leg->SetHeader("Selection: "+dir_name+", L=2.6 fb^{-1}");
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
   leg->SetTextSize(0.03);
@@ -87,7 +92,7 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
 	//background->SetMarkerStyle(kFullCircle);
 	background->SetFillColor(0);
 	cout << ss << ", " << h_sample->Integral() << "==>" << background->Integral() << endl;
-	leg->AddEntry(background, "Total background", "L");
+	leg->AddEntry(background, Form("Total background, K-factor=%.1f", KFACTOR), "L");
       }
       else{
 	background->Add(h_sample, 1.0);
@@ -101,6 +106,13 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
     //f->Close();
   }
 
+  TCanvas* c = new TCanvas("c", "canvas", 800, 800);
+  TPad* pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
+  pad1->SetBottomMargin(0); 
+  pad1->SetGridx();  
+  pad1->Draw();      
+  pad1->cd();    
+
   s->Draw("HIST");
   if(signal!=0)
     s->SetMinimum(TMath::Max(signal->GetMinimum()*0.5,0.1));
@@ -112,17 +124,17 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
   }
 
   if(signal!=0){
-    if(option3=="Shape"){
+    if(option_shape=="Shape"){
       signal->Scale(background->Integral()/signal->Integral());
       leg->AddEntry(signal, "X(750) normalised to Bkg.", "L");
-      signal->Draw(option1+"SAME");
+      signal->Draw(option_signal+"SAME");
     }
     else{
       leg->AddEntry(signal, "X(750), #sigma=1.0 pb", "L");
-      signal->Draw(option1+"SAME");
+      signal->Draw(option_signal+"SAME");
     }
   }
-  if(background!=0) background->Draw(option2+"ESAME");
+  if(background!=0) background->Draw(option_bkg+"ESAME");
   if(data!=0){
     if(string(dir_name.Data()).find("Mass")!=string::npos || 
        (string(dir_name.Data()).find("BTag")!=string::npos &&
@@ -130,10 +142,69 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
       data->Reset();
       data->Add(background, 1.0);
       leg->AddEntry(data, "Data = MC (blinded)", "P");
+      data->Draw("PESAME");
     }
-    data->Draw("PESAME");
-    leg->AddEntry(data, "Data", "P");
+    else{
+      data->Draw("PESAME");
+      leg->AddEntry(data, "Data", "P");
+    }
   }
+  if(s->GetHistogram()){
+    s->GetHistogram()->GetYaxis()->SetTitleSize(20);
+    s->GetHistogram()->GetYaxis()->SetTitleFont(43);
+    s->GetHistogram()->GetYaxis()->SetTitleOffset(1.55);
+  }
+  TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
+  axis->SetLabelFont(43); 
+  axis->SetLabelSize(15);
+  axis->Draw();
+  leg->Draw();
+
+  c->cd(); 
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
+  pad2->SetTopMargin(0);
+  pad2->SetBottomMargin(0.2);
+  pad2->SetGridx();   
+  pad2->SetGridy(); 
+  pad2->Draw();
+  pad2->cd();       
+
+  // Define the ratio plot
+  if(data!=0 || background!=0){
+    TH1F *hratio = 0;
+    if(data!=0)
+      hratio = (TH1F*)data->Clone("data_clone");
+    else
+      hratio = (TH1F*)background->Clone("data_clone");
+    hratio->SetLineColor(kBlack);
+    hratio->SetMinimum(0.);  // Define Y ..
+    hratio->SetMaximum(2); // .. range
+    hratio->Sumw2();
+    hratio->SetStats(0);      // No statistics on lower plot
+    if(background!=0)
+      hratio->Divide(background);
+    hratio->SetMarkerStyle(21);
+    hratio->Draw("ep"); 
+    hratio->SetTitle(""); // Remove the ratio title
+
+    // Y axis ratio plot settings
+    hratio->GetYaxis()->SetTitle("data/MC");
+    hratio->GetYaxis()->SetNdivisions(505);
+    hratio->GetYaxis()->SetTitleSize(20);
+    hratio->GetYaxis()->SetTitleFont(43);
+    hratio->GetYaxis()->SetTitleOffset(1.55);
+    hratio->GetYaxis()->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+    hratio->GetYaxis()->SetLabelSize(15);
+    // X axis ratio plot settings
+    hratio->GetXaxis()->SetTitle(h_name);
+    hratio->GetXaxis()->SetTitleSize(20);
+    hratio->GetXaxis()->SetTitleFont(43);
+    hratio->GetXaxis()->SetTitleOffset(4.);
+    hratio->GetXaxis()->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+    hratio->GetXaxis()->SetLabelSize(15);
+  }
+
+
   out->cd();
   s->Write("", TObject::kOverwrite);
   if(signal!=0) signal->Write("", TObject::kOverwrite);
@@ -141,17 +212,16 @@ void plot(TString dir_name, TString h_name, TString postfix="", TString option1=
   if(data!=0) data->Write("", TObject::kOverwrite);
   out->Close();
 
-  leg->Draw();
-
   if(SAVE){
     //out->Close();
-    if(option3=="Shape")
-      gPad->SetLogy(0);
+    if(option_shape=="Shape")
+      pad1->SetLogy(0);
     else
-      gPad->SetLogy(1);
-    gPad->SaveAs("plots/"+h_name+postfix+".png");
+      pad1->SetLogy(1);
+    c->SaveAs("plots/"+h_name+postfix+".png");
     for(unsigned int of = 0; of < open_files.size() ; ++of)
       open_files[of]->Close();
+    //delete c;
   }
 }
 
@@ -159,12 +229,15 @@ void plot_all(){
 
   vector<TString> dirs = {
     //"Vtype",
-    "HLT",
-    "HLT_Offline_OR",
-    "HLT_Offline_AND",
+    //"HLT",
+    //"HLT_Offline_OR",
+    //"HLT_Offline_AND",
+    "BTag_LT_lept",
     "BTag_MT",
+    "BTag_nMT",
+    "BTag_LT",
     "BTag_TT",
-    "Mass"
+    //"Mass"
   };
 
   vector<TString> hists = {

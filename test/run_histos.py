@@ -5,16 +5,20 @@ ROOT.gROOT.SetBatch(True)
 argv.remove( '-b-' )
 from ROOT import TLorentzVector
 import math
+import sys
+sys.path.append('./')
+sys.path.append('../python/')
+from samples import *
 
 def weight(ev, lumi):
   if lumi<0:
     return 1.0
   return ev.puWeight*abs(ev.genWeight)/ev.genWeight*lumi
 
-import sys
-sys.path.append('./')
-sys.path.append('../python/')
-from samples import *
+def preselection(ev):
+  if hasattr(ev, "json_silver"):
+    return getattr(ev, "json_silver")
+  return True
 
 # specify here which samples
 samples = samples_pruned
@@ -67,10 +71,11 @@ cuts_map = [ ["All", lambda ev : True] ]
 #cuts_map.append( ["HLT" ,lambda ev : (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v or ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v)])
 #cuts_map.append( ["HLT_Offline_OR", lambda ev : ((ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v and abs(ev.Jet_eta[ev.hJCidx[0]])<2.4 and abs(ev.Jet_eta[ev.hJCidx[1]])<2.4 and abs(ev.Jet_eta[ev.hJCidx[0]] - ev.Jet_eta[ev.hJCidx[1]])<1.6 and ev.Jet_pt[ev.hJCidx[0]]>150 and ev.Jet_pt[ev.hJCidx[1]]>150) or (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v and ev.Jet_pt[ev.hJCidx[0]]>200 and ev.Jet_pt[ev.hJCidx[1]]>200 and abs(ev.Jet_eta[ev.hJCidx[0]])<2.4 and abs(ev.Jet_eta[ev.hJCidx[1]])<2.4 )) if len(ev.hJCidx)==2 else False])
 #cuts_map.append( ["HLT_Offline_AND", lambda ev : (abs(ev.Jet_eta[ev.hJCidx[0]] - ev.Jet_eta[ev.hJCidx[1]])<1.6 and ev.Jet_pt[ev.hJCidx[0]]>200 and ev.Jet_pt[ev.hJCidx[1]]>200 and abs(ev.Jet_eta[ev.hJCidx[0]])<2.4 and abs(ev.Jet_eta[ev.hJCidx[1]])<2.4 ) if len(ev.hJCidx)==2 else False] )
-cuts_map.append( ["BTag_LT", lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False])
-cuts_map.append( ["BTag_nMT", lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False])
-cuts_map.append( ["BTag_MT", lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False])
-cuts_map.append( ["BTag_TT", lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False])
+cuts_map.append( ["BTag_LT_lept", lambda ev : ( ev.Vtype in [0,1,2,3] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False])
+cuts_map.append( ["BTag_LT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False])
+cuts_map.append( ["BTag_nMT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False])
+cuts_map.append( ["BTag_MT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False])
+cuts_map.append( ["BTag_TT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False])
 #cuts_map.append( ["Mass", lambda ev : ev.HaddJetsdR08_mass>600 and ev.HaddJetsdR08_mass<800] )
 
 f.cd()
@@ -129,6 +134,7 @@ chain.SetBranchStatus("*HCSV*", True)
 chain.SetBranchStatus("lheHT", True)
 chain.SetBranchStatus("Vtype", True)
 chain.SetBranchStatus("*HaddJetsdR08*", True)
+chain.SetBranchStatus("json*", True)
 
 print eff_map
 
@@ -139,6 +145,9 @@ for iev in range( min(int(1e+7), chain.GetEntries()) ):
     ev = chain
     if iev%1000 == 0:
         print "Processing event ", iev
+
+    if not preselection(ev):
+      continue
 
     passall = True
     for cut in cuts_map:

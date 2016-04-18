@@ -14,13 +14,14 @@ samples_V21 = {
 
 samples_pruned = {
  "HT100to200" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT100to200/", 27990000],
-  "HT200to300" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT200to300/", 1712000.],
-  "HT300to500" :   ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT300to500/",347700.],
-  "HT500to700" :   ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT500to700/", 32100.],
-  "HT700to1000" :  ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT700to1000/", 6831.],
-  "HT1000to1500" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT1000to1500/", 1207.],
-  "HT1500to2000" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT1500to2000/",119.9],
-  "HT2000toInf" :  ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT2000toInf/", 25.24], 
-  "M750" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/M750/", 1.0],
+ "HT200to300" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT200to300/", 1712000.],
+ "HT300to500" :   ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT300to500/",347700.],
+ "HT500to700" :   ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT500to700/", 32100.],
+ "HT700to1000" :  ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT700to1000/", 6831.],
+ "HT1000to1500" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT1000to1500/", 1207.],
+ "HT1500to2000" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT1500to2000/",119.9],
+ "HT2000toInf" :  ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/HT2000toInf/", 25.24], 
+ "M750" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/M750/", 1.0],
+ "Run2015D" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/Run2015D/", -1],
 }
 
