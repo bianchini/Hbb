@@ -59,8 +59,10 @@ def submit(sample, first, last, postfix):
 
 ##########################################
 
-# [name, files_per_sample, njobs]
+# [name, files_per_sample, njobs, offset [OPTIONAL]]
 for sample in [
+
+    # run_tree_skimmer:
     #["Run2015D",3, 71],
     #["M750",1,20], 
     #["HT100to200", 1, 50], 
@@ -71,21 +73,32 @@ for sample in [
     #["HT1000to1500",7, 10], 
     #["HT1500to2000",4,  13], 
     #["HT2000toInf", 5,  6],
+    #["Spin0_M650", 30, 20],
+    #["Spin0_M800", 30, 20],
+    #["Spin0_M950", 30, 20],
+    #["Spin0_M1400", 30, 20],
+    ["TT_ext3",4,100,100]
 
-    ["M750",-1, 1], 
-    ["HT100to200", -1, 1], 
-    ["HT200to300", -1, 1], 
-    ["HT300to500", -1, 1], 
-    ["HT500to700", -1, 1], 
-    ["HT700to1000",-1, 1], 
-    ["HT1000to1500",-1, 1], 
-    ["HT1500to2000",-1, 1], 
-    ["HT2000toInf", -1, 1],
-    ["Run2015D", -1, 1],
+    # run_histos:
+    #["M750",-1, 1], 
+    #["HT100to200", -1, 1], 
+    #["HT200to300", -1, 1], 
+    #["HT300to500", -1, 1], 
+    #["HT500to700", -1, 1], 
+    #["HT700to1000",-1, 1], 
+    #["HT1000to1500",-1, 1], 
+    #["HT1500to2000",-1, 1], 
+    #["HT2000toInf", -1, 1],
+    #["Run2015D", -1, 1],
+    #["Spin0_M650", -1, 1],
+    #["Spin0_M800", -1, 1],
+    #["Spin0_M950", -1, 1],
+    #["Spin0_M1400", -1, 1],
+    #["TT_ext3",-1,1]
     ]:
     for it in xrange(sample[2]):
         postfix = it+1
-        first = it*sample[1]+1
-        last = (it+1)*sample[1]
+        first = it*sample[1]+1 + (sample[3] if len(sample)>3 else 0)
+        last = (it+1)*sample[1] + (sample[3] if len(sample)>3 else 0)
         submit(sample[0], first if sample[1]>=0 else -1, last, postfix)
         #exit(1)

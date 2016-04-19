@@ -9,7 +9,7 @@ name=tree.root
 #gfalFS -s /scratch/$USER/gfalFS/T3_CH_PSI srm://t3se01.psi.ch
 
 declare -a arr=(
-    Run2015D
+    #Run2015D
     #HT100to200
     #HT200to300
     #HT300to500
@@ -19,6 +19,11 @@ declare -a arr=(
     #HT1500to2000
     #HT2000toInf
     #M750
+    #Spin0_M650
+    #Spin0_M950
+    #Spin0_M800
+    #Spin0_M1400
+    TT_ext3
 )
 
 for i in ${arr[@]}

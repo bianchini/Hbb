@@ -9,6 +9,7 @@
 #include "TPad.h"
 #include "TGaxis.h"
 
+#include <map>
 
 #define SAVE true
 
@@ -17,21 +18,22 @@ using namespace std;
 const double KFACTOR = 1.45;
 
 void plot(TString dir_name, TString h_name, TString postfix="", 
-	  TString option_signal="HIST",  TString option_bkg="PE", TString option_shape="", 
+	  TString option_signal="HIST",  TString option_bkg="PE", TString option_data="PE", TString option_shape="", 
 	  TString out_name="plot"){
   
   TFile* out = TFile::Open("plots/"+out_name+".root", "UPDATE");
 
   THStack* s = new THStack("stack_background_"+h_name,"");
   
-  TLegend* leg = new TLegend(0.64,0.75,0.80,0.88, "","brNDC");
-  leg->SetHeader("Selection: "+dir_name+", L=2.6 fb^{-1}");
+  TLegend* leg = new TLegend(0.55,0.65,0.80,0.88, "","brNDC");
+  leg->SetHeader("Selection: "+dir_name+", L=2.56 fb^{-1}");
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
   leg->SetTextSize(0.03);
   leg->SetFillColor(10);
 
   vector<TString> samples = {
+    "Run2015D",
     "HT100to200", 
     "HT200to300", 
     "HT300to500", 
@@ -41,12 +43,24 @@ void plot(TString dir_name, TString h_name, TString postfix="",
     "HT1500to2000", 
     "HT2000toInf",
     "M750",
-    "Run2015D"
+    "TT_ext3"
+    //"Spin0_M650",
+    //"Spin0_M800",
+    //"Spin0_M950",
+    //"Spin0_M1400"
   };
   
   TH1F* signal = 0;
+  map<TString, TH1F*> signals;
+  for(unsigned int ss = 0 ; ss < samples.size(); ++ss){   
+    if( string(samples[ss].Data()).find("Spin")!=string::npos || samples[ss]=="M750") 
+      signals[samples[ss]] = 0;
+  }
+
   TH1F* data = 0;
   TH1F* background = 0;
+  TH1F* top = 0;
+  TH1F* qcd = 0;
 
   vector<TFile*> open_files;
   for(unsigned int ss = 0 ; ss < samples.size(); ++ss){
@@ -60,44 +74,104 @@ void plot(TString dir_name, TString h_name, TString postfix="",
     float count = ((TH1F*)f->Get("Count"))->GetBinContent(1);
     TH1F* h_sample = (TH1F*)f->Get(dir_name+h_name);
     if(h_sample!=0){
+
+      // rebin mass plots in CR...
+      if( string(dir_name.Data()).find("_lept")!=string::npos && 
+	  string(h_name.Data()).find("_Mass")!=string::npos )
+	h_sample->Rebin(10);
+
+      // first deal with data
       if(sample=="Run2015D"){
 	data = (TH1F*)h_sample->Clone("data_"+h_name);
 	data->SetMarkerColor(kBlack);
+	data->SetLineColor(kBlack);
 	data->SetMarkerSize(1.2);
 	data->SetMarkerStyle(kFullCircle);
 	data->SetFillColor(0);
 	cout << ss << ", " << h_sample->Integral() << "==>" << data->Integral() << endl;
 	continue;
       }
-      h_sample->Scale(1./count*KFACTOR);
-      if(string(sample.Data()).find("HT")==string::npos){
-	signal = (TH1F*)h_sample->Clone("signal_"+h_name);
+
+      h_sample->Scale(1./count);
+
+      // then with signal
+      if(string(sample.Data()).find("Spin")!=string::npos || sample=="M750"){
+	signal = (TH1F*)h_sample->Clone("signal_"+h_name+"_"+sample+option_shape);
 	signal->SetLineColor(kRed);
 	signal->SetLineStyle(kDashed);
 	signal->SetLineWidth(3);
+	signals[sample] = signal;
 	cout << ss << ", " << h_sample->Integral() << "==>" << signal->Integral() << endl;
 	continue;
       }
-      h_sample->SetFillColor(ss+30);
-      h_sample->SetLineColor(ss+30);
+
+      // this is background
+      if(string(sample.Data()).find("HT")!=string::npos){
+	h_sample->Scale(KFACTOR);
+	h_sample->SetFillColor(ss+30);
+	h_sample->SetLineColor(ss+30);
+      }
+      if(string(sample.Data()).find("TT_")!=string::npos){
+	h_sample->SetFillColor(kMagenta);
+	h_sample->SetLineColor(kMagenta);
+      }
+	
+
       h_sample->SetLineWidth(0);
       h_sample->SetFillStyle(1001);
       s->Add(h_sample);
+
+      if(string(sample.Data()).find("HT")!=string::npos){
+	if(qcd==0){
+	  qcd = (TH1F*)h_sample->Clone("qcd_"+h_name);
+	  qcd->SetLineColor(kBlack);
+	  qcd->SetLineWidth(2);
+	  qcd->SetFillColor(0);
+	  cout << ss << ", " << h_sample->Integral() << "==>" << qcd->Integral() << endl;
+	  leg->AddEntry(qcd, Form("Multi-jet, K-factor=%.1f", KFACTOR), "F");
+	}
+	else{
+	  qcd->Add(h_sample, 1.0);
+	  cout << ss << ", " << h_sample->Integral() << "==>" << qcd->Integral() << endl;
+	}
+      }
+
+      if(string(sample.Data()).find("TT_")!=string::npos){
+	if(top==0){
+          top = (TH1F*)h_sample->Clone("top_"+h_name);
+          top->SetLineColor(kMagenta);
+          top->SetLineWidth(2);
+          top->SetFillColor(kMagenta);
+	  top->SetFillColor(0);
+          cout << ss << ", " << h_sample->Integral() << "==>" << top->Integral() << endl;
+          leg->AddEntry(top, "Top", "F");
+        }
+        else{
+          top->Add(h_sample, 1.0);
+          cout << ss << ", " << h_sample->Integral() << "==>" << top->Integral() << endl;
+        }
+      }
+
       if(background==0){
 	background = (TH1F*)h_sample->Clone("background_"+h_name);
-	//background->SetMarkerColor(kBlack);
 	background->SetLineColor(kBlue);
-	//background->SetMarkerSize(1.2);
 	background->SetLineWidth(2);
-	//background->SetMarkerStyle(kFullCircle);
-	background->SetFillColor(0);
+	if( option_bkg!="TEXT" ){
+	  background->SetMarkerStyle(kFullCircle);
+	  background->SetMarkerSize(0.);
+	  background->SetFillColor(kBlue);
+	  background->SetFillStyle(3004);
+	}
+	else{
+	  background->SetFillStyle(0); 
+	}
 	cout << ss << ", " << h_sample->Integral() << "==>" << background->Integral() << endl;
-	leg->AddEntry(background, Form("Total background, K-factor=%.1f", KFACTOR), "L");
+	leg->AddEntry(background, "Total background", "F");
       }
       else{
 	background->Add(h_sample, 1.0);
-	cout << ss << ", " << h_sample->Integral() << "==>" << background->Integral() << endl;
       }
+
     }
     else{
       cout << "Cannot find histogram" << endl;
@@ -124,28 +198,38 @@ void plot(TString dir_name, TString h_name, TString postfix="",
   }
 
   if(signal!=0){
-    if(option_shape=="Shape"){
-      signal->Scale(background->Integral()/signal->Integral());
-      leg->AddEntry(signal, "X(750) normalised to Bkg.", "L");
-      signal->Draw(option_signal+"SAME");
-    }
-    else{
-      leg->AddEntry(signal, "X(750), #sigma=1.0 pb", "L");
-      signal->Draw(option_signal+"SAME");
+
+    for(std::map<TString,TH1F*>::iterator it = signals.begin(); it != signals.end(); ++it){
+      if(option_shape=="Shape"){	
+	it->second->Scale(background->Integral()/signal->Integral());
+	leg->AddEntry(it->second, (it->first)+" normalised to Bkg.", "L");
+	it->second->Draw(option_signal+"SAME");
+      }
+      else{
+	leg->AddEntry(it->second,  (it->first)+", #sigma=1.0 pb", "L");
+	it->second->Draw(option_signal+"SAME");
+      }
     }
   }
-  if(background!=0) background->Draw(option_bkg+"ESAME");
+
+  if(background!=0){
+    if( option_bkg=="TEXT") 
+      background->Draw("TEXTSAME");
+    else
+      background->Draw(option_bkg+"E2SAME");
+  }
   if(data!=0){
-    if(string(dir_name.Data()).find("Mass")!=string::npos || 
-       (string(dir_name.Data()).find("BTag")!=string::npos &&
-	string(h_name.Data()).find("Mass")!=string::npos) ){
+    if(  string(dir_name.Data()).find("_lept")==string::npos && 
+	 (string(dir_name.Data()).find("Mass")!=string::npos || 
+	  (string(dir_name.Data()).find("BTag")!=string::npos &&
+	   string(h_name.Data()).find("Mass")!=string::npos)) ){
       data->Reset();
       data->Add(background, 1.0);
       leg->AddEntry(data, "Data = MC (blinded)", "P");
-      data->Draw("PESAME");
+      data->Draw(option_data+"SAME");
     }
     else{
-      data->Draw("PESAME");
+      data->Draw(option_data+"SAME");
       leg->AddEntry(data, "Data", "P");
     }
   }
@@ -207,7 +291,10 @@ void plot(TString dir_name, TString h_name, TString postfix="",
 
   out->cd();
   s->Write("", TObject::kOverwrite);
-  if(signal!=0) signal->Write("", TObject::kOverwrite);
+  if(signal!=0){
+    for(std::map<TString,TH1F*>::iterator it = signals.begin(); it != signals.end(); ++it)
+      it->second->Write("", TObject::kOverwrite);
+  }
   if(background!=0) background->Write("", TObject::kOverwrite);
   if(data!=0) data->Write("", TObject::kOverwrite);
   out->Close();
@@ -264,12 +351,12 @@ void plot_all(){
   };
 
   plot("All/","All_lheHT");
-  plot("","CutFlow", "", "TEXT", "TEXT");
+  plot("","CutFlow", "", "TEXT", "TEXT", "PE");
 
   for(unsigned int d = 0 ; d < dirs.size(); ++d){
     for(unsigned int h = 0 ; h < hists.size(); ++h){
       plot(dirs[d]+"/", dirs[d]+"_"+hists[h]);
-      plot(dirs[d]+"/", dirs[d]+"_"+hists[h], "_shape", "HIST", "HIST", "Shape");
+      plot(dirs[d]+"/", dirs[d]+"_"+hists[h], "_shape", "HIST", "PE", "PE", "Shape");
     }
   }
 }
