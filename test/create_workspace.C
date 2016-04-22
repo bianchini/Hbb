@@ -301,6 +301,26 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   w->import(*mass_pdf_bkg);
   w->import(mass_pdf_bkg_norm);
 
+  // Empirical mass function with turn-on
+  RooRealVar m0_t("m0_t_bkg","m0",300., 600.);
+  RooRealVar s0_t("s0_t_bkg","s0",10., 200.);
+  RooRealVar p1_t("p1_t_bkg","p1",0.0, 20.);
+  RooRealVar p2_t("p2_t_bkg","p2",10., 40.);
+  RooRealVar p3_t("p3_t_bkg","p3",0.5, 5.0);
+  TString mass_formula_t = "0.5*(TMath::Erf((x-m0_t_bkg)/s0_t_bkg)+1)*TMath::Power(1-x/13000.,p1_t_bkg)/(TMath::Power(x/13000.,p2_t_bkg+p3_t_bkg*TMath::Log(x/13000.)))";
+  RooGenericPdf* mass_t_pdf_bkg = new RooGenericPdf("mass_t_pdf_bkg", mass_formula_t, RooArgSet(*x,m0_t,s0_t,p1_t,p2_t,p3_t));
+  RooRealVar mass_t_pdf_bkg_norm("mass_t_pdf_bkg_norm", "background normalisation", data_bkg->sumEntries());
+  mass_t_pdf_bkg->fitTo(*data_bkg, PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE));
+  if( set_param_const ){  
+    m0_t.setConstant();  
+    s0_t.setConstant();  
+    p1_t.setConstant();  
+    p2_t.setConstant();  
+    p3_t.setConstant();  
+  }
+  w->import(*mass_t_pdf_bkg);
+  w->import(mass_t_pdf_bkg_norm);
+
   TLegend* leg = new TLegend(0.45,0.65,0.75,0.88, "","brNDC");
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
@@ -314,6 +334,7 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   exp_pdf_bkg->plotOn(frame, LineColor(kRed), Name("exp_pdf_bkg"));
   pol_pdf_bkg->plotOn(frame, LineColor(kOrange), Name("pol_pdf_bkg"));
   mass_pdf_bkg->plotOn(frame, LineColor(kBlue), Name("mass_pdf_bkg"));
+  mass_t_pdf_bkg->plotOn(frame, LineColor(kBlue), LineStyle(kDashed),Name("mass_t_pdf_bkg"));
 
   c1->cd(2);  
   frame->Draw();
@@ -321,12 +342,14 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   double chi2_exp = frame->chiSquare("exp_pdf_bkg","data", 1);
   double chi2_pol = frame->chiSquare("pol_pdf_bkg","data", 5);
   double chi2_mass = frame->chiSquare("mass_pdf_bkg","data", 3);
+  double chi2_mass_t = frame->chiSquare("mass_t_pdf_bkg","data", 3+2);
 
   leg->SetHeader(Form("Range: [%.0f,%.0f] GeV", x->getMin(), x->getMax()) );
   
   leg->AddEntry(frame->getCurve("exp_pdf_bkg"), Form("Exponential: #chi^{2}/ndof=%.2f", chi2_exp), "L");
   leg->AddEntry(frame->getCurve("pol_pdf_bkg"), Form("Pol. 5th: #chi^{2}/ndof=%.2f", chi2_pol), "L");
   leg->AddEntry(frame->getCurve("mass_pdf_bkg"), Form("Mass: #chi^{2}/ndof=%.2f", chi2_mass), "L");
+  leg->AddEntry(frame->getCurve("mass_t_pdf_bkg"), Form("Mass w/ turn-on: #chi^{2}/ndof=%.2f", chi2_mass_t), "L");
   leg->Draw();
 
   return;  
@@ -376,17 +399,20 @@ void create_workspace(TString ws_name="Xbb_workspace",
 }
 
 void create_all(){
-  create_workspace("Xbb_workspace", "MT", 550., 1200.);
-  create_workspace("Xbb_workspace", "MT", 550., 1500.);
-  create_workspace("Xbb_workspace", "MT", 550., 1800.);
-  create_workspace("Xbb_workspace", "MT", 550., 2000.);
-  create_workspace("Xbb_workspace", "MT", 525., 1500.);
-  create_workspace("Xbb_workspace", "MT", 500., 1500.);
 
-  create_workspace("Xbb_workspace", "TT", 550., 1200.);
-  create_workspace("Xbb_workspace", "TT", 550., 1500.);
-  create_workspace("Xbb_workspace", "TT", 550., 1800.);
-  create_workspace("Xbb_workspace", "TT", 550., 2000.);
-  create_workspace("Xbb_workspace", "TT", 525., 1500.);
-  create_workspace("Xbb_workspace", "TT", 500., 1500.);
+  vector<TString> cats = {"MT","TT"};
+
+  for(unsigned int c = 0 ; c < cats.size(); ++c){
+    create_workspace("Xbb_workspace", cats[c], 580., 1500.);
+    create_workspace("Xbb_workspace", cats[c], 570., 1500.);
+    create_workspace("Xbb_workspace", cats[c], 560., 1500.);
+    create_workspace("Xbb_workspace", cats[c], 550., 1500.);
+    create_workspace("Xbb_workspace", cats[c], 540., 1500.);
+    create_workspace("Xbb_workspace", cats[c], 530., 1500.);
+    create_workspace("Xbb_workspace", cats[c], 520., 1500.);   
+    create_workspace("Xbb_workspace", cats[c], 550., 1200.);
+    create_workspace("Xbb_workspace", cats[c], 550., 1800.);
+    create_workspace("Xbb_workspace", cats[c], 550., 2000.);
+  }
+
 }
