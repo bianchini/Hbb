@@ -2,8 +2,6 @@ Code relevant for Hbb.
 
 How to run:
 
-Go into test/:
-
 > cd test/
 
 Make a light skim of vhbb trees and save the output into /scratch/$USER:
@@ -31,9 +29,21 @@ Move the output files into ./plots:
 Produce histograms and total signal/background templates:
 
 > root -b
-
-root [0] .L make_plots.C++
-
-root [0] plot_all()
+> root [0] .L make_plots.C++
+> root [1] plot_all()
 
 A ROOT file with all shapes is saved under plots/plots.root
+Produce the workspace:
+
+> root -b
+> root [0] .L create_workspace.C++
+> root [1] create_all()
+
+Dump the workspace into a datacard:
+
+> dump_to_datacard.py
+
+Go into a release with an official Combine package (CMSSW_7_1_5).
+To run the limits do:
+
+> python run.py

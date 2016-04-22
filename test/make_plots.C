@@ -13,6 +13,8 @@
 
 #define SAVE true
 
+#define BLIND false
+
 using namespace std;
 
 const double KFACTOR = 1.45;
@@ -219,7 +221,7 @@ void plot(TString dir_name, TString h_name, TString postfix="",
       background->Draw(option_bkg+"E2SAME");
   }
   if(data!=0){
-    if(  string(dir_name.Data()).find("_lept")==string::npos && 
+    if(  BLIND && string(dir_name.Data()).find("_lept")==string::npos && 
 	 (string(dir_name.Data()).find("Mass")!=string::npos || 
 	  (string(dir_name.Data()).find("BTag")!=string::npos &&
 	   string(h_name.Data()).find("Mass")!=string::npos)) ){
@@ -308,7 +310,10 @@ void plot(TString dir_name, TString h_name, TString postfix="",
     c->SaveAs("plots/"+h_name+postfix+".png");
     for(unsigned int of = 0; of < open_files.size() ; ++of)
       open_files[of]->Close();
-    //delete c;
+    delete pad1;
+    delete pad2;
+    delete axis;
+    delete c;
   }
 }
 
@@ -319,35 +324,35 @@ void plot_all(){
     //"HLT",
     //"HLT_Offline_OR",
     //"HLT_Offline_AND",
-    "BTag_LT_lept",
+    //"BTag_LT_lept",
     "BTag_MT",
-    "BTag_nMT",
-    "BTag_LT",
-    "BTag_TT",
+    //"BTag_nMT",
+    //"BTag_LT",
+    //"BTag_TT",
     //"Mass"
   };
 
   vector<TString> hists = {
-    "MinJetPt",
-    "MaxJetPt",
+    //"MinJetPt",
+    //"MaxJetPt",
     "Mass",
     "MassFSR",
-    "Pt",
-    "Eta",
-    "DeltaEta",
-    "DeltaPhi",
-    "MaxJetCSV",
-    "MinJetCSV",
-    "Vtype",
-    "njet30",
-    "njet50",
-    "njet70",
-    "njet100",
-    "MET",
-    "PtBalance",
-    "MaxJetPtoMass",
-    "MinJetPtoMass",
-    "MaxEta"
+    //"Pt",
+    //"Eta",
+    //"DeltaEta",
+    //"DeltaPhi",
+    //"MaxJetCSV",
+    //"MinJetCSV",
+    //"Vtype",
+    //"njet30",
+    //"njet50",
+    //"njet70",
+    //"njet100",
+    //"MET",
+    //"PtBalance",
+    //"MaxJetPtoMass",
+    //"MinJetPtoMass",
+    //"MaxEta"
   };
 
   plot("All/","All_lheHT");

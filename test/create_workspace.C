@@ -18,6 +18,97 @@
 using namespace std;
 using namespace RooFit;
 
+void compare_mass_spectra(float x_min=550., float x_max=1500.,
+			  TString input_fname="plots/plot.root",
+			  TString h_name_sgn_1 = "signal_BTag_MT_Mass_M750",
+			  TString h_name_sgn_2 = "signal_BTag_MT_MassFSR_M750",
+			  int rebin_factor = 1,
+			  TString title = ""
+			  ){
+
+  TCanvas* c1 = new TCanvas("c1","c1",800,800);
+
+  RooRealVar* x = new RooRealVar("x","x", 400., 4000.);
+  x->setMin(x_min);
+  x->setMax(x_max);
+
+  TFile* input_file = TFile::Open(input_fname, "READ");
+  if(input_file==0 || input_file->IsZombie()){
+    cout << "File " << string(input_fname.Data()) << " could not be found." << endl;
+    return;
+  }
+
+  TH1F* h_sgn_1 = (TH1F*)input_file->Get(h_name_sgn_1);
+  TH1F* h_sgn_2 = (TH1F*)input_file->Get(h_name_sgn_2);
+  if( h_sgn_1==0 || h_sgn_2==0 ){
+    cout << "No signal histogram!" << endl;
+    input_file->Close();
+    return;
+  }
+
+  // optionally rebin the histogram before making the RooDataHist
+  if(rebin_factor>1){
+    h_sgn_1->Rebin(rebin_factor);
+    h_sgn_2->Rebin(rebin_factor);
+  }
+
+  // the signal data set
+  RooDataHist* data_sgn_1 = new RooDataHist("data_sgn_1", "data signal 1", *x, h_sgn_1);
+  RooDataHist* data_sgn_2 = new RooDataHist("data_sgn_2", "data signal 1", *x, h_sgn_2);
+
+  // Bukin pdf: http://arxiv.org/abs/0711.4449
+  RooRealVar Xp_1("Xp_sgn_1", "Xp", 650.,850.);
+  RooRealVar sP_1("sP_sgn_1", "sP", 50., 150.);
+  RooRealVar xi_1("xi_sgn_1", "xi",-2.,0.);
+  RooRealVar rho1_1("rho1_sgn_1", "rho1", -0.2,0.2);
+  RooRealVar rho2_1("rho2_sgn_1", "rho2", -1.,1.);
+  RooBukinPdf* buk_pdf_sgn_1 = new RooBukinPdf("buk_pdf_sgn_1","RooBukinPdf for signal 1", *x, Xp_1, sP_1, xi_1, rho1_1, rho2_1);
+  std::cout << "######## FIT BUKIN  ###########" << std::endl;
+  buk_pdf_sgn_1->fitTo(*data_sgn_1);
+
+  // Bukin pdf: http://arxiv.org/abs/0711.4449
+  RooRealVar Xp_2("Xp_sgn_2", "Xp", 650.,850.);
+  RooRealVar sP_2("sP_sgn_2", "sP", 50., 150.);
+  RooRealVar xi_2("xi_sgn_2", "xi",-2.,0.);
+  RooRealVar rho1_2("rho1_sgn_2", "rho1", -0.2,0.2);
+  RooRealVar rho2_2("rho2_sgn_2", "rho2", -1.,1.);
+  RooBukinPdf* buk_pdf_sgn_2 = new RooBukinPdf("buk_pdf_sgn_2","RooBukinPdf for signal 1", *x, Xp_2, sP_2, xi_2, rho1_2, rho2_2);
+  std::cout << "######## FIT BUKIN  ###########" << std::endl;
+  buk_pdf_sgn_2->fitTo(*data_sgn_2);
+
+  TLegend* leg = new TLegend(0.55,0.65,0.80,0.88, "","brNDC");
+  leg->SetFillStyle(0);
+  leg->SetBorderSize(0);
+  leg->SetTextSize(0.05);
+  leg->SetFillColor(10);
+  
+  RooPlot* frame = x->frame();
+  frame->SetName("frame");
+  frame->SetTitle(title);
+  data_sgn_1->plotOn(frame, MarkerColor(kBlue));
+  data_sgn_2->plotOn(frame, MarkerColor(kRed));
+  buk_pdf_sgn_1->plotOn(frame, LineColor(kBlue), Name("buk_pdf_sgn_1"));
+  buk_pdf_sgn_2->plotOn(frame, LineColor(kRed), Name("buk_pdf_sgn_2"));
+
+  leg->AddEntry(frame->getCurve("buk_pdf_sgn_1"), Form("Reco: #mu=%.0f,#sigma=%.0f", Xp_1.getVal(), sP_1.getVal() ), "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_sgn_2"), Form("FSR: #mu=%.0f,#sigma=%.0f", Xp_2.getVal(), sP_2.getVal() ), "L");
+
+  c1->cd();  
+  frame->Draw();
+  leg->Draw();
+  c1->cd();
+  c1->Update();
+  c1->SaveAs("plots/compare_mass_spectra.png");
+
+  delete c1;
+  delete leg;
+  delete x;
+  delete data_sgn_1;
+  delete data_sgn_2;
+  delete buk_pdf_sgn_1;
+  delete buk_pdf_sgn_2;
+  input_file->Close();
+}
 
 void add_signal_to_workspace(TCanvas* c1 = 0,
 			     RooWorkspace* w=0,
