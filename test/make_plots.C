@@ -21,14 +21,14 @@ const double KFACTOR = 1.45;
 
 void plot(TString dir_name, TString h_name, TString postfix="", 
 	  TString option_signal="HIST",  TString option_bkg="PE", TString option_data="PE", TString option_shape="", 
-	  TString out_name="plot"){
+	  TString out_name="plot", TString version="V2"){
   
-  TFile* out = TFile::Open("plots/"+out_name+".root", "UPDATE");
+  TFile* out = TFile::Open("plots/"+version+"/"+out_name+".root", "UPDATE");
 
   THStack* s = new THStack("stack_background_"+h_name,"");
   
   TLegend* leg = new TLegend(0.55,0.65,0.80,0.88, "","brNDC");
-  leg->SetHeader("Selection: "+dir_name+", L=2.56 fb^{-1}");
+  leg->SetHeader("Selection: "+dir_name+", L=2.54 fb^{-1}");
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
   leg->SetTextSize(0.03);
@@ -67,7 +67,7 @@ void plot(TString dir_name, TString h_name, TString postfix="",
   vector<TFile*> open_files;
   for(unsigned int ss = 0 ; ss < samples.size(); ++ss){
     TString sample = samples[ss];
-    TFile* f = TFile::Open("./plots/"+sample+".root", "READ");
+    TFile* f = TFile::Open("./plots/"+version+"/"+sample+".root", "READ");
     if(f==0 || f->IsZombie()){
       cout << "Cannot find file" << endl;
       continue;
@@ -78,7 +78,7 @@ void plot(TString dir_name, TString h_name, TString postfix="",
     if(h_sample!=0){
 
       // rebin mass plots in CR...
-      if( string(dir_name.Data()).find("_lept")!=string::npos && 
+      if( string(dir_name.Data()).find("Lep")!=string::npos && 
 	  string(h_name.Data()).find("_Mass")!=string::npos )
 	h_sample->Rebin(10);
 
@@ -221,7 +221,7 @@ void plot(TString dir_name, TString h_name, TString postfix="",
       background->Draw(option_bkg+"E2SAME");
   }
   if(data!=0){
-    if(  BLIND && string(dir_name.Data()).find("_lept")==string::npos && 
+    if(  BLIND && string(dir_name.Data()).find("Lep")==string::npos && 
 	 (string(dir_name.Data()).find("Mass")!=string::npos || 
 	  (string(dir_name.Data()).find("BTag")!=string::npos &&
 	   string(h_name.Data()).find("Mass")!=string::npos)) ){
@@ -307,7 +307,7 @@ void plot(TString dir_name, TString h_name, TString postfix="",
       pad1->SetLogy(0);
     else
       pad1->SetLogy(1);
-    c->SaveAs("plots/"+h_name+postfix+".png");
+    c->SaveAs("plots/"+version+"/"+h_name+postfix+".png");
     for(unsigned int of = 0; of < open_files.size() ; ++of)
       open_files[of]->Close();
     delete pad1;
@@ -325,34 +325,44 @@ void plot_all(){
     //"HLT_Offline_OR",
     //"HLT_Offline_AND",
     //"BTag_LT_lept",
-    "BTag_MT",
+    //"BTag_MT",
     //"BTag_nMT",
     //"BTag_LT",
     //"BTag_TT",
     //"Mass"
+    "Had_MT_MinPt200_DH1p6",
+    "Had_MT_MinPt150_DH1p6",
+    "Had_MT_MinPt175_DH1p6",
+    "Lep_LT_MinPt200_DH2p0",
+    "Lep_LT_MinPt150_DH2p0",
+    "Lep_LT_MinPt175_DH2p0",
+    "Had_MT_MinPt200_DH2p0",
+    "Had_MT_MinPt150_DH2p0",
+    "Had_MT_MinPt175_DH2p0"
   };
 
   vector<TString> hists = {
-    //"MinJetPt",
-    //"MaxJetPt",
+    "MinJetPt",
+    "MaxJetPt",
     "Mass",
     "MassFSR",
-    //"Pt",
-    //"Eta",
-    //"DeltaEta",
-    //"DeltaPhi",
-    //"MaxJetCSV",
-    //"MinJetCSV",
-    //"Vtype",
-    //"njet30",
-    //"njet50",
-    //"njet70",
-    //"njet100",
-    //"MET",
-    //"PtBalance",
+    "MassAK08",
+    "Pt",
+    "Eta",
+    "DeltaEta",
+    "DeltaPhi",
+    "MaxJetCSV",
+    "MinJetCSV",
+    "Vtype",
+    "njet30",
+    "njet50",
+    "njet70",
+    "njet100",
+    "MET",
+    "PtBalance",
     //"MaxJetPtoMass",
     //"MinJetPtoMass",
-    //"MaxEta"
+    "MaxEta"
   };
 
   plot("All/","All_lheHT");

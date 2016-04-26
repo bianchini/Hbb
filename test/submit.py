@@ -33,18 +33,19 @@ def submit(sample, first, last, postfix):
         outName = "tree_"+str(postfix)
     f = open(scriptName,'w')
     f.write('#!/bin/bash\n\n')
-    f.write('mkdir /scratch/bianchi/'+(sample+'/' if run=="run_tree_skimmer" else '')+'\n')
+    f.write('mkdir -pv /scratch/$USER/'+(sample+'/' if run=="run_tree_skimmer" else '')+'\n')
+    f.write('[ $? -ne 0 ] && echo \"Couldn\'t create dir /scratch/$USER/'+(sample+'/' if run=="run_tree_skimmer" else '')+'\" && exit 1\n')
     f.write('cd $HOME/TTH-76X-heppy/CMSSW/src/Hbb/test/\n')
-    f.write('source /swshare/psit3/etc/profile.d/cms_ui_env.sh\n')
+    f.write('[ `echo $HOSTNAME | grep t3ui` ] && [ -r /mnt/t3nfs01/data01/swshare/psit3/etc/profile.d/cms_ui_env.sh ] && source /mnt/t3nfs01/data01/swshare/psit3/etc/profile.d/cms_ui_env.sh && echo \"UI features enabled\"\n')
     f.write('source /cvmfs/cms.cern.ch/cmsset_default.sh\n')
     f.write('eval `scramv1 runtime -sh`\n')
     f.write('\n')    
     f.write('python '+run+'.py '+sample+' '+str(first)+' '+str(last)+' '+str(postfix)+'\n')
     if run=="run_tree_skimmer":
         f.write('mkdir '+sample+'\n')
-        f.write('mv /scratch/bianchi/'+sample+'/'+outName+'.root ./'+sample+'/'+'\n')    
+        f.write('mv /scratch/$USER/'+sample+'/'+outName+'.root ./'+sample+'/'+'\n')    
     else:
-        f.write('mv /scratch/bianchi/'+outName+'.root ./'+'\n')    
+        f.write('mv /scratch/$USER/'+outName+'.root ./'+'\n')    
 
     f.close()
     os.system('chmod +x '+scriptName)
@@ -65,19 +66,19 @@ for sample in [
     # run_tree_skimmer:
     #["Run2015D",3, 71],
     #["M750",1,20], 
-    #["HT100to200", 1, 50], 
-    #["HT200to300", 10, 25], 
-    #["HT300to500", 10, 25], 
-    #["HT500to700", 10, 25], 
-    #["HT700to1000",10, 20], 
-    #["HT1000to1500",7, 10], 
-    #["HT1500to2000",4,  13], 
-    #["HT2000toInf", 5,  6],
+    #["HT100to200", 2, 25], 
+    #["HT200to300", 20, 13], 
+    #["HT300to500", 20, 13], 
+    #["HT500to700", 20, 13], 
+    #["HT700to1000",5, 40], 
+    #["HT1000to1500",14, 5], 
+    #["HT1500to2000",8,  7], 
+    #["HT2000toInf", 10,  3],
     #["Spin0_M650", 30, 20],
     #["Spin0_M800", 30, 20],
     #["Spin0_M950", 30, 20],
     #["Spin0_M1400", 30, 20],
-    ["TT_ext3",4,100,100]
+    #["TT_ext3",4,100,0]
 
     # run_histos:
     #["M750",-1, 1], 
@@ -89,7 +90,7 @@ for sample in [
     #["HT1000to1500",-1, 1], 
     #["HT1500to2000",-1, 1], 
     #["HT2000toInf", -1, 1],
-    #["Run2015D", -1, 1],
+    ["Run2015D", -1, 1],
     #["Spin0_M650", -1, 1],
     #["Spin0_M800", -1, 1],
     #["Spin0_M950", -1, 1],
