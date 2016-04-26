@@ -30,13 +30,11 @@ def run(datacard, do_limit=True):
 
 
 tests = []
-for cat in ['MT', 'TT']:
-    for pdf in ['mass_pdf_bkg','pol_pdf_bkg', 'exp_pdf_bkg']:
-        for x_range in ['550to1200','550to1500','550to1800', '550to2000', '525to1500', '500to1500']:
-            tests.append( cat + '_' + x_range + '_buk_pdf_sgn_' + pdf)
-#tests = [
-#    'MT_550to2000_buk_pdf_sgn_mass_pdf_bkg',
-#    ]
+for cat in ['Had_MT_MinPt200_DH2p0','Had_MT_MinPt200_DH1p6', 'Had_MT_MinPt150_DH2p0', 'Had_MT_MinPt150_DH1p6']:
+    for pdf in ['mass_pdf_bkg']:
+        for x_range in ['550to1200']:
+            for mass in ['MassFSR', 'MassAK08']:
+                tests.append( cat + '_' + mass + '_' + x_range + '_buk_pdf_sgn_' + pdf)
 
 out = ROOT.TFile.Open("limit.root", "RECREATE")
 h = ROOT.TH1F("h", "Limits", len(tests), 0, len(tests))

@@ -19,11 +19,14 @@ using namespace std;
 using namespace RooFit;
 
 void compare_mass_spectra(float x_min=550., float x_max=1500.,
-			  TString input_fname="plots/plot.root",
-			  TString h_name_sgn_1 = "signal_BTag_MT_Mass_M750",
-			  TString h_name_sgn_2 = "signal_BTag_MT_MassFSR_M750",
+			  TString input_fname="plots/V2/plot.root",
+			  TString cat = "signal_Had_MT_MinPt200_DH2p0", 
+			  TString h_name_sgn_1 = "Mass_M750",
+			  TString h_name_sgn_2 = "MassFSR_M750",
+			  TString h_name_sgn_3 = "MassAK08_M750",
 			  int rebin_factor = 1,
-			  TString title = ""
+			  TString title = "",
+			  TString version = "V2"
 			  ){
 
   TCanvas* c1 = new TCanvas("c1","c1",800,800);
@@ -38,9 +41,10 @@ void compare_mass_spectra(float x_min=550., float x_max=1500.,
     return;
   }
 
-  TH1F* h_sgn_1 = (TH1F*)input_file->Get(h_name_sgn_1);
-  TH1F* h_sgn_2 = (TH1F*)input_file->Get(h_name_sgn_2);
-  if( h_sgn_1==0 || h_sgn_2==0 ){
+  TH1F* h_sgn_1 = (TH1F*)input_file->Get(cat+"_"+h_name_sgn_1);
+  TH1F* h_sgn_2 = (TH1F*)input_file->Get(cat+"_"+h_name_sgn_2);
+  TH1F* h_sgn_3 = (TH1F*)input_file->Get(cat+"_"+h_name_sgn_3);
+  if( h_sgn_1==0 || h_sgn_2==0 || h_sgn_3==0){
     cout << "No signal histogram!" << endl;
     input_file->Close();
     return;
@@ -50,11 +54,13 @@ void compare_mass_spectra(float x_min=550., float x_max=1500.,
   if(rebin_factor>1){
     h_sgn_1->Rebin(rebin_factor);
     h_sgn_2->Rebin(rebin_factor);
+    h_sgn_3->Rebin(rebin_factor);
   }
 
   // the signal data set
   RooDataHist* data_sgn_1 = new RooDataHist("data_sgn_1", "data signal 1", *x, h_sgn_1);
-  RooDataHist* data_sgn_2 = new RooDataHist("data_sgn_2", "data signal 1", *x, h_sgn_2);
+  RooDataHist* data_sgn_2 = new RooDataHist("data_sgn_2", "data signal 2", *x, h_sgn_2);
+  RooDataHist* data_sgn_3 = new RooDataHist("data_sgn_3", "data signal 3", *x, h_sgn_3);
 
   // Bukin pdf: http://arxiv.org/abs/0711.4449
   RooRealVar Xp_1("Xp_sgn_1", "Xp", 650.,850.);
@@ -76,6 +82,16 @@ void compare_mass_spectra(float x_min=550., float x_max=1500.,
   std::cout << "######## FIT BUKIN  ###########" << std::endl;
   buk_pdf_sgn_2->fitTo(*data_sgn_2);
 
+  // Bukin pdf: http://arxiv.org/abs/0711.4449
+  RooRealVar Xp_3("Xp_sgn_3", "Xp", 650.,850.);
+  RooRealVar sP_3("sP_sgn_3", "sP", 50., 150.);
+  RooRealVar xi_3("xi_sgn_3", "xi",-2.,0.);
+  RooRealVar rho1_3("rho1_sgn_3", "rho1", -0.2,0.2);
+  RooRealVar rho2_3("rho2_sgn_3", "rho2", -1.,1.);
+  RooBukinPdf* buk_pdf_sgn_3 = new RooBukinPdf("buk_pdf_sgn_3","RooBukinPdf for signal 1", *x, Xp_3, sP_3, xi_3, rho1_3, rho2_3);
+  std::cout << "######## FIT BUKIN  ###########" << std::endl;
+  buk_pdf_sgn_3->fitTo(*data_sgn_3);
+
   TLegend* leg = new TLegend(0.55,0.65,0.80,0.88, "","brNDC");
   leg->SetFillStyle(0);
   leg->SetBorderSize(0);
@@ -87,26 +103,31 @@ void compare_mass_spectra(float x_min=550., float x_max=1500.,
   frame->SetTitle(title);
   data_sgn_1->plotOn(frame, MarkerColor(kBlue));
   data_sgn_2->plotOn(frame, MarkerColor(kRed));
+  data_sgn_3->plotOn(frame, MarkerColor(kMagenta));
   buk_pdf_sgn_1->plotOn(frame, LineColor(kBlue), Name("buk_pdf_sgn_1"));
   buk_pdf_sgn_2->plotOn(frame, LineColor(kRed), Name("buk_pdf_sgn_2"));
+  buk_pdf_sgn_3->plotOn(frame, LineColor(kMagenta), Name("buk_pdf_sgn_3"));
 
   leg->AddEntry(frame->getCurve("buk_pdf_sgn_1"), Form("Reco: #mu=%.0f,#sigma=%.0f", Xp_1.getVal(), sP_1.getVal() ), "L");
   leg->AddEntry(frame->getCurve("buk_pdf_sgn_2"), Form("FSR: #mu=%.0f,#sigma=%.0f", Xp_2.getVal(), sP_2.getVal() ), "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_sgn_3"), Form("aK_{T}08: #mu=%.0f,#sigma=%.0f", Xp_3.getVal(), sP_3.getVal() ), "L");
 
   c1->cd();  
   frame->Draw();
   leg->Draw();
   c1->cd();
   c1->Update();
-  c1->SaveAs("plots/compare_mass_spectra.png");
+  c1->SaveAs("plots/"+version+"/compare_mass_spectra_"+cat+".png");
 
   delete c1;
   delete leg;
   delete x;
   delete data_sgn_1;
   delete data_sgn_2;
+  delete data_sgn_3;
   delete buk_pdf_sgn_1;
   delete buk_pdf_sgn_2;
+  delete buk_pdf_sgn_3;
   input_file->Close();
 }
 
@@ -117,7 +138,8 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
 			     RooRealVar* x=0,
 			     int rebin_factor = 1,
 			     bool set_param_const = true,
-			     TString title = ""
+			     TString title = "",
+			     TString version="V2"
 			     ){
 
   TFile* input_file = TFile::Open(input_fname, "READ");
@@ -355,10 +377,44 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   return;  
 }
 
+void add_data_to_workspace(TCanvas* c1 = 0,
+			   RooWorkspace* w=0,
+			   TString input_fname="plots/plot.root",
+			   TString h_name_data = "data_BTag_MT_MassFSR_M750",
+			   RooRealVar* x=0,
+			   int rebin_factor = 1,
+			   bool set_param_const = false,
+			   TString title = ""
+			   ){
+  
+  TFile* input_file = TFile::Open(input_fname, "READ");
+  if(input_file==0 || input_file->IsZombie()){
+    cout << "File " << string(input_fname.Data()) << " could not be found." << endl;
+    return;
+  }
+  
+  TH1F* h_data = (TH1F*)input_file->Get(h_name_data);
+  if( h_data==0 ){
+    cout << "No data histogram!" << endl;
+    input_file->Close();
+    return;
+  }
+
+  // optionally rebin the histogram before making the RooDataHist
+  if(rebin_factor>1) h_data->Rebin(rebin_factor);
+
+  // the signal data set
+  RooDataHist* data_obs = new RooDataHist("data_obs", "data observed", *x, h_data);
+  w->import(*data_obs);
+
+  return;
+}
 
 void create_workspace(TString ws_name="Xbb_workspace", 
-		      TString cat = "MT",		      
-		      float x_min=550., float x_max=1500.){
+		      TString cat = "BTag_MT",		      
+		      float x_min=550., float x_max=1500.,
+		      TString mass = "MassFSR",
+		      TString version="V2"){
 
   TCanvas* c1 = new TCanvas("c1"+cat,"c1",1200,400);
   c1->Divide(2);
@@ -372,23 +428,29 @@ void create_workspace(TString ws_name="Xbb_workspace",
   w->import(x);
 
   add_signal_to_workspace(c1, w, 
-			  "plots/plot.root", "signal_BTag_"+cat+"_MassFSR_M750",
+			  "plots/"+version+"/plot.root", "signal_"+cat+"_"+mass+"_M750",
 			  &x, 1, true,
 			  "Signal for MT, m_{X}=750 GeV"
 			  );
-  
+
   add_background_to_workspace(c1, w, 
-			      "plots/plot.root", "background_BTag_"+cat+"_MassFSR",
+			      "plots/"+version+"/plot.root", "background_"+cat+"_"+mass,
 			      &x, 1, false,
 			      "Background"
 			      );
+
+  add_data_to_workspace(c1, w, 
+			"plots/"+version+"/plot.root", "data_"+cat+"_"+mass,
+			&x, 1, false,
+			"Data"
+			);
 
   // print workspace contents  
   w->Print() ; 
 
   // save the workspace into a ROOT file
 
-  TString savename = "./plots/"+ws_name+"_"+cat+"_"+TString(Form("%.0fto%.0f",x_min,x_max));
+  TString savename = "./plots/"+version+"/"+ws_name+"_"+cat+"_"+mass+"_"+TString(Form("%.0fto%.0f",x_min,x_max));
   w->writeToFile(savename+".root") ;
 
   // draw fit results
@@ -398,21 +460,23 @@ void create_workspace(TString ws_name="Xbb_workspace",
   delete w;
 }
 
-void create_all(){
+void create_all(TString version="V2"){
 
-  vector<TString> cats = {"MT","TT"};
+  vector<TString> cats = {
+    "Had_MT_MinPt200_DH2p0",
+    "Had_MT_MinPt150_DH2p0",
+    "Had_MT_MinPt200_DH1p6",
+    "Had_MT_MinPt150_DH1p6",
+  };
+
+  vector<TString> masses = {"MassFSR", "MassAK08"};
 
   for(unsigned int c = 0 ; c < cats.size(); ++c){
-    create_workspace("Xbb_workspace", cats[c], 580., 1500.);
-    create_workspace("Xbb_workspace", cats[c], 570., 1500.);
-    create_workspace("Xbb_workspace", cats[c], 560., 1500.);
-    create_workspace("Xbb_workspace", cats[c], 550., 1500.);
-    create_workspace("Xbb_workspace", cats[c], 540., 1500.);
-    create_workspace("Xbb_workspace", cats[c], 530., 1500.);
-    create_workspace("Xbb_workspace", cats[c], 520., 1500.);   
-    create_workspace("Xbb_workspace", cats[c], 550., 1200.);
-    create_workspace("Xbb_workspace", cats[c], 550., 1800.);
-    create_workspace("Xbb_workspace", cats[c], 550., 2000.);
+    for(unsigned int m = 0 ; m < masses.size(); ++m){
+      create_workspace("Xbb_workspace", cats[c], 560., 1200., masses[m], version);
+      create_workspace("Xbb_workspace", cats[c], 550., 1200., masses[m], version);
+      create_workspace("Xbb_workspace", cats[c], 540., 1200., masses[m], version);
+    }
   }
 
 }

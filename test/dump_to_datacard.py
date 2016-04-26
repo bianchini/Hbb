@@ -9,15 +9,15 @@ import string
 from os import listdir
 import ROOT
 
-def make_datacard( ws_name , cat, x_range, pdf_sgn, pdf_bkg, data_obs ):
+def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_obs ):
 
-    outname = ws_name+'_'+cat+'_'+x_range
+    outname = ws_name+'_'+cat+'_'+mass+'_'+x_range
     postfix = '_'+pdf_sgn+'_'+pdf_bkg
-    ws_file = ROOT.TFile.Open('plots/'+outname+'.root')
+    ws_file = ROOT.TFile.Open('plots/'+version+'/'+outname+'.root')
     ws = ws_file.Get(ws_name)
-    obs = ws.data("data_bkg").sumEntries()
+    obs = ws.data(data_obs).sumEntries()
 
-    f = open( 'plots/'+outname+postfix+'.txt','w')
+    f = open( 'plots/'+version+'/'+outname+postfix+'.txt','w')
     f.write('imax 1 number of bins\n')
     f.write('jmax 1 number of processes minus 1\n')
     f.write('kmax * number of nuisance parameters\n')
@@ -39,7 +39,7 @@ def make_datacard( ws_name , cat, x_range, pdf_sgn, pdf_bkg, data_obs ):
     if pdf_bkg=='mass_pdf_bkg':
         for param in ["p1_bkg","p2_bkg","p3_bkg"]:
             val =  ws.var(param).getVal()
-            f.write(param+'  param  '+( "%.2E" % val) + '  1.0\n')
+            f.write(param+'  param  '+( "%.2E" % val) + '  10.0\n')
     elif pdf_bkg=='pol_pdf_bkg':
         for param in ["a0_bkg","a1_bkg","a2_bkg", "a3_bkg", "a4_bkg", "a5_bkg"]:
             val =  ws.var(param).getVal()
@@ -52,12 +52,14 @@ def make_datacard( ws_name , cat, x_range, pdf_sgn, pdf_bkg, data_obs ):
         
     f.close()
     ws_file.Close()
-    print 'Created datacard '+'plots/'+outname+postfix+'.txt'
+    print 'Created datacard '+'plots/'+version+'/'+outname+postfix+'.txt'
 
 ########################################
 
-for cat in ['MT', 'TT']:
-    for pdf in ['mass_pdf_bkg','pol_pdf_bkg', 'exp_pdf_bkg']:
-        for x_range in ['550to1200','550to1500','550to1800', '550to2000', '525to1500', '500to1500']:
-            make_datacard('Xbb_workspace',cat, x_range, 'buk_pdf_sgn', pdf, 'data_bkg')
+for cat in ['Had_MT_MinPt200_DH2p0','Had_MT_MinPt200_DH1p6', 'Had_MT_MinPt150_DH2p0', 'Had_MT_MinPt150_DH1p6']:
+    for pdf in ['mass_pdf_bkg']:
+        for x_range in ['550to1200']:
+            for mass in ['MassFSR', 'MassAK08']:
+                #make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_bkg')
+                make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_obs')
 
