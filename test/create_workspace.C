@@ -3,6 +3,7 @@
 #include "TCanvas.h"
 #include "TLegend.h"
 #include "TSystem.h"
+#include "TMath.h"
 
 #include "RooRealVar.h"
 #include "RooDataHist.h"
@@ -17,6 +18,129 @@
 
 using namespace std;
 using namespace RooFit;
+
+
+
+void add_jet_systematics(RooWorkspace* w=0,
+			 RooRealVar* x=0,
+			 TString input_fname="plots/V2/plot.root",
+			 TString cat = "signal_Had_MT_MinPt200_DH2p0", 
+			 TString h_name_sgn = "MassFSR",
+			 TString proc = "M750",
+			 int rebin_factor = 1,
+			 TString title = "",
+			 TString version = "V2"
+			  ){
+
+  TCanvas* c1 = new TCanvas("c1_systematics","c1",800,800);
+
+  TFile* input_file = TFile::Open(input_fname, "READ");
+  if(input_file==0 || input_file->IsZombie()){
+    cout << "File " << string(input_fname.Data()) << " could not be found." << endl;
+    return;
+  }
+
+  TH1F* h_sgn_nominal = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_"+proc);
+  TH1F* h_sgn_JECUp = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JECUp_"+proc);
+  TH1F* h_sgn_JECDown = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JECDown_"+proc);
+  TH1F* h_sgn_JERUp = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JERUp_"+proc);
+  TH1F* h_sgn_JERDown = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JERDown_"+proc);
+
+  if( h_sgn_nominal==0 
+      || h_sgn_JECUp==0 || h_sgn_JECDown==0 
+      || h_sgn_JERDown==0 || h_sgn_JERUp==0){
+    cout << "No signal histogram!" << endl;
+    input_file->Close();
+    return;
+  }
+
+  if(rebin_factor>1){
+    h_sgn_nominal->Rebin(rebin_factor);
+    h_sgn_JECUp->Rebin(rebin_factor);
+    h_sgn_JECDown->Rebin(rebin_factor);
+    h_sgn_JERUp->Rebin(rebin_factor);
+    h_sgn_JERDown->Rebin(rebin_factor);
+  }
+
+  // Bukin pdf: http://arxiv.org/abs/0711.4449
+  RooRealVar Xp("Xp_syst", "Xp", 650.,850.);
+  RooRealVar sP("sP_syst", "sP", 50., 150.);
+  RooRealVar xi("xi_syst", "xi",-2.,0.);
+  RooRealVar rho1("rho1_syst", "rho1", -0.2,0.2);
+  RooRealVar rho2("rho2_syst", "rho2", -1.,1.);
+  RooBukinPdf* buk_pdf_syst = new RooBukinPdf("buk_pdf_syst","RooBukinPdf for signal", *x, Xp, sP, xi, rho1, rho2);
+
+  RooDataHist* data_sgn_nominal = new RooDataHist("data_sgn_nominal", "data signal nominal", *x, h_sgn_nominal);
+  RooDataHist* data_sgn_JECUp = new RooDataHist("data_sgn_JECUp", "data signal JECUp", *x, h_sgn_JECUp);
+  RooDataHist* data_sgn_JECDown = new RooDataHist("data_sgn_JECDown", "data signal JECDown", *x, h_sgn_JECDown);
+  RooDataHist* data_sgn_JERUp = new RooDataHist("data_sgn_JERUp", "data signal JERUp", *x, h_sgn_JERUp);
+  RooDataHist* data_sgn_JERDown = new RooDataHist("data_sgn_JERDown", "data signal JERDown", *x, h_sgn_JERDown);
+
+  // Nominal
+  buk_pdf_syst->fitTo(*data_sgn_nominal);  
+  float m_nominal = Xp.getVal();
+  float s_nominal = sP.getVal();
+  //w->saveSnapshot("nominal", RooArgSet(Xp,sP,xi,rho1,rho2));
+
+  // JEC up
+  buk_pdf_syst->fitTo(*data_sgn_JECUp);
+  float m_JECUp = Xp.getVal();
+  //w->saveSnapshot("JECUp", RooArgSet(Xp,sP,xi,rho1,rho2));
+
+  // JEC down
+  buk_pdf_syst->fitTo(*data_sgn_JECDown);
+  float m_JECDown = Xp.getVal();
+
+  // JER up
+  buk_pdf_syst->fitTo(*data_sgn_JERUp);
+  float s_JERUp = sP.getVal();
+
+  // JER down
+  buk_pdf_syst->fitTo(*data_sgn_JERDown);
+  float s_JERDown = sP.getVal();
+
+  // remove constant option
+  w->var("Xp_sgn")->setConstant(kFALSE);
+  w->var("sP_sgn")->setConstant(kFALSE);
+
+  cout << "JEC:" << endl;
+  cout << "\tNominal: " << m_nominal << endl;
+  cout << "\tUp     : " << m_JECUp << endl;
+  cout << "\tDown   : " << m_JECDown << endl;
+  cout << "JER:" << endl;
+  cout << "\tNominal: " << s_nominal << endl;
+  cout << "\tUp     : " << s_JERUp << endl;
+  cout << "\tDown   : " << s_JERDown << endl;
+
+
+  RooRealVar Xp_shift_sgn("Xp_shift_sgn","Xp_shift_sgn", TMath::Max( TMath::Abs(m_nominal-m_JECDown), 
+								     TMath::Abs(m_nominal-m_JECUp) ));
+  w->import(Xp_shift_sgn);
+
+  RooRealVar sP_shift_sgn("sP_shift_sgn","sP_shift_sgn", TMath::Max( TMath::Abs(s_nominal-s_JERDown), 
+								     TMath::Abs(s_nominal-s_JERUp) ));
+  w->import(sP_shift_sgn);
+
+  RooPlot* frame = x->frame();
+  frame->SetName("frame");
+  frame->SetTitle(title);
+  data_sgn_nominal->plotOn(frame, MarkerColor(kBlack));
+  data_sgn_JECUp->plotOn(frame, MarkerColor(kRed));
+  data_sgn_JECDown->plotOn(frame, MarkerColor(kRed));
+  data_sgn_JERUp->plotOn(frame, MarkerColor(kBlue));
+  data_sgn_JERDown->plotOn(frame, MarkerColor(kBlue));
+
+  //w->loadSnapshot("nominal");
+  //buk_pdf_syst->plotOn(frame, LineColor(kBlack), Name("nominal") );
+  //w->loadSnapshot("JECUp");
+  //buk_pdf_syst->plotOn(frame, LineColor(kRed), Name("JECUp") );
+
+  c1->cd();
+  frame->Draw();
+  c1->SaveAs("plots/"+version+"/systematics_mass_spectra_"+cat+".png");
+
+  return;
+}
 
 void compare_mass_spectra(float x_min=550., float x_max=1500.,
 			  TString input_fname="plots/V2/plot.root",
@@ -411,9 +535,10 @@ void add_data_to_workspace(TCanvas* c1 = 0,
 }
 
 void create_workspace(TString ws_name="Xbb_workspace", 
-		      TString cat = "BTag_MT",		      
+		      TString cat = "Had_MT_MinPt150_DH1p6",		      
 		      float x_min=550., float x_max=1500.,
 		      TString mass = "MassFSR",
+		      TString proc="M750",
 		      TString version="V2"){
 
   TCanvas* c1 = new TCanvas("c1"+cat,"c1",1200,400);
@@ -428,10 +553,20 @@ void create_workspace(TString ws_name="Xbb_workspace",
   w->import(x);
 
   add_signal_to_workspace(c1, w, 
-			  "plots/"+version+"/plot.root", "signal_"+cat+"_"+mass+"_M750",
+			  "plots/"+version+"/plot.root", "signal_"+cat+"_"+mass+"_"+proc,
 			  &x, 1, true,
-			  "Signal for MT, m_{X}=750 GeV"
+			  "Signal for MT, m_{X}="+proc+" GeV"
 			  );
+
+  add_jet_systematics(w, &x,
+		      "plots/"+version+"/plot.root",
+		      "signal_"+cat,
+		      mass, proc,  
+		      1, "JEC/JER", 
+		      version
+		      );
+
+  return;
 
   add_background_to_workspace(c1, w, 
 			      "plots/"+version+"/plot.root", "background_"+cat+"_"+mass,
@@ -463,9 +598,9 @@ void create_workspace(TString ws_name="Xbb_workspace",
 void create_all(TString version="V2"){
 
   vector<TString> cats = {
-    "Had_MT_MinPt200_DH2p0",
-    "Had_MT_MinPt150_DH2p0",
-    "Had_MT_MinPt200_DH1p6",
+    //"Had_MT_MinPt200_DH2p0",
+    //"Had_MT_MinPt150_DH2p0",
+    //"Had_MT_MinPt200_DH1p6",
     "Had_MT_MinPt150_DH1p6",
   };
 

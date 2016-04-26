@@ -26,7 +26,7 @@ def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_
     f.write('shapes sgn       '+cat+'      '+outname+'.root '+ws_name+':'+pdf_sgn+'\n')
     f.write('shapes data_obs  '+cat+'      '+outname+'.root '+ws_name+':'+data_obs+'\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('bin                  '+cat+'\n')
+    f.write('bin  '+cat+'\n')
     f.write(('observation  %.0f' % obs)+'\n')
     f.write('--------------------------------------------------------------\n')
     f.write('bin               '+cat+'               '+cat+'\n')
@@ -49,6 +49,11 @@ def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_
             val =  ws.var(param).getVal()
             f.write(param+'  param  '+( "%.2E" % val) + '  1.0\n')
 
+    if pdf_sgn=='buk_pdf_sgn':
+        if not ws.var('Xp_sgn').getAttribute("Constant"):
+            f.write('Xp_sgn  param  '+( "%.1E" % ws.var('Xp_sgn').getVal()) + ("  %.1f" % ws.var('Xp_shift_sgn').getVal()) + '\n')
+        if not ws.var('sP_sgn').getAttribute("Constant"):
+            f.write('sP_sgn  param  '+( "%.1E" % ws.var('sP_sgn').getVal()) + ("  %.1f" % ws.var('sP_shift_sgn').getVal()) + '\n')
         
     f.close()
     ws_file.Close()
@@ -56,10 +61,16 @@ def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_
 
 ########################################
 
-for cat in ['Had_MT_MinPt200_DH2p0','Had_MT_MinPt200_DH1p6', 'Had_MT_MinPt150_DH2p0', 'Had_MT_MinPt150_DH1p6']:
+for cat in [#'Had_MT_MinPt200_DH2p0',
+            #'Had_MT_MinPt200_DH1p6', 
+            #'Had_MT_MinPt150_DH2p0', 
+            'Had_MT_MinPt150_DH1p6'
+            ]:
     for pdf in ['mass_pdf_bkg']:
         for x_range in ['550to1200']:
-            for mass in ['MassFSR', 'MassAK08']:
+            for mass in ['MassFSR', 
+                         #'MassAK08'
+                         ]:
                 #make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_bkg')
                 make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_obs')
 
