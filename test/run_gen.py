@@ -8,7 +8,7 @@ from ROOT import TLorentzVector
 import math
 
 f = ROOT.TFile("gen.root", "RECREATE")
-h = ROOT.TH1F("mass","Mass after ISR",200,600,700)
+h = ROOT.TH1F("mass","Mass after ISR",300,400,1000)
 njet = ROOT.TH1F("njet","Numberr of genjets",5,0,5)
 hjet = ROOT.TH1F("massJet","Mass with jets",50,0,800)
 pt = ROOT.TH1F("pt","Pt after ISR",20,0,400)
@@ -19,17 +19,17 @@ ROOT.FWLiteEnabler.enable()
 
 from DataFormats.FWLite import Handle, Events
 
-
 for ff in xrange(int(argv[2]), int(argv[3])):
 
+    print argv[1]+("_%d.root" % ff)
     events = Events(argv[1]+("_%d.root" % ff))
 
     genH, genN = Handle("std::vector<reco::GenParticle>"), "genParticles"
-    jetH, jetN = Handle("std::vector<reco::GenJet>"), "ak4GenJetsNoNu"
+    jetH, jetN = Handle("std::vector<reco::GenJet>"), "ak4GenJets"
 
     for i,event in enumerate(events):
 
-        if i%50==0:
+        if i%10==0:
             print "Event", i, ", file n.", ff
         genbquarksFromH = []
 
@@ -42,7 +42,7 @@ for ff in xrange(int(argv[2]), int(argv[3])):
         genParticles = list(genH.product())
         for np,p in enumerate(genParticles):
             #print " %5d: pdgId %+5d status %3d  pt %6.1f  " % (i, p.pdgId(),p.status(),p.pt())
-            if p.pdgId() == 25 and p.numberOfDaughters() > 0 and abs(p.daughter(0).pdgId()) != 25:
+            if p.pdgId() in [25, 5100039] and p.numberOfDaughters() > 0 and abs(p.daughter(0).pdgId()) not in  [25,5100039]:
                 for d in xrange( p.numberOfDaughters() ):
                     if abs(p.daughter(d).pdgId()) == 5:
                     #print "\tAdd daughter with status " , p.daughter(d).status()

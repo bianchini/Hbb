@@ -34,8 +34,11 @@ def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_
     f.write('process            -1                  1\n')
     f.write('rate              1.0               1.0\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('sig_unc lnN         1.10           -\n')
+    f.write('sgn_unc    lnN    1.10           -\n')
 
+    if ws.var('CSV_shift_sgn') != None:
+        f.write('CMS_btag   lnN   '+("%.2f" % (1+ws.var('CSV_shift_sgn').getVal()))+'        -\n')  
+        
     if pdf_bkg=='mass_pdf_bkg':
         for param in ["p1_bkg","p2_bkg","p3_bkg"]:
             val =  ws.var(param).getVal()
@@ -61,16 +64,29 @@ def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_
 
 ########################################
 
-for cat in [#'Had_MT_MinPt200_DH2p0',
-            #'Had_MT_MinPt200_DH1p6', 
-            #'Had_MT_MinPt150_DH2p0', 
-            'Had_MT_MinPt150_DH1p6'
+for cat in [    
+    'Had_MT_MinPt150_DH2p0', 
+    'Had_MT_MinPt150_DH1p6',
+    'Had_MT_MinPt150_DH1p1',
+    'Had_MT_MinPt200_DH2p0', 
+    'Had_MT_MinPt200_DH1p6',
+    'Had_MT_MinPt200_DH1p1',
+    'Had_LT_MinPt150_DH2p0', 
+    'Had_LT_MinPt150_DH1p6',
+    'Had_LT_MinPt150_DH1p1',
+    'Had_LT_MinPt200_DH2p0', 
+    'Had_LT_MinPt200_DH1p6',
+    'Had_LT_MinPt200_DH1p1'
+    ]:
+    for pdf in [
+        'mass_pdf_bkg'
+        ]:
+        for x_range in [
+            '550to1200'
             ]:
-    for pdf in ['mass_pdf_bkg']:
-        for x_range in ['550to1200']:
-            for mass in ['MassFSR', 
-                         #'MassAK08'
-                         ]:
+            for mass in [
+                'MassFSR', 
+                ]:
                 #make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_bkg')
                 make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_obs')
 

@@ -21,18 +21,26 @@ using namespace RooFit;
 
 
 
-void add_jet_systematics(RooWorkspace* w=0,
-			 RooRealVar* x=0,
-			 TString input_fname="plots/V2/plot.root",
-			 TString cat = "signal_Had_MT_MinPt200_DH2p0", 
-			 TString h_name_sgn = "MassFSR",
-			 TString proc = "M750",
-			 int rebin_factor = 1,
-			 TString title = "",
-			 TString version = "V2"
-			  ){
+void add_systematics(RooWorkspace* w=0,
+		     RooRealVar* x=0,
+		     TString input_fname="plots/V2/plot.root",
+		     TString cat = "signal_Had_MT_MinPt200_DH2p0", 
+		     TString cat_CSVSFUp = "signal_Had_MT_CSVSFUp_MinPt200_DH2p0", 
+		     TString cat_CSVSFDown = "signal_Had_MT_CSVSFDown_MinPt200_DH2p0", 
+		     TString h_name_sgn = "MassFSR",
+		     TString proc = "M750",
+		     int rebin_factor = 1,
+		     TString title = "",
+		     TString version = "V2"
+		     ){
 
   TCanvas* c1 = new TCanvas("c1_systematics","c1",800,800);
+
+  TLegend* leg = new TLegend(0.55,0.65,0.80,0.88, "","brNDC");
+  leg->SetFillStyle(0);
+  leg->SetBorderSize(0);
+  leg->SetTextSize(0.05);
+  leg->SetFillColor(10);
 
   TFile* input_file = TFile::Open(input_fname, "READ");
   if(input_file==0 || input_file->IsZombie()){
@@ -41,6 +49,22 @@ void add_jet_systematics(RooWorkspace* w=0,
   }
 
   TH1F* h_sgn_nominal = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_"+proc);
+  TH1F* h_sgn_CSVSFUp = (TH1F*)input_file->Get(cat_CSVSFUp+"_"+h_name_sgn+"_"+proc);    
+  TH1F* h_sgn_CSVSFDown = (TH1F*)input_file->Get(cat_CSVSFDown+"_"+h_name_sgn+"_"+proc);    
+  
+  if(h_sgn_nominal!=0 && h_sgn_CSVSFUp!=0 && h_sgn_CSVSFDown!=0){
+    float nominal = h_sgn_nominal->Integral(); 
+    float CSVSFUp = h_sgn_CSVSFUp->Integral();
+    float CSVSFDown = h_sgn_CSVSFDown->Integral();
+    RooRealVar CSV_shift_sgn("CSV_shift_sgn", "CSV_shift_sgn",  TMath::Max(TMath::Abs(CSVSFUp-nominal), TMath::Abs(CSVSFDown-nominal))/nominal );
+    w->import(CSV_shift_sgn);
+  }
+  else{
+    cout << "No CSV shifted histogram with names " << string((cat_CSVSFDown+"_"+h_name_sgn+"_"+proc).Data()) << ", " << string((cat_CSVSFUp+"_"+h_name_sgn+"_"+proc).Data())  << endl;
+    RooRealVar CSV_shift_sgn("CSV_shift_sgn", "CSV_shift_sgn",  0.05);
+    w->import(CSV_shift_sgn);
+  }
+
   TH1F* h_sgn_JECUp = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JECUp_"+proc);
   TH1F* h_sgn_JECDown = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JECDown_"+proc);
   TH1F* h_sgn_JERUp = (TH1F*)input_file->Get(cat+"_"+h_name_sgn+"_JERUp_"+proc);
@@ -62,42 +86,79 @@ void add_jet_systematics(RooWorkspace* w=0,
     h_sgn_JERDown->Rebin(rebin_factor);
   }
 
-  // Bukin pdf: http://arxiv.org/abs/0711.4449
-  RooRealVar Xp("Xp_syst", "Xp", 650.,850.);
-  RooRealVar sP("sP_syst", "sP", 50., 150.);
-  RooRealVar xi("xi_syst", "xi",-2.,0.);
-  RooRealVar rho1("rho1_syst", "rho1", -0.2,0.2);
-  RooRealVar rho2("rho2_syst", "rho2", -1.,1.);
-  RooBukinPdf* buk_pdf_syst = new RooBukinPdf("buk_pdf_syst","RooBukinPdf for signal", *x, Xp, sP, xi, rho1, rho2);
-
-  RooDataHist* data_sgn_nominal = new RooDataHist("data_sgn_nominal", "data signal nominal", *x, h_sgn_nominal);
-  RooDataHist* data_sgn_JECUp = new RooDataHist("data_sgn_JECUp", "data signal JECUp", *x, h_sgn_JECUp);
-  RooDataHist* data_sgn_JECDown = new RooDataHist("data_sgn_JECDown", "data signal JECDown", *x, h_sgn_JECDown);
-  RooDataHist* data_sgn_JERUp = new RooDataHist("data_sgn_JERUp", "data signal JERUp", *x, h_sgn_JERUp);
-  RooDataHist* data_sgn_JERDown = new RooDataHist("data_sgn_JERDown", "data signal JERDown", *x, h_sgn_JERDown);
-
   // Nominal
-  buk_pdf_syst->fitTo(*data_sgn_nominal);  
-  float m_nominal = Xp.getVal();
-  float s_nominal = sP.getVal();
-  //w->saveSnapshot("nominal", RooArgSet(Xp,sP,xi,rho1,rho2));
+  RooDataHist* data_sgn_nominal = new RooDataHist("data_sgn_nominal", "data signal nominal", *x, h_sgn_nominal);
+  RooRealVar Xp_syst_nominal("Xp_syst_nominal", "Xp", 650.,850.);
+  RooRealVar sP_syst_nominal("sP_syst_nominal", "sP", 50., 150.);
+  RooRealVar xi_syst_nominal("xi_syst_nominal", "xi",-2.,0.);
+  RooRealVar rho1_syst_nominal("rho1_syst_nominal", "rho1", -0.2,0.2);
+  RooRealVar rho2_syst_nominal("rho2_syst_nominal", "rho2", -1.,1.);
+  RooBukinPdf* buk_pdf_syst_nominal = new RooBukinPdf("buk_pdf_syst_nominal","RooBukinPdf for signal", *x, Xp_syst_nominal, sP_syst_nominal, xi_syst_nominal, rho1_syst_nominal, rho2_syst_nominal);
+  buk_pdf_syst_nominal->fitTo(*data_sgn_nominal);  
+  float m_nominal = Xp_syst_nominal.getVal();
+  float s_nominal = sP_syst_nominal.getVal();
 
   // JEC up
-  buk_pdf_syst->fitTo(*data_sgn_JECUp);
-  float m_JECUp = Xp.getVal();
-  //w->saveSnapshot("JECUp", RooArgSet(Xp,sP,xi,rho1,rho2));
+  RooDataHist* data_sgn_JECUp = new RooDataHist("data_sgn_JECUp", "data signal JECUp", *x, h_sgn_JECUp);
+  RooRealVar Xp_syst_JECUp("Xp_syst_JECUp", "Xp", 650.,850.);
+  RooRealVar sP_syst_JECUp("sP_syst_JECUp", "sP", sP_syst_nominal.getVal());
+  RooRealVar xi_syst_JECUp("xi_syst_JECUp", "xi", xi_syst_nominal.getVal());
+  RooRealVar rho1_syst_JECUp("rho1_syst_JECUp", "rho1", rho1_syst_nominal.getVal());
+  RooRealVar rho2_syst_JECUp("rho2_syst_JECUp", "rho2", rho2_syst_nominal.getVal());
+  RooBukinPdf* buk_pdf_syst_JECUp = new RooBukinPdf("buk_pdf_syst_JECUp","RooBukinPdf for signal", *x, Xp_syst_JECUp, sP_syst_JECUp, xi_syst_JECUp, rho1_syst_JECUp, rho2_syst_JECUp);
+  sP_syst_JECUp.setConstant();
+  xi_syst_JECUp.setConstant();
+  rho1_syst_JECUp.setConstant();
+  rho2_syst_JECUp.setConstant();
+  buk_pdf_syst_JECUp->fitTo(*data_sgn_JECUp);  
+  float m_JECUp = Xp_syst_JECUp.getVal();
 
   // JEC down
-  buk_pdf_syst->fitTo(*data_sgn_JECDown);
-  float m_JECDown = Xp.getVal();
+  RooDataHist* data_sgn_JECDown = new RooDataHist("data_sgn_JECDown", "data signal JECDown", *x, h_sgn_JECDown);
+  RooRealVar Xp_syst_JECDown("Xp_syst_JECDown", "Xp", 650.,850.);
+  RooRealVar sP_syst_JECDown("sP_syst_JECDown", "sP", sP_syst_nominal.getVal());
+  RooRealVar xi_syst_JECDown("xi_syst_JECDown", "xi", xi_syst_nominal.getVal());
+  RooRealVar rho1_syst_JECDown("rho1_syst_JECDown", "rho1", rho1_syst_nominal.getVal());
+  RooRealVar rho2_syst_JECDown("rho2_syst_JECDown", "rho2", rho2_syst_nominal.getVal());
+  RooBukinPdf* buk_pdf_syst_JECDown = new RooBukinPdf("buk_pdf_syst_JECDown","RooBukinPdf for signal", *x, Xp_syst_JECDown, sP_syst_JECDown, xi_syst_JECDown, rho1_syst_JECDown, rho2_syst_JECDown);
+  sP_syst_JECDown.setConstant();
+  xi_syst_JECDown.setConstant();
+  rho1_syst_JECDown.setConstant();
+  rho2_syst_JECDown.setConstant();
+  buk_pdf_syst_JECDown->fitTo(*data_sgn_JECDown);  
+  float m_JECDown = Xp_syst_JECDown.getVal();
 
   // JER up
-  buk_pdf_syst->fitTo(*data_sgn_JERUp);
-  float s_JERUp = sP.getVal();
+  RooDataHist* data_sgn_JERUp = new RooDataHist("data_sgn_JERUp", "data signal JERUp", *x, h_sgn_JERUp);
+  RooRealVar Xp_syst_JERUp("Xp_syst_JERUp", "Xp", Xp_syst_nominal.getVal());
+  RooRealVar sP_syst_JERUp("sP_syst_JERUp", "sP", 50., 150.);
+  RooRealVar xi_syst_JERUp("xi_syst_JERUp", "xi", xi_syst_nominal.getVal());
+  RooRealVar rho1_syst_JERUp("rho1_syst_JERUp", "rho1", rho1_syst_nominal.getVal());
+  RooRealVar rho2_syst_JERUp("rho2_syst_JERUp", "rho2", rho2_syst_nominal.getVal());
+  RooBukinPdf* buk_pdf_syst_JERUp = new RooBukinPdf("buk_pdf_syst_JERUp","RooBukinPdf for signal", *x, Xp_syst_JERUp, sP_syst_JERUp, xi_syst_JERUp, rho1_syst_JERUp, rho2_syst_JERUp);
+  Xp_syst_JERUp.setConstant();
+  xi_syst_JERUp.setConstant();
+  rho1_syst_JERUp.setConstant();
+  rho2_syst_JERUp.setConstant();
+  buk_pdf_syst_JERUp->fitTo(*data_sgn_JERUp);  
+  buk_pdf_syst_JERUp->fitTo(*data_sgn_JERUp);  
+  float s_JERUp = sP_syst_JERUp.getVal();
 
   // JER down
-  buk_pdf_syst->fitTo(*data_sgn_JERDown);
-  float s_JERDown = sP.getVal();
+  RooDataHist* data_sgn_JERDown = new RooDataHist("data_sgn_JERDown", "data signal JERDown", *x, h_sgn_JERDown);
+  RooRealVar Xp_syst_JERDown("Xp_syst_JERDown", "Xp", Xp_syst_nominal.getVal());
+  RooRealVar sP_syst_JERDown("sP_syst_JERDown", "sP", 50., 150.);
+  RooRealVar xi_syst_JERDown("xi_syst_JERDown", "xi", xi_syst_nominal.getVal());
+  RooRealVar rho1_syst_JERDown("rho1_syst_JERDown", "rho1", rho1_syst_nominal.getVal());
+  RooRealVar rho2_syst_JERDown("rho2_syst_JERDown", "rho2", rho2_syst_nominal.getVal());
+  RooBukinPdf* buk_pdf_syst_JERDown = new RooBukinPdf("buk_pdf_syst_JERDown","RooBukinPdf for signal", *x, Xp_syst_JERDown, sP_syst_JERDown, xi_syst_JERDown, rho1_syst_JERDown, rho2_syst_JERDown);
+  Xp_syst_JERDown.setConstant();
+  xi_syst_JERDown.setConstant();
+  rho1_syst_JERDown.setConstant();
+  rho2_syst_JERDown.setConstant();
+  buk_pdf_syst_JERDown->fitTo(*data_sgn_JERDown);  
+  buk_pdf_syst_JERDown->fitTo(*data_sgn_JERDown);  
+  float s_JERDown = sP_syst_JERDown.getVal();
 
   // remove constant option
   w->var("Xp_sgn")->setConstant(kFALSE);
@@ -125,19 +186,34 @@ void add_jet_systematics(RooWorkspace* w=0,
   frame->SetName("frame");
   frame->SetTitle(title);
   data_sgn_nominal->plotOn(frame, MarkerColor(kBlack));
-  data_sgn_JECUp->plotOn(frame, MarkerColor(kRed));
-  data_sgn_JECDown->plotOn(frame, MarkerColor(kRed));
-  data_sgn_JERUp->plotOn(frame, MarkerColor(kBlue));
-  data_sgn_JERDown->plotOn(frame, MarkerColor(kBlue));
+  buk_pdf_syst_nominal->plotOn(frame, LineColor(kBlack), Name("buk_pdf_syst_nominal"));     
+  buk_pdf_syst_JECUp->plotOn(frame, LineColor(kRed), LineStyle(kSolid), Name("buk_pdf_syst_JECUp"));     
+  buk_pdf_syst_JECDown->plotOn(frame, LineColor(kRed), LineStyle(kDashed), Name("buk_pdf_syst_JECDown"));     
+  buk_pdf_syst_JERUp->plotOn(frame, LineColor(kBlue), LineStyle(kSolid), Name("buk_pdf_syst_JERUp"));     
+  buk_pdf_syst_JERDown->plotOn(frame, LineColor(kBlue), LineStyle(kDashed), Name("buk_pdf_syst_JERDown"));     
 
-  //w->loadSnapshot("nominal");
-  //buk_pdf_syst->plotOn(frame, LineColor(kBlack), Name("nominal") );
-  //w->loadSnapshot("JECUp");
-  //buk_pdf_syst->plotOn(frame, LineColor(kRed), Name("JECUp") );
-
+  leg->AddEntry(frame->getCurve("buk_pdf_syst_nominal"),"Nominal", "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_syst_JECUp"),"JES up", "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_syst_JECDown"),"JES down", "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_syst_JERUp"),"JER up", "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_syst_JERDown"),"JER down", "L");
+  
   c1->cd();
   frame->Draw();
-  c1->SaveAs("plots/"+version+"/systematics_mass_spectra_"+cat+".png");
+  leg->Draw();
+  c1->SaveAs("plots/"+version+"/Systematics_mass_spectra_"+cat+".png");
+
+  delete data_sgn_nominal;
+  delete data_sgn_JECUp;
+  delete data_sgn_JECDown;
+  delete data_sgn_JERUp;
+  delete data_sgn_JERDown;
+  delete buk_pdf_syst_nominal;
+  delete buk_pdf_syst_JECUp;
+  delete buk_pdf_syst_JECDown;
+  delete buk_pdf_syst_JERUp;
+  delete buk_pdf_syst_JERDown;
+  delete c1;
 
   return;
 }
@@ -257,13 +333,12 @@ void compare_mass_spectra(float x_min=550., float x_max=1500.,
 
 void add_signal_to_workspace(TCanvas* c1 = 0,
 			     RooWorkspace* w=0,
-			     TString input_fname="plots/plot.root",
-			     TString h_name_sgn = "signal_BTag_MT_MassFSR_M750",
+			     TString input_fname="plots/V2/plot.root",
+			     TString h_name_sgn = "signal_Had_MT_MinPt150_DH1p6_MassFSR_M750",
 			     RooRealVar* x=0,
 			     int rebin_factor = 1,
 			     bool set_param_const = true,
-			     TString title = "",
-			     TString version="V2"
+			     TString title = ""
 			     ){
 
   TFile* input_file = TFile::Open(input_fname, "READ");
@@ -274,7 +349,7 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
 
   TH1F* h_sgn = (TH1F*)input_file->Get(h_name_sgn);
   if( h_sgn==0 ){
-    cout << "No signal histogram!" << endl;
+    cout << "No signal histogram " << string(h_name_sgn.Data()) << endl;
     input_file->Close();
     return;
   }
@@ -535,11 +610,14 @@ void add_data_to_workspace(TCanvas* c1 = 0,
 }
 
 void create_workspace(TString ws_name="Xbb_workspace", 
-		      TString cat = "Had_MT_MinPt150_DH1p6",		      
+		      TString cat_btag = "Had_MT",		      
+		      TString cat_kin = "MinPt150_DH1p6",		      
 		      float x_min=550., float x_max=1500.,
 		      TString mass = "MassFSR",
 		      TString proc="M750",
 		      TString version="V2"){
+
+  TString cat = cat_btag+"_"+cat_kin;
 
   TCanvas* c1 = new TCanvas("c1"+cat,"c1",1200,400);
   c1->Divide(2);
@@ -555,19 +633,19 @@ void create_workspace(TString ws_name="Xbb_workspace",
   add_signal_to_workspace(c1, w, 
 			  "plots/"+version+"/plot.root", "signal_"+cat+"_"+mass+"_"+proc,
 			  &x, 1, true,
-			  "Signal for MT, m_{X}="+proc+" GeV"
+			  ("Signal, m_{X}="+proc+" GeV")
 			  );
 
-  add_jet_systematics(w, &x,
-		      "plots/"+version+"/plot.root",
-		      "signal_"+cat,
-		      mass, proc,  
-		      1, "JEC/JER", 
-		      version
-		      );
+  add_systematics(w, &x,
+		  "plots/"+version+"/plot.root",
+		  "signal_"+cat,
+		  "signal_"+cat_btag+"_CSVSFUp_"+cat_kin,
+		  "signal_"+cat_btag+"_CSVSFDown_"+cat_kin,
+		  mass, proc,  
+		  1, "JEC/JER", version
+		  );
 
-  return;
-
+  
   add_background_to_workspace(c1, w, 
 			      "plots/"+version+"/plot.root", "background_"+cat+"_"+mass,
 			      &x, 1, false,
@@ -584,7 +662,6 @@ void create_workspace(TString ws_name="Xbb_workspace",
   w->Print() ; 
 
   // save the workspace into a ROOT file
-
   TString savename = "./plots/"+version+"/"+ws_name+"_"+cat+"_"+mass+"_"+TString(Form("%.0fto%.0f",x_min,x_max));
   w->writeToFile(savename+".root") ;
 
@@ -597,21 +674,28 @@ void create_workspace(TString ws_name="Xbb_workspace",
 
 void create_all(TString version="V2"){
 
-  vector<TString> cats = {
-    //"Had_MT_MinPt200_DH2p0",
-    //"Had_MT_MinPt150_DH2p0",
-    //"Had_MT_MinPt200_DH1p6",
-    "Had_MT_MinPt150_DH1p6",
+  vector<TString> cats_btag = {
+    "Had_MT",
+    "Had_LT"
   };
 
-  vector<TString> masses = {"MassFSR", "MassAK08"};
+  vector<TString> cats_kin = {
+    "MinPt150_DH2p0",
+    "MinPt150_DH1p6",
+    "MinPt150_DH1p1",
+    "MinPt200_DH2p0",
+    "MinPt200_DH1p6",
+    "MinPt200_DH1p1"
+  };
 
-  for(unsigned int c = 0 ; c < cats.size(); ++c){
-    for(unsigned int m = 0 ; m < masses.size(); ++m){
-      create_workspace("Xbb_workspace", cats[c], 560., 1200., masses[m], version);
-      create_workspace("Xbb_workspace", cats[c], 550., 1200., masses[m], version);
-      create_workspace("Xbb_workspace", cats[c], 540., 1200., masses[m], version);
+  vector<TString> masses = {"MassFSR"};
+
+  for(unsigned int btag = 0 ; btag < cats_btag.size(); ++btag){
+    for(unsigned int kin = 0 ; kin < cats_kin.size(); ++kin){
+      for(unsigned int m = 0 ; m < masses.size(); ++m){
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1200., masses[m], "M750", version);
+      }
     }
   }
-
+  
 }
