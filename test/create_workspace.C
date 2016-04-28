@@ -485,12 +485,12 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   w->import(exp_pdf_bkg_norm);
 
   // Polynomial Pdf
-  RooRealVar a0("a0_bkg","a0",  0.,4000.);
-  RooRealVar a1("a1_bkg","a1", -2000.,2000.);
-  RooRealVar a2("a2_bkg","a2", -1000.,1000.);
-  RooRealVar a3("a3_bkg","a3", -100.,100.);
-  RooRealVar a4("a4_bkg","a4",-200.,200.);
-  RooRealVar a5("a5_bkg","a5",-10.,10.);
+  RooRealVar a0("a0_bkg","a0",  1); a0.setConstant();
+  RooRealVar a1("a1_bkg","a1",  -1.,1.);
+  RooRealVar a2("a2_bkg","a2",  -1.,1.);
+  RooRealVar a3("a3_bkg","a3",  -1.,1.);
+  RooRealVar a4("a4_bkg","a4",  -1.,1.);
+  RooRealVar a5("a5_bkg","a5",  -1.,1.);
   RooBernstein* pol_pdf_bkg = new RooBernstein("pol_pdf_bkg","Polynomial for background", *x, RooArgList(a0,a1,a2,a3,a4,a5));
   RooRealVar pol_pdf_bkg_norm("pol_pdf_bkg_norm", "background normalisation", data_bkg->sumEntries());
   std::cout << "######## FIT Pol 6  ###########" << std::endl;
@@ -682,10 +682,10 @@ void create_all(TString version="V2"){
   vector<TString> cats_kin = {
     "MinPt150_DH2p0",
     "MinPt150_DH1p6",
-    "MinPt150_DH1p1",
+    //"MinPt150_DH1p1",
     "MinPt200_DH2p0",
-    "MinPt200_DH1p6",
-    "MinPt200_DH1p1"
+    "MinPt200_DH1p6"
+    //"MinPt200_DH1p1"
   };
 
   vector<TString> masses = {"MassFSR"};
@@ -693,7 +693,14 @@ void create_all(TString version="V2"){
   for(unsigned int btag = 0 ; btag < cats_btag.size(); ++btag){
     for(unsigned int kin = 0 ; kin < cats_kin.size(); ++kin){
       for(unsigned int m = 0 ; m < masses.size(); ++m){
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 540., 1200., masses[m], "M750", version);
 	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1200., masses[m], "M750", version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 560., 1200., masses[m], "M750", version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 570., 1200., masses[m], "M750", version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 580., 1200., masses[m], "M750", version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1300., masses[m], "M750", version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1400., masses[m], "M750", version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1500., masses[m], "M750", version);
       }
     }
   }
