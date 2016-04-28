@@ -42,15 +42,24 @@ def make_datacard( version, ws_name, cat, mass, x_range, pdf_sgn, pdf_bkg, data_
     if pdf_bkg=='mass_pdf_bkg':
         for param in ["p1_bkg","p2_bkg","p3_bkg"]:
             val =  ws.var(param).getVal()
-            f.write(param+'  param  '+( "%.2E" % val) + '  10.0\n')
-    elif pdf_bkg=='pol_pdf_bkg':
-        for param in ["a0_bkg","a1_bkg","a2_bkg", "a3_bkg", "a4_bkg", "a5_bkg"]:
+            #f.write(param+'  param  '+( "%.2E" % val) + '  10.0\n')
+            f.write(param+'  flatParam \n')
+    elif pdf_bkg=='mass_t_pdf_bkg':
+        for param in ["p1_t_bkg","p2_t_bkg","p3_t_bkg", "m0_t_bkg", "s0_t_bkg"]:
             val =  ws.var(param).getVal()
-            f.write(param+'  param  '+( "%.2E" % val) + '  1.0\n')
+            #f.write(param+'  param  '+( "%.2E" % val) + '  10.0\n')
+            f.write(param+'  flatParam \n')
+    elif pdf_bkg=='pol_pdf_bkg':
+        for param in [#"a0_bkg",
+                      "a1_bkg","a2_bkg", "a3_bkg", "a4_bkg", "a5_bkg"]:
+            val =  ws.var(param).getVal()
+            #f.write(param+'  param  '+( "%.2E" % val) + '  1.0\n')
+            f.write(param+'  flatParam \n')
     elif pdf_bkg=='exp_pdf_bkg':
         for param in ["c_bkg"]:
             val =  ws.var(param).getVal()
-            f.write(param+'  param  '+( "%.2E" % val) + '  1.0\n')
+            #f.write(param+'  param  '+( "%.2E" % val) + '  1.0\n')
+            f.write(param+'  flatParam \n')
 
     if pdf_sgn=='buk_pdf_sgn':
         if not ws.var('Xp_sgn').getAttribute("Constant"):
@@ -79,7 +88,10 @@ for cat in [
     'Had_LT_MinPt200_DH1p1'
     ]:
     for pdf in [
-        'mass_pdf_bkg'
+        'mass_pdf_bkg',
+        'mass_t_pdf_bkg',
+        'exp_pdf_bkg',
+        'pol_pdf_bkg'
         ]:
         for x_range in [
             '550to1200'
@@ -87,6 +99,5 @@ for cat in [
             for mass in [
                 'MassFSR', 
                 ]:
-                #make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_bkg')
                 make_datacard('V2', 'Xbb_workspace', cat, mass, x_range, 'buk_pdf_sgn', pdf, 'data_obs')
 
