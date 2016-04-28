@@ -27,7 +27,7 @@ datasets = {
             'MiniAODv2' : "",
             },
         '850' : {
-            'DR1' : "",
+            'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-551027a5881a2631d1433b4dcef3d795/USER",
             'DR2' : "",
             'MiniAODv2' : "",
             },
@@ -55,7 +55,7 @@ datasets = {
             'MiniAODv2' : "",
             },
         '850' : {
-            'DR1' : "",
+            'DR1' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-8bd3f26464b79ec0d2c23fdbc10aa599/USER",
             'DR2' : "",
             'MiniAODv2' : "",
             },
@@ -156,7 +156,7 @@ def create_DR1_crab( mass, dataset):
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'DIGI-RECO_1_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
-            fout.write(line.rstrip('\n')+' '+dataset+'\n')
+            fout.write(line.rstrip('\n')+' \''+dataset+'\'\n')
         else:
             fout.write(line)
     fout.close()
@@ -198,7 +198,7 @@ def create_DR2_crab( mass, dataset):
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'DIGI-RECO_2_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
-            fout.write(line.rstrip('\n')+' '+dataset+'\n')
+            fout.write(line.rstrip('\n')+' \''+dataset+'\'\n')
         else:
             fout.write(line)
     fout.close()
@@ -240,7 +240,7 @@ def create_MiniAODv2_crab( mass, dataset):
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'MiniAODv2_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
-            fout.write(line.rstrip('\n')+' '+dataset+'\n')
+            fout.write(line.rstrip('\n')+' \''+dataset+'\'\n')
         else:
             fout.write(line)
     fout.close()
