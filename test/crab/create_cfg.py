@@ -36,12 +36,12 @@ datasets = {
         '1000' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-60e1ce1319d13e415e1054fc8f0658d8/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "",
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
             },
         '1200' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-386016f839f3e1fcdbcf95bea262e045/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "",
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
             },
         },
 
@@ -49,7 +49,7 @@ datasets = {
         '650' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-9c4852fff28307df210c7c47f547414b/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "",
+            'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
             },
         '750' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-b29bde1faea9942dc123ffeac5ce7a63/USER",

@@ -1,4 +1,4 @@
-rom WMCore.Configuration import Configuration
+from WMCore.Configuration import Configuration
 
 config = Configuration()
 
