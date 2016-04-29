@@ -23,4 +23,4 @@ config.Data.publication = True
 config.Data.outputDatasetTag  = 'DIGI-RECO-2'
 
 config.section_("Site")
-config.Site.storageSite = 'T2_CH_CSCS
+config.Site.storageSite = 'T2_CH_CSCS'
