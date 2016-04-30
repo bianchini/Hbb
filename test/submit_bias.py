@@ -16,7 +16,7 @@ sys.path.append('./')
 
 ################################################################################
 
-def submit(pdf,xsec):
+def submit(pdf,xsec, cat='Had_LT_MinPt150_DH1p6_MassFSR_550to1200'):
     print "Running: submit_bias.py"
     scriptName = 'job_'+pdf+'_'+str(xsec)+'.sh'
     jobName    = 'job_'+pdf+'_'+str(xsec)
@@ -27,7 +27,7 @@ def submit(pdf,xsec):
     f.write('source /cvmfs/cms.cern.ch/cmsset_default.sh\n')
     f.write('eval `scramv1 runtime -sh`\n')
     f.write('\n')    
-    f.write('python bias.py '+pdf+' '+str(xsec)+'\n')
+    f.write('python bias.py '+pdf+' '+str(xsec)+' '+cat+'\n')
     f.close()
     os.system('chmod +x '+scriptName)
              
@@ -41,6 +41,13 @@ def submit(pdf,xsec):
 
 ##########################################
 
-for pdf in ["mass", "pol", "pow", "polyexp", "exp"]:
-    for xsec in [1., 2., 4., 10.]:
-        submit(pdf, xsec)
+for cat in ['Had_LT_MinPt150_DH1p6_MassFSR_540to1200', 
+            'Had_LT_MinPt150_DH1p6_MassFSR_550to1200', 
+            'Had_LT_MinPt150_DH1p6_MassFSR_560to1200',
+            'Had_LT_MinPt150_DH1p6_MassFSR_570to1200',
+            'Had_LT_MinPt150_DH1p6_MassFSR_550to1300',
+            'Had_LT_MinPt150_DH1p6_MassFSR_550to1400'
+            ]:
+    for pdf in ["mass", "pol", "pow", "polyexp", "exp"]:
+        for xsec in [1.]:
+            submit(pdf, xsec, cat)

@@ -567,8 +567,8 @@ void bias_study(TString ws_name="Xbb_workspace",
 	coeff.add(*x);
  	for(int i = 0; i < 4; ++i){
 	  RooRealVar* ai = 0;
-	  if(i==0) ai = new RooRealVar(Form("a%d",i), "", -0.2, 0.);
-	  else ai = new RooRealVar(Form("a%d",i), "", -2., 2.);
+	  if(i==0) ai = new RooRealVar(Form("a%d",i), "", -1, 1.);
+	  else ai = new RooRealVar(Form("a%d",i), "", -3., 3.);
 	  coeff.add( *ai );
 	}	
 	TString formula_exp = "TMath::Exp(a0*x + a1*x*x + a2*x*x*x + a3*x*x*x*x)";
