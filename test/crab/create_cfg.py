@@ -25,7 +25,8 @@ datasets = {
         '750' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-1996af734f472cabbb886e4b4c3f158b/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "",
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
+            'VHBB' : "/GluGluSpin0ToBBbar_W_1p0_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER",
             },
         '850' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-551027a5881a2631d1433b4dcef3d795/USER",
@@ -37,11 +38,13 @@ datasets = {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-60e1ce1319d13e415e1054fc8f0658d8/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
+            'VHBB' : "/GluGluSpin0ToBBbar_W_1p0_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER"
             },
         '1200' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-386016f839f3e1fcdbcf95bea262e045/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
+            'VHBB' : "/GluGluSpin0ToBBbar_W_1p0_M_1200_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER"
             },
         },
 
@@ -50,16 +53,18 @@ datasets = {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-9c4852fff28307df210c7c47f547414b/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
+            'VHBB' : "/RSGravitonToBBbar_kMpl01_M_650_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER"
             },
         '750' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-b29bde1faea9942dc123ffeac5ce7a63/USER",
-            'DR2' : "",
+            'DR2' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "",
             },
         '850' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-8bd3f26464b79ec0d2c23fdbc10aa599/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
+            'VHBB' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER"
             },
         '1000' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-0f30faa368f28ebfe71c1a70d951aa02/USER",
@@ -99,14 +104,14 @@ def create_GENSIM_cfg( mass ):
 
 #################
 
-def create_GENSIM_crab( mass, unitsPerJob, totalUnits ):
+def create_GENSIM_crab( mass, unitsPerJob, totalUnits, version=''):
 
     fin = open( 'crab_GEN-SIM_cfg.py.ex', 'r')
     fout = open( 'crab_GEN-SIM_'+str(mass)+'_cfg.py', 'w')
 
     for line in fin:
         if 'requestName' in line:
-            fout.write(line.rstrip('\n')+' \'gen-sim_'+spin+'_'+str(mass)+'\'\n')
+            fout.write(line.rstrip('\n')+' \'gen-sim_'+spin+'_'+str(mass)+version+'\'\n')
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'GEN-SIM_'+str(mass)+'_cfg.py\'\n')
         elif 'unitsPerJob' in line:
@@ -132,10 +137,10 @@ def submit_GENSIM_crab(mass):
 
 #################################
 
-def sequence_GENSIM(mass):
+def sequence_GENSIM(mass,version=''):
     create(mass)
     create_GENSIM_cfg(mass)
-    create_GENSIM_crab(mass, 1000, 100000)
+    create_GENSIM_crab(mass, 1000, 100000, version)
     submit_GENSIM_crab(mass)
 
 #################################
@@ -147,14 +152,14 @@ def create_DR1_cfg( mass ):
 
 #################################
 
-def create_DR1_crab( mass, dataset):
+def create_DR1_crab( mass, dataset, version=''):
 
     fin = open( 'crab_DR1_cfg.py.ex', 'r')
     fout = open( 'crab_DR1_'+str(mass)+'_cfg.py', 'w')
 
     for line in fin:
         if 'requestName' in line:
-            fout.write(line.rstrip('\n')+' \'dr1_'+spin+'_'+str(mass)+'\'\n')
+            fout.write(line.rstrip('\n')+' \'dr1_'+spin+'_'+str(mass)+version+'\'\n')
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'DIGI-RECO_1_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
@@ -175,9 +180,9 @@ def submit_DR1_crab(mass):
 
 #################################
 
-def sequence_DR1(mass):
+def sequence_DR1(mass,version=''):
     create_DR1_cfg(mass)
-    create_DR1_crab(mass, datasets[spin][str(mass)]['DR1'] )
+    create_DR1_crab(mass, datasets[spin][str(mass)]['DR1'], version)
     submit_DR1_crab(mass)
 
 #################################
@@ -189,14 +194,14 @@ def create_DR2_cfg( mass ):
 
 #################################
 
-def create_DR2_crab( mass, dataset):
+def create_DR2_crab( mass, dataset,version=''):
 
     fin = open( 'crab_DR2_cfg.py.ex', 'r')
     fout = open( 'crab_DR2_'+str(mass)+'_cfg.py', 'w')
 
     for line in fin:
         if 'requestName' in line:
-            fout.write(line.rstrip('\n')+' \'dr2_'+spin+'_'+str(mass)+'\'\n')
+            fout.write(line.rstrip('\n')+' \'dr2_'+spin+'_'+str(mass)+version+'\'\n')
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'DIGI-RECO_2_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
@@ -217,9 +222,9 @@ def submit_DR2_crab(mass):
 
 #################################
 
-def sequence_DR2(mass):
+def sequence_DR2(mass,version=''):
     create_DR2_cfg(mass)
-    create_DR2_crab(mass, datasets[spin][str(mass)]['DR2'] )
+    create_DR2_crab(mass, datasets[spin][str(mass)]['DR2'], version )
     submit_DR2_crab(mass)
 
 #################################
@@ -231,14 +236,14 @@ def create_MiniAODv2_cfg( mass ):
 
 #################################
 
-def create_MiniAODv2_crab( mass, dataset):
+def create_MiniAODv2_crab( mass, dataset, version=''):
 
     fin = open( 'crab_MiniAODv2_cfg.py.ex', 'r')
     fout = open( 'crab_MiniAODv2_'+str(mass)+'_cfg.py', 'w')
 
     for line in fin:
         if 'requestName' in line:
-            fout.write(line.rstrip('\n')+' \'miniAODv2_'+spin+'_'+str(mass)+'\'\n')
+            fout.write(line.rstrip('\n')+' \'miniAODv2_'+spin+'_'+str(mass)+version+'\'\n')
         elif 'psetName' in line:
             fout.write(line.rstrip('\n')+' \'MiniAODv2_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
@@ -259,9 +264,9 @@ def submit_MiniAODv2_crab(mass):
 
 #################################
 
-def sequence_MiniAODv2(mass):
+def sequence_MiniAODv2(mass,version=''):
     create_MiniAODv2_cfg(mass)
-    create_MiniAODv2_crab(mass, datasets[spin][str(mass)]['MiniAODv2'] )
+    create_MiniAODv2_crab(mass, datasets[spin][str(mass)]['MiniAODv2'], version )
     submit_MiniAODv2_crab(mass)
 
 ################################
@@ -269,17 +274,17 @@ def sequence_MiniAODv2(mass):
 
 # finally, we run:
 for mass in [ 
-    #650,
-    750, 
-    #850,
-    #1000,
-    #1200,
+    #[650, ''],
+    [750,''], 
+    #[850,''],
+    [1000,'_v2'],
+    [1200,'_v2'],
     ]:
     if argv[1]=='GENSIM':
-        sequence_GENSIM(mass)
+        sequence_GENSIM(mass[0],mass[1])
     elif argv[1]=='DR1':
-        sequence_DR1(mass)
+        sequence_DR1(mass[0],mass[1])
     elif argv[1]=='DR2':
-        sequence_DR2(mass)
+        sequence_DR2(mass[0], mass[1])
     elif argv[1]=='MiniAODv2':
-        sequence_MiniAODv2(mass)
+        sequence_MiniAODv2(mass[0], mass[1])
