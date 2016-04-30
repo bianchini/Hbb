@@ -58,13 +58,14 @@ datasets = {
         '750' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-b29bde1faea9942dc123ffeac5ce7a63/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "",
+            'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
+            'VHBB' : "/RSGravitonToBBbar_kMpl01_M_750_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER"
             },
         '850' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-8bd3f26464b79ec0d2c23fdbc10aa599/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER",
-            'VHBB' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/USER"
+            'VHBB' : "/RSGravitonToBBbar_kMpl01_M_850_TuneCUEP8M1_13TeV_pythia8/bianchi-MiniAODv2_v3-17d438ff51ec6b3cada9e499a5a978e0/USER"
             },
         '1000' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_1000_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-0f30faa368f28ebfe71c1a70d951aa02/USER",
@@ -120,6 +121,8 @@ def create_GENSIM_crab( mass, unitsPerJob, totalUnits, version=''):
             fout.write(line.rstrip('\n')+' '+str(totalUnits)+'\n')
         elif 'outputPrimaryDataset' in line:
             fout.write(line.rstrip('\n')+' \''+(spin.replace('_X_', '_'+str(mass)+'_'))+'\'\n')
+        elif 'outputDatasetTag' in line:
+            fout.write(line.rstrip('\'\n')+version+'\'\n')
         else:
             fout.write(line)
     fout.close()
@@ -164,6 +167,8 @@ def create_DR1_crab( mass, dataset, version=''):
             fout.write(line.rstrip('\n')+' \'DIGI-RECO_1_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
             fout.write(line.rstrip('\n')+' \''+dataset+'\'\n')
+        elif 'outputDatasetTag' in line:
+            fout.write(line.rstrip('\'\n')+version+'\'\n')
         else:
             fout.write(line)
     fout.close()
@@ -206,6 +211,8 @@ def create_DR2_crab( mass, dataset,version=''):
             fout.write(line.rstrip('\n')+' \'DIGI-RECO_2_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
             fout.write(line.rstrip('\n')+' \''+dataset+'\'\n')
+        elif 'outputDatasetTag' in line:
+            fout.write(line.rstrip('\'\n')+version+'\'\n')
         else:
             fout.write(line)
     fout.close()
@@ -248,6 +255,8 @@ def create_MiniAODv2_crab( mass, dataset, version=''):
             fout.write(line.rstrip('\n')+' \'MiniAODv2_'+str(mass)+'_cfg.py\'\n')
         elif 'inputDataset' in line:
             fout.write(line.rstrip('\n')+' \''+dataset+'\'\n')
+        elif 'outputDatasetTag' in line:
+            fout.write(line.rstrip('\'\n')+version+'\'\n')
         else:
             fout.write(line)
     fout.close()
