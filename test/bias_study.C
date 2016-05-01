@@ -1,6 +1,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TCanvas.h"
 #include "TObject.h"
 #include "TLegend.h"
@@ -27,6 +28,7 @@ using namespace std;
 using namespace RooFit;
 
 #define SAVE false
+#define MINUIT_STRATEGY 1
 
 int doFTest( TString formula="pol", RooRealVar* x=0, RooAbsData* data=0, TString saveDir="", TString saveAs=""){
 
@@ -494,6 +496,8 @@ void bias_study(TString ws_name="Xbb_workspace",
   cout << "Total background: " << n_bkg_nominal->getVal() << endl;
   RooAbsPdf* pdf_bkg_nominal_fit = 0;
   RooRealVar p1("p1","p1", 0., 10.);
+  p1.setVal(0.);
+  p1.setConstant();
   RooRealVar p2("p2","p2", 0., 50.);
   RooRealVar p3("p3","p3",-5., 5.);
   double sqrts = 1.3e+04;
@@ -549,7 +553,11 @@ void bias_study(TString ws_name="Xbb_workspace",
 	coeff.add(*x);
  	for(int i = 0; i < 3; ++i){
 	  RooRealVar* ai = 0;
-	  if(i==0) ai = new RooRealVar(Form("a%d",i), "", 0., 10.);
+	  if(i==0){
+	    ai = new RooRealVar(Form("a%d",i), "", 0., 10.);
+	    ai->setVal(0.);
+	    ai->setConstant();
+	  }
 	  else if(i==1) ai = new RooRealVar(Form("a%d",i), "", 0., 50.);
 	  else ai = new RooRealVar(Form("a%d",i), "", -5., 5.);
 	  coeff.add( *ai );
@@ -635,10 +643,10 @@ void bias_study(TString ws_name="Xbb_workspace",
       if( pdf_bkg_alternative==0) continue;
 
       // fit alternative model to data!
-      pdf_bkg_alternative->fitTo(*data_bkg, Strategy(2), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
+      pdf_bkg_alternative->fitTo(*data_bkg, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
 
       // fit nominal model to data!
-      pdf_bkg_nominal_fit->fitTo(*data_bkg, Strategy(2), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
+      pdf_bkg_nominal_fit->fitTo(*data_bkg, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
 
       double p1_reset = p1.getVal();
       double p2_reset = p2.getVal();
@@ -682,9 +690,11 @@ void bias_study(TString ws_name="Xbb_workspace",
 	RooDataHist *data_sgn_toy = pdf_sgn_model_alternative.generateBinned(*x, Extended()) ;
 	RooDataHist *data_toy = pdf_bkg_model_alternative.generateBinned(*x, Extended()) ;
 	data_toy->add(*data_sgn_toy);
-	cout << "\tNumber of entries: " << data_toy->sumEntries() << endl;
-	RooFitResult* res = model_fit.fitTo(*data_toy, Strategy(2), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
-	if(res->status()!=0) continue;     
+	cout << "\tNumber of entries in toy " << toy << ": " << data_toy->sumEntries() << endl;
+	RooFitResult* res = model_fit.fitTo(*data_toy, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE), Extended());
+	if(res==0 || res->status()!=0) continue;     
+
+	// save toy variables into the tree
 	ns_gen = data_sgn_toy->sumEntries(); 
 	//n_sgn_nominal->getVal();
 	ns_fit = n_sgn_fit.getVal();
@@ -723,3 +733,69 @@ void bias_study(TString ws_name="Xbb_workspace",
 }
 
 //  LocalWords:  TMath
+
+
+void plot_bias(){
+
+  TCanvas* c1 = new TCanvas("c1_ftest_pol","c1",800,800);
+  c1->SetGridx();
+  c1->SetGridy();
+  TLegend* leg = new TLegend(0.1,0.5,0.4,0.85, "","brNDC");
+  leg->SetFillStyle(0);
+  leg->SetBorderSize(0);
+  leg->SetTextSize(0.03);
+  leg->SetFillColor(10);
+    
+  vector<TString> files = { 
+    "540to1200",
+    "550to1200",
+    "560to1200",
+    "570to1200",
+    "580to1200"
+    //"550to1300",
+    //"550to1400"
+  };
+
+  vector<TH1F*> histos;
+
+  for(unsigned int nf = 0 ; nf < files.size() ; ++nf){
+    TFile* f = TFile::Open("./plots/V2/bias_study_Had_LT_MinPt150_DH1p6_MassFSR_"+files[nf]+".root");
+    TTree* toys = (TTree*)f->Get("toys");
+    TH2F* hf = new TH2F("h_"+files[nf], "", 5,0, 5,100,-4,4);
+    toys->Draw("(ns_fit-ns_gen)/ns_err:nf>>h_"+files[nf],"", "");
+
+    TH1F* h = new TH1F("h_"+files[nf], "", 5,0, 5);
+    for(int b = 1; b <= h->GetNbinsX(); ++b){
+      TH1D* proj = hf->ProjectionY("_py", b, b);
+      h->SetBinContent(b, proj->GetMean());
+      h->SetBinError(b, proj->GetMeanError());
+    }
+    h->SetMarkerColor(1+nf);
+    h->SetMarkerSize(2);
+    h->SetLineColor(1);
+    h->SetMarkerStyle(kFullCircle);
+    leg->AddEntry(h, files[nf], "P");
+    histos.push_back(h);
+  }
+
+  c1->cd();
+  for(unsigned int nh = 0 ; nh < histos.size(); ++nh){
+    if(nh==0){
+      histos[nh]->SetStats(0);
+      histos[nh]->SetMinimum(-1.5);
+      histos[nh]->SetMaximum(+3.);
+      histos[nh]->GetXaxis()->SetBinLabel(1, "dijet");
+      histos[nh]->GetXaxis()->SetBinLabel(2, "poly");
+      histos[nh]->GetXaxis()->SetBinLabel(3, "exp");
+      histos[nh]->GetXaxis()->SetBinLabel(4, "pow");
+      histos[nh]->GetXaxis()->SetBinLabel(5, "poly*exp");
+      histos[nh]->GetYaxis()->SetTitle("Mean of #frac{#hat{#mu}-#mu}{#sigma_{#mu}}");
+      histos[nh]->Draw("PE");      
+    }
+    else
+      histos[nh]->Draw("PESAME");
+  }    
+  leg->Draw();
+  c1->Draw();
+
+}
