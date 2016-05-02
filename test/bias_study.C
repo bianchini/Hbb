@@ -28,7 +28,7 @@ using namespace std;
 using namespace RooFit;
 
 #define SAVE false
-#define MINUIT_STRATEGY 1
+#define MINUIT_STRATEGY 2
 
 int doFTest( TString formula="pol", RooRealVar* x=0, RooAbsData* data=0, TString saveDir="", TString saveAs=""){
 
@@ -446,13 +446,15 @@ void bias_study(TString ws_name="Xbb_workspace",
 		TString nominal_bkg_model = "mass",
 		TString alternative_bkg_model = "mass",
 		float sgn_xsec = 1.0,
-		int ntoys = 10
+		int ntoys = 10,
+		float xMin = -1.,
+		float xMax = -1.
 		){
 
-  TFile* out = TFile::Open(path+"/bias_study_"+fname+"_"+alternative_bkg_model+"_xSec"+TString(Form("%.0f",sgn_xsec))+".root","RECREATE");
+  TFile* out = TFile::Open(path+"/bias_study_"+fname+"_Nom-"+nominal_bkg_model+"_Alt-"+alternative_bkg_model+"_xSec"+TString(Form("%.0f",sgn_xsec))+"_Range"+TString(Form("%.0fto%.0f",xMin,xMax))+".root","RECREATE");
   TTree* tree = new TTree("toys","");
-  float ns_gen, ns_fit, ns_err, xsec;
-  float param[3];
+  float ns_gen, ns_fit, ns_err, xsec, xL, xH;
+  float param[8];
   int nf, nt;
   tree->Branch("ns_gen", &ns_gen, "ns_gen/F");
   tree->Branch("ns_fit", &ns_fit, "ns_fit/F");
@@ -460,8 +462,10 @@ void bias_study(TString ws_name="Xbb_workspace",
   tree->Branch("xsec", &xsec, "xsec/F");
   tree->Branch("nf", &nf, "nf/I");
   tree->Branch("toy", &nt, "nt/I");
-  tree->Branch("param", param, "param[3]/F");
-
+  tree->Branch("param", param, "param[8]/F");
+  tree->Branch("xmin", &xL, "xmin/F"); 
+  tree->Branch("xmax", &xH, "xmax/F"); 
+  
 
   TFile* file = TFile::Open(path+"/"+ws_name+"_"+fname+".root","READ");
   if( file==0 || file->IsZombie()){
@@ -485,29 +489,124 @@ void bias_study(TString ws_name="Xbb_workspace",
   double binVolume = data_bkg->binVolume(*x);
   xmin -= binVolume/2;
   xmax += binVolume/2;
+  if( xMin>=0. & xMax>xMin ){
+    xmin = xMin;
+    xmax = xMax;
+  }
+  xL = xmin;
+  xH = xmax;
   x->setMin( xmin );
   x->setMax( xmax );
   x->setBins( int(xmax-xmin)/binVolume );
+  x->setRange("fit", xmin, xmax);
   cout << string(Form("[%.0f, %.0f], bins=%d",x->getMin(),x->getMax(),x->getBins())) << endl;
 
-  // The Nominal bkg pdf
-  RooAbsPdf* pdf_bkg_nominal = w->pdf(nominal_bkg_model+"_pdf_bkg");
-  RooRealVar* n_bkg_nominal = w->var(nominal_bkg_model+"_pdf_bkg_norm");
+  // the nominal bkg pdf
+  RooRealVar* n_bkg_nominal = new RooRealVar("n_bkg_nominal", "", w->data("data_obs")->sumEntries(0, "fit"));
   cout << "Total background: " << n_bkg_nominal->getVal() << endl;
-  RooAbsPdf* pdf_bkg_nominal_fit = 0;
-  RooRealVar p1("p1","p1", 0., 10.);
-  p1.setVal(0.);
-  p1.setConstant();
-  RooRealVar p2("p2","p2", 0., 50.);
-  RooRealVar p3("p3","p3",-5., 5.);
-  double sqrts = 1.3e+04;
-  TString mass_formula(Form("TMath::Power(1-x/%E,p1)/(TMath::Power(x/%E,p2+p3*TMath::Log(x/%E)))", sqrts, sqrts, sqrts));
-  pdf_bkg_nominal_fit = new RooGenericPdf("pdf_bkg_nominal_fit", mass_formula, RooArgSet(*x,p1,p2,p3));
-  cout << "Nominal background pdf created! (RooGenericPdf)" << endl;
 
+  // container for fit parameters
+  RooArgSet fit_param;
+  map<TString, double> reset_values;
+  RooAbsPdf* pdf_bkg_nominal_fit = 0;
+
+  // NOMINAL
+  if(nominal_bkg_model=="mass"){
+    fit_param.add(*x);
+    for(int i = 0; i < 3; ++i){
+      RooRealVar* pi = 0;
+      if(i==0){
+	pi = new RooRealVar(Form("p%d",i), "", 0., 10.);
+	//pi->setVal(.0);
+	//pi->setConstant();
+      }
+      else if(i==1) pi = new RooRealVar(Form("p%d",i), "",  0., 50.);
+      else pi = new RooRealVar(Form("p%d",i), "", -5., 5.);
+      fit_param.add( *pi );
+    }
+    double sqrts = 1.3e+04;
+    TString mass_formula(Form("TMath::Power(1-x/%E,p0)/(TMath::Power(x/%E,p1+p2*TMath::Log(x/%E)))", sqrts, sqrts, sqrts));
+    pdf_bkg_nominal_fit = new RooGenericPdf("pdf_bkg_nominal_fit", mass_formula, fit_param);
+    cout << "Nominal background pdf created! (RooGenericPdf)" << endl;
+  }
+
+  // POLYNOMIAL
+  else if(nominal_bkg_model=="pol"){
+    for(int i = 0; i < 6; ++i){
+      RooRealVar* pi = new RooRealVar(Form("p%d",i), "", -1., 1.);
+      if(i==0){
+	pi->setVal(1.0);
+	pi->setConstant();
+      }
+      fit_param.add( *pi );
+    }
+    pdf_bkg_nominal_fit = new RooBernstein( "pdf_bkg_nominal_fit" ,"Polynomial for background", *x, fit_param);
+    cout << "Nominal background pdf created! (RooBernstein)" << endl;
+  }
+
+  // EXPONENTIAL OF POLYNOM
+  else if( nominal_bkg_model=="exp" ){
+    fit_param.add(*x);
+    for(int i = 0; i < 4; ++i){
+      RooRealVar* pi = 0;
+      if(i==0) pi = new RooRealVar(Form("p%d",i), "", -300., 0.);
+      else if(i<3) pi = new RooRealVar(Form("p%d",i), "", 0., 1000.);
+      else pi = new RooRealVar(Form("p%d",i), "", -100., 100.);
+      fit_param.add( *pi );
+    }	
+    double sqrts = 1.3e+04;
+    TString formula_exp(Form("TMath::Exp(p0*x/%E + p1*x*x/%E + p2*x*x*x/%E + p3*x*x*x*x/%E)", TMath::Power(sqrts,1), TMath::Power(sqrts,2), TMath::Power(sqrts,3), TMath::Power(sqrts,3)));
+    pdf_bkg_nominal_fit = new RooGenericPdf("pdf_bkg_nominal_fit", formula_exp , fit_param);
+    cout << "Nominal background pdf created! (RooGenericPdf)" << endl;
+  }    
+
+  // POWER LAW
+  else if( nominal_bkg_model=="pow" ){
+    fit_param.add(*x);
+    for(int i = 0; i < 3; ++i){
+      RooRealVar* pi = 0;
+      if(i==0) pi = new RooRealVar(Form("p%d",i), "", 0., 100.);
+      else if(i==1) pi = new RooRealVar(Form("p%d",i), "", 0., 200.);
+      else pi = new RooRealVar(Form("p%d",i), "", -1000., 0.);
+      fit_param.add( *pi );
+    }	
+    double sqrts = 1.3e+04;
+    TString formula_pow(Form("TMath::Power(x/%E, p0 + p1*x/%E + p2*x*x/%E)", TMath::Power(sqrts,1), TMath::Power(sqrts,1), TMath::Power(sqrts,2)));
+    pdf_bkg_nominal_fit = new RooGenericPdf("pdf_bkg_nominal_fit", formula_pow , fit_param); 
+    cout << "Nominal background pdf created! (RooGenericPdf)" << endl;
+  }    
+
+  // EXPONENTIAL * POLYNOM
+  else if( nominal_bkg_model=="polyexp" ){
+    fit_param.add(*x);
+    for(int i = 0; i < 3; ++i){
+      RooRealVar* pi = 0;
+      if(i==0) pi = new RooRealVar(Form("p%d",i), "", -200, 0.);
+      else if(i==1) pi = new RooRealVar(Form("p%d",i), "", -100, 100.);
+      else pi = new RooRealVar(Form("p%d",i), "", 0., 1000);
+      fit_param.add( *pi );
+    }	
+    double sqrts = 1.3e+04;
+    TString formula_polyexp(Form("TMath::Max(1e-50,(1 + p1*x/%E + p2*x*x/%E)*TMath::Exp(x/%E*p0))", TMath::Power(sqrts,1), TMath::Power(sqrts,2), TMath::Power(sqrts,1)));
+    pdf_bkg_nominal_fit = new RooGenericPdf("pdf_bkg_nominal_fit", formula_polyexp , fit_param);
+    cout << "Nominal background pdf created! (RooGenericPdf)" << endl;
+  }    
+
+  // ANYTHING ELSE 
+  else { /*...*/ }
+
+
+  if(pdf_bkg_nominal_fit==0){
+    cout << "No pdf_bkg_nominal_fit! Return" << endl;
+    file->Close();
+    return;
+  }   
+
+  
   // the nominal sgn pdf
   RooAbsPdf* pdf_sgn_nominal = w->pdf(nominal_sgn_model+"_pdf_sgn");
-  RooRealVar* n_sgn_nominal = w->var(nominal_sgn_model+"_pdf_sgn_norm");
+  //RooRealVar* n_sgn_nominal = w->var(nominal_sgn_model+"_pdf_sgn_norm");
+  RooRealVar* n_sgn_nominal = new RooRealVar("n_sgn_nominal", "", w->data("data_sgn")->sumEntries(0, "fit") );
   float n_sgn_nominal_input = n_sgn_nominal->getVal();
   cout << "Total signal: " << n_sgn_nominal_input << endl;
   RooAbsPdf* pdf_sgn_nominal_fit = 0;
@@ -555,8 +654,8 @@ void bias_study(TString ws_name="Xbb_workspace",
 	  RooRealVar* ai = 0;
 	  if(i==0){
 	    ai = new RooRealVar(Form("a%d",i), "", 0., 10.);
-	    ai->setVal(0.);
-	    ai->setConstant();
+	    //ai->setVal(0.);
+	    //ai->setConstant();
 	  }
 	  else if(i==1) ai = new RooRealVar(Form("a%d",i), "", 0., 50.);
 	  else ai = new RooRealVar(Form("a%d",i), "", -5., 5.);
@@ -643,14 +742,18 @@ void bias_study(TString ws_name="Xbb_workspace",
       if( pdf_bkg_alternative==0) continue;
 
       // fit alternative model to data!
-      pdf_bkg_alternative->fitTo(*data_bkg, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
+      pdf_bkg_alternative->fitTo(*data_bkg, Strategy(1), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE), Range("fit"));
 
       // fit nominal model to data!
-      pdf_bkg_nominal_fit->fitTo(*data_bkg, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE));
+      pdf_bkg_nominal_fit->fitTo(*data_bkg, Strategy(1), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE), Range("fit"));
 
-      double p1_reset = p1.getVal();
-      double p2_reset = p2.getVal();
-      double p3_reset = p3.getVal();
+      for(unsigned int par = 0 ; par<8 ; ++par){
+	if( fit_param.find(Form("p%d",par)) )
+	  reset_values[ TString(Form("p%d",par)) ] = ((RooRealVar*)fit_param.find(Form("p%d",par)))->getVal();
+	else reset_values[ TString(Form("p%d",par)) ] = 0.0;
+	cout << string(Form("Reset value for p%d = %f",par, (reset_values.find(TString(Form("p%d",par))))->second )) << endl;
+      }
+      
 
       if(SAVE || true){
 	RooPlot* frame = x->frame();
@@ -660,13 +763,17 @@ void bias_study(TString ws_name="Xbb_workspace",
 	pdf_bkg_nominal_fit->plotOn(frame, LineStyle(kSolid), LineColor(kBlue));
 	frame->Draw();
 	out->cd();
-	frame->Write(Form("fit_%s_nom_vs_alt",formula.Data()), TObject::kOverwrite);
+	frame->Write(Form("fit_%s_vs_%s", nominal_bkg_model.Data(), formula.Data()), TObject::kOverwrite);
       }
 
       // Build the alternative model: Ns and Nb fixed to original values
+      if( sgn_xsec_fact <= 0.) n_sgn_nominal->setVal( 1e-03 );
       RooExtendPdf pdf_sgn_model_alternative("pdf_sgn_model_alternative", "", *pdf_sgn_nominal, *n_sgn_nominal);
       RooExtendPdf pdf_bkg_model_alternative("pdf_bkg_model_alternative", "", *pdf_bkg_alternative, *n_bkg_nominal);
-      RooAddPdf model_alternative("model_alternative","", RooArgList(pdf_sgn_model_alternative,pdf_bkg_model_alternative) ) ;
+      RooArgList model_components;
+      model_components.add( pdf_bkg_model_alternative );
+      model_components.add( pdf_sgn_model_alternative );
+      RooAddPdf model_alternative("model_alternative","", model_components ) ;
       
       // Build the nominal fit model
       RooRealVar n_bkg_fit("n_bkg_fit","", n_bkg_nominal->getVal(),  0., 1000000.);
@@ -682,35 +789,56 @@ void bias_study(TString ws_name="Xbb_workspace",
 	// reset
 	n_bkg_fit.setVal( n_bkg_nominal->getVal() );
 	n_sgn_fit.setVal( n_sgn_nominal->getVal() );
-	p1.setVal( p1_reset );
-	p2.setVal( p2_reset );
-	p3.setVal( p3_reset );	
+	for(unsigned int par = 0 ; par<8 ; ++par){
+	  if( !fit_param.find(Form("p%d",par)) ) continue;
+	  double reset_val = (reset_values.find(TString(Form("p%d",par))))->second;
+	  ((RooRealVar*)fit_param.find(Form("p%d",par)))->setVal( reset_val );
+	  cout << string(Form("Reset value for p%d = %f",par, reset_val )) << endl;
+	}
 
 	//RooDataHist *data_toy = model_alternative.generateBinned(*x, Extended()) ;
-	RooDataHist *data_sgn_toy = pdf_sgn_model_alternative.generateBinned(*x, Extended()) ;
 	RooDataHist *data_toy = pdf_bkg_model_alternative.generateBinned(*x, Extended()) ;
-	data_toy->add(*data_sgn_toy);
-	cout << "\tNumber of entries in toy " << toy << ": " << data_toy->sumEntries() << endl;
-	RooFitResult* res = model_fit.fitTo(*data_toy, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE), Extended());
-	if(res==0 || res->status()!=0) continue;     
+	cout << "\tNumber of background toys: " << data_toy->sumEntries() << endl;
+	RooDataHist *data_sgn_toy = 0;
+	if(sgn_xsec_fact>0.){ 
+	  data_sgn_toy = pdf_sgn_model_alternative.generateBinned(*x, Extended()) ;
+	  data_toy->add(*data_sgn_toy);
+	  cout << "\tNumber of signal toys: " << data_sgn_toy->sumEntries() << endl;
+	}
+	cout << "\tTotal number of entries in toy n. " << toy << ": " << data_toy->sumEntries() << endl;
+
+	// fit to toy dataset
+	RooFitResult* res = model_fit.fitTo(*data_toy, Strategy(MINUIT_STRATEGY), Minimizer("Minuit2"), PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE), Save(kTRUE), Extended()/*, Range("fit")*/);
+	if(res==0 || res->status()!=0){
+	  cout << "No valid status" << endl;
+	  continue;     
+	}
 
 	// save toy variables into the tree
-	ns_gen = data_sgn_toy->sumEntries(); 
+	ns_gen = data_sgn_toy!=0 ? data_sgn_toy->sumEntries() : 0.0; 
 	//n_sgn_nominal->getVal();
 	ns_fit = n_sgn_fit.getVal();
 	ns_err = n_sgn_fit.getError();
-	param[0] = p1.getVal();
-	param[1] = p2.getVal();
-	param[2] = p3.getVal();
+
+	for(unsigned int par = 0 ; par<8 ; ++par){
+	  if( fit_param.find(Form("p%d",par)) )
+	    param[par] = ((RooRealVar*)fit_param.find(Form("p%d",par)))->getVal(); 
+	  else
+	    param[par] = 0.0;
+	}
+
 	cout << string(Form("Ns(fit): %f +/- %f, Ns(gen): %f", ns_fit, ns_err, ns_gen)) << endl;
 	tree->Fill();
 
 	if(SAVE){
 	  RooPlot* frame = x->frame();
 	  data_toy->plotOn(frame);
-	  model_fit.plotOn(frame, LineStyle(kSolid), LineColor(kRed));
-	  model_alternative.plotOn(frame, LineStyle(kDashed), LineColor(kRed));
-	  model_fit.plotOn(frame, Components(*pdf_bkg_nominal_fit), LineStyle(kSolid), LineColor(kGreen));
+	  model_alternative.plotOn(frame, Components(pdf_bkg_model_alternative), LineStyle(kDashed), LineColor(kRed));
+	  model_fit.plotOn(frame, Components(*pdf_bkg_nominal_fit), LineStyle(kSolid), LineColor(kRed));
+	  if(sgn_xsec_fact>0.){
+	    model_alternative.plotOn(frame, Components(pdf_sgn_model_alternative), LineStyle(kDashed), LineColor(kBlue));
+	    cout << "Plotting signal nominal" << sgn_xsec_fact << endl;
+	  }
 	  model_fit.plotOn(frame, Components(*pdf_sgn_nominal_fit), LineStyle(kSolid), LineColor(kBlue));
 	  frame->Draw();
 	  out->cd();

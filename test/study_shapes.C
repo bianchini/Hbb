@@ -2,9 +2,10 @@
 
   using namespace RooFit;
 
-  TFile* fs = TFile::Open("plots/plot.root", "READ");
+  TFile* fs = TFile::Open("plots/V2/plot.root", "READ");
 
-  TH1F* mass_s = (TH1F*)fs->Get("signal_BTag_MT_MassFSR_M750");
+  //TH1F* mass_s = (TH1F*)fs->Get("signal_BTag_MT_MassFSR_M750");
+  TH1F* mass_s = (TH1F*)fs->Get("signal_Had_MT_MinPt200_DH1p6_MassFSR_M750");
   if( mass_s==0 ){
     cout << "No signal histogram!" << endl;
     fs->Close();
@@ -12,7 +13,8 @@
   }
   //mass_s->Rebin(2);
 
-  RooRealVar x("x","x", 530,1200);
+  //RooRealVar x("x","x", 530,1200);
+  RooRealVar x("x","x", 550,1000);
   x.setBins(mass_s->GetNbinsX());
 
   RooDataHist data_s("data_s", "data signal", x, mass_s);
@@ -24,7 +26,7 @@
   RooRealVar rho2("rho2", "rho2", -1.,1.);
   RooBukinPdf buk_s("buk_s","buk_s", x, Xp, sP, xi, rho1, rho2);
   std::cout << "######## FIT BUKIN  ###########" << std::endl;
-  buk_s.fitTo(data_s);
+  //buk_s.fitTo(data_s);
   
 
   //  w.factory("RooCBShape:sig_pdf(x[110.,150.], mean[125.,120.,130.], sigma[3.,1.,5.], alpha[-5.,-30.,0.],n[0.1,0.,1000.])");
@@ -38,7 +40,8 @@
   //cb_s.fitTo(data_s);
 
 
-  TH1F* mass_b = (TH1F*)fs->Get("background_BTag_MT_MassFSR");
+  //TH1F* mass_b = (TH1F*)fs->Get("data_BTag_MT_MassFSR");
+  TH1F* mass_b = (TH1F*)fs->Get("data_Had_LT_MinPt150_DH1p6_MassFSR");
 
   if( mass_b==0 ){
     cout << "Ho background histogram!" << endl;
@@ -52,16 +55,33 @@
   RooExponential exp_b("exp_b","exp_b",x,c);
   //exp_b.fitTo(data_b);
 
-  RooRealVar a0("a0","a0",  0.,4000.);
-  RooRealVar a1("a1","a1", -2000.,2000.);
-  RooRealVar a2("a2","a2", -1000.,1000.);
-  RooRealVar a3("a3","a3", -100.,100.);
-  RooRealVar a4("a4","a4",-200.,200.);
-  RooRealVar a5("a5","a5",-10.,10.);
-  RooRealVar a6("a6","a6",-10.,10.);
-  RooBernstein ch_b("ch_b","ch_b",x,RooArgList(a0,a1,a2,a3,a4,a5/*,a6*/));
+  RooRealVar a0("a0","a0",  -1., 1.);
+  //RooRealVar a1("a1","a1",  -1.,1.);
+  //RooRealVar a2("a2","a2",  -1.,1.);
+  //RooRealVar a3("a3","a3",  -1.,1.);
+  //RooRealVar a4("a4","a4",  -1.,1.);
+  RooRealVar a5("a5","a5",  -1.,1.);
+  a0.setConstant();
+
+  //RooBernstein ch_b("ch_b","ch_b",x,RooArgList(a0,a1,a2,a3,a4,a5));
   std::cout << "######## FIT Pol 6  ###########" << std::endl;
-  ch_b.fitTo(data_b);
+
+  RooRealVar a1("a1","a1",   0., 10.);
+  RooRealVar a2("a2","a2",   0.,50.);
+  RooRealVar a3("a3","a3",  -5, 5.);
+  RooRealVar a4("a4","a4",  -10.,10.);
+  //RooGenericPdf ch_b("ch_b","TMath::Power(x, a1+a2*x+a3*x*x)", RooArgSet(x,a1,a2,a3));
+  //RooGenericPdf ch_b("ch_b","TMath::Power(x, a1+a3*x)*TMath::Exp(x*a2)", RooArgSet(x,a1,a2,a3));
+  double sqrts = 13e+03;
+  a1.setVal(0.);
+  a1.setConstant();
+  //RooGenericPdf ch_b("ch_b",Form("TMath::Exp(a1*x/%E + a2*x*x/%E + a3*x*x*x/%E + a4*x*x*x*x/%E)", TMath::Power(sqrts,1), TMath::Power(sqrts,2), TMath::Power(sqrts,3), TMath::Power(sqrts,3)), RooArgSet(x,a1,a2,a3,a4));
+  //RooGenericPdf ch_b("ch_b",Form("TMath::Power(x/%E, a1 + a2*x/%E + a3*x*x/%E)", TMath::Power(sqrts,1), TMath::Power(sqrts,1), TMath::Power(sqrts,2)), RooArgSet(x,a1,a2,a3));
+  //RooGenericPdf ch_b("ch_b",Form("TMath::Max(1e-50,(1 + a2*x/%E + a3*x*x/%E)*TMath::Exp(x/%E*a1))", TMath::Power(sqrts,1), TMath::Power(sqrts,2), TMath::Power(sqrts,1)), RooArgSet(x,a1,a2,a3));
+  RooGenericPdf ch_b("ch_b",Form("TMath::Power(1 - x/%E, a1)/TMath::Power(x/%E,a2 + a3*TMath::Log(x/%E))", TMath::Power(sqrts,1), TMath::Power(sqrts,1), TMath::Power(sqrts,1)), RooArgSet(x,a1,a2,a3));
+
+  ch_b.fitTo(data_b, Minimizer("Minuit2"), Strategy(2));
+
 
   TCanvas* c1 = new TCanvas("c1","c1",1200,400);
   c1->Divide(2);
@@ -106,6 +126,56 @@
 			chi2_b));
   leg_b->Draw();
 
+
+  ////////
+  RooRealVar m0("m0","m0",400., 600.);
+  RooRealVar s0("s0","s0",10., 200.);
+  RooRealVar p0("p0","p0",0., 50000.);
+  RooRealVar p1("p1","p1",0., 8.);
+  RooRealVar p2("p2","p2",10., 15.);
+  RooRealVar p3("p3","p3",1.0, 2.0);
+
+  //RooGenericPdf mt_pdf("m_pdf", "0.5*(TMath::Erf((x-m0)/s0)+1)*TMath::Power(1-x/13000.,p1)/(TMath::Power(x/13000.,p2+p3*TMath::Log(x/13000.)))", RooArgSet(x,m0,s0,p1,p2,p3));
+  //RooFormulaVar turnon("turnon", "0.5*(TMath::Erf((x-m0)/s0)+1)", RooArgSet(x,m0,s0));
+  //RooGenericPdf m_pdf("m_pdf", "TMath::Power(1-x/13000.,p1)/(TMath::Power(x/13000.,p2+p3*TMath::Log(x/13000.)))", RooArgSet(x,p1,p2,p3,m0,s0));
+
+  //RooGenericPdf mp_pdf("m_pdf", "0.5*(TMath::Erf((x-m0)/s0)+1)*TMath::Exp(x*c)", RooArgSet(x,m0,s0,c));
+
+  //ch_b.fitTo(data_b);
+
+
+  RooPlot* frame_b2 = x.frame();
+  frame_b2->SetName("frame_b2");
+  frame_b2->SetTitle("Background: mass shape");
+  data_b.plotOn(frame_b2,Name("data"));
+  ch_b.plotOn(frame_b2,  LineColor(kBlue), Name("model"));
+  c1->cd(2);
+  frame_b2->Draw();
+  double ch2 = frame_b2->chiSquare("model","data", 5);
+  cout << "Chi2 ch_b = " << ch2 << endl;
+
+  return;
+  ////////
+
+
+  //TH1F* mass_data = (TH1F*)fs->Get("data_BTag_MT_MassFSR");
+  TH1F* mass_data = (TH1F*)fs->Get("background_Had_MT_MinPt150_DH1p6_MassFSR");
+
+  if( mass_data==0 ){
+    cout << "No data histogram!" << endl;
+    fs->Close();
+    return;
+  }
+  //mass_b->Rebin(2);
+
+  RooDataHist data("data_obs", "data", x, mass_data);
+  //RooPlot* frame_data = x.frame();
+  //frame_data->SetName("frame_data");
+  //frame_data->SetTitle("Background: 5th order polynomial");
+  //data.plotOn(frame_data);
+  //ch_b.plotOn(frame_data,  LineColor(kBlue), Name("model"));
+  //frame_data->Draw();
+
   RooWorkspace *w = new RooWorkspace("w","workspace") ;
 
   Xp.setConstant();
@@ -120,6 +190,7 @@
   w->import(ch_b);
   w->import(data_b);
   w->import(data_s);
+  w->import(data);
 
   RooDataHist* toy = ch_b.generateBinned(x, data_b.sumEntries());
   toy->SetName("signalX10");
@@ -141,7 +212,7 @@
   w->Print() ;
 
   // Save the workspace into a ROOT file
-  w->writeToFile("Xbb_workspace.root") ;
+  w->writeToFile("Xbb_workspace_MT.root") ;
 
   cout << "Signal yield: " << data_s.sumEntries() << endl;
   cout << "Background yield: " << data_b.sumEntries() << endl;

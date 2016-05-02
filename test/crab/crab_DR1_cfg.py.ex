@@ -20,7 +20,7 @@ config.Data.unitsPerJob = 1
 config.Data.publication = True
 
 # This string is used to construct the output dataset name
-config.Data.outputDatasetTag  = 'DIGI-RECO-1' #something you like
+config.Data.outputDatasetTag  = 'DIGI-RECO-1'
 
 config.section_("Site")
 config.Site.storageSite = 'T2_CH_CSCS'

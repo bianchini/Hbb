@@ -18,7 +18,7 @@ config.Data.unitsPerJob = 1
 config.Data.publication = True
 
 # This string is used to construct the output dataset name
-config.Data.outputDatasetTag  = 'MiniAODv2' #something you like
+config.Data.outputDatasetTag  = 'MiniAODv2'
 
 config.section_("Site")
 config.Site.storageSite = 'T2_CH_CSCS'
