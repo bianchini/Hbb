@@ -42,21 +42,23 @@ def submit(pdf_nom='mass', pdf_alt='mass', xsec=1.0, cat='Had_LT_MinPt150_DH1p6_
 ##########################################
 
 for cat in [
-    #'Had_LT_MinPt150_DH1p6_MassFSR_540to1200', 
-    #'Had_LT_MinPt150_DH1p6_MassFSR_550to1200', 
-    #'Had_LT_MinPt150_DH1p6_MassFSR_560to1200',
-    #'Had_LT_MinPt150_DH1p6_MassFSR_570to1200',
-    #'Had_LT_MinPt150_DH1p6_MassFSR_580to1200',
-    #'Had_LT_MinPt150_DH1p6_MassFSR_550to1300',
+    'Had_LT_MinPt150_DH1p6_MassFSR_540to1200', 
+    'Had_LT_MinPt150_DH1p6_MassFSR_550to1200', 
+    'Had_LT_MinPt150_DH1p6_MassFSR_560to1200',
+    'Had_LT_MinPt150_DH1p6_MassFSR_570to1200',
+    'Had_LT_MinPt150_DH1p6_MassFSR_580to1200',
+    'Had_LT_MinPt150_DH1p6_MassFSR_550to1300',
     'Had_LT_MinPt150_DH1p6_MassFSR_550to1400'
     ]:
     for pdf_nom in ["mass", 
-                    "pol", "pow", "polyexp", 
+                    #"pol", "pow", "polyexp", 
                     #"exp"
                     ]:
-        for pdf_alt in ["mass", "pol", "pow", "polyexp", "exp"]:
-            for xmin in [550., 560., 570.]:
-                for xmax in [900., 1000., 1100., 1200.]:
+        for pdf_alt in ["mass", 
+                        "pol", "pow", "polyexp", "exp"
+                        ]:
+            for xmin in [-1]:
+                for xmax in [-1]:
                     for xsec in [0.]:
                         submit(pdf_nom, pdf_alt, xsec, cat, xmin, xmax)
-                        exit(1)
+                        #exit(1)

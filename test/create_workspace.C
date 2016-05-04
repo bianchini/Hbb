@@ -4,6 +4,7 @@
 #include "TLegend.h"
 #include "TSystem.h"
 #include "TMath.h"
+#include<map>
 
 #include "RooRealVar.h"
 #include "RooDataHist.h"
@@ -28,7 +29,8 @@ void add_systematics(RooWorkspace* w=0,
 		     TString cat_CSVSFUp = "signal_Had_MT_CSVSFUp_MinPt200_DH2p0", 
 		     TString cat_CSVSFDown = "signal_Had_MT_CSVSFDown_MinPt200_DH2p0", 
 		     TString h_name_sgn = "MassFSR",
-		     TString proc = "M750",
+		     TString proc = "Spin0_M750",
+		     float prompt_mass = 750.,
 		     int rebin_factor = 1,
 		     TString title = "",
 		     TString version = "V2"
@@ -56,12 +58,12 @@ void add_systematics(RooWorkspace* w=0,
     float nominal = h_sgn_nominal->Integral(); 
     float CSVSFUp = h_sgn_CSVSFUp->Integral();
     float CSVSFDown = h_sgn_CSVSFDown->Integral();
-    RooRealVar CSV_shift_sgn("CSV_shift_sgn", "CSV_shift_sgn",  TMath::Max(TMath::Abs(CSVSFUp-nominal), TMath::Abs(CSVSFDown-nominal))/nominal );
+    RooRealVar CSV_shift_sgn("CSV_shift_sgn_"+proc, "CSV_shift_sgn",  TMath::Max(TMath::Abs(CSVSFUp-nominal), TMath::Abs(CSVSFDown-nominal))/nominal );
     w->import(CSV_shift_sgn);
   }
   else{
     cout << "No CSV shifted histogram with names " << string((cat_CSVSFDown+"_"+h_name_sgn+"_"+proc).Data()) << ", " << string((cat_CSVSFUp+"_"+h_name_sgn+"_"+proc).Data())  << endl;
-    RooRealVar CSV_shift_sgn("CSV_shift_sgn", "CSV_shift_sgn",  0.05);
+    RooRealVar CSV_shift_sgn("CSV_shift_sgn_"+proc, "CSV_shift_sgn",  0.05);
     w->import(CSV_shift_sgn);
   }
 
@@ -88,8 +90,8 @@ void add_systematics(RooWorkspace* w=0,
 
   // Nominal
   RooDataHist* data_sgn_nominal = new RooDataHist("data_sgn_nominal", "data signal nominal", *x, h_sgn_nominal);
-  RooRealVar Xp_syst_nominal("Xp_syst_nominal", "Xp", 650.,850.);
-  RooRealVar sP_syst_nominal("sP_syst_nominal", "sP", 50., 150.);
+  RooRealVar Xp_syst_nominal("Xp_syst_nominal", "Xp", prompt_mass, 400., 1300.);
+  RooRealVar sP_syst_nominal("sP_syst_nominal", "sP", 50., 400.);
   RooRealVar xi_syst_nominal("xi_syst_nominal", "xi",-2.,0.);
   RooRealVar rho1_syst_nominal("rho1_syst_nominal", "rho1", -0.2,0.2);
   RooRealVar rho2_syst_nominal("rho2_syst_nominal", "rho2", -1.,1.);
@@ -100,7 +102,7 @@ void add_systematics(RooWorkspace* w=0,
 
   // JEC up
   RooDataHist* data_sgn_JECUp = new RooDataHist("data_sgn_JECUp", "data signal JECUp", *x, h_sgn_JECUp);
-  RooRealVar Xp_syst_JECUp("Xp_syst_JECUp", "Xp", 650.,850.);
+  RooRealVar Xp_syst_JECUp("Xp_syst_JECUp", "Xp", prompt_mass, 400., 1300.);
   RooRealVar sP_syst_JECUp("sP_syst_JECUp", "sP", sP_syst_nominal.getVal());
   RooRealVar xi_syst_JECUp("xi_syst_JECUp", "xi", xi_syst_nominal.getVal());
   RooRealVar rho1_syst_JECUp("rho1_syst_JECUp", "rho1", rho1_syst_nominal.getVal());
@@ -115,7 +117,7 @@ void add_systematics(RooWorkspace* w=0,
 
   // JEC down
   RooDataHist* data_sgn_JECDown = new RooDataHist("data_sgn_JECDown", "data signal JECDown", *x, h_sgn_JECDown);
-  RooRealVar Xp_syst_JECDown("Xp_syst_JECDown", "Xp", 650.,850.);
+  RooRealVar Xp_syst_JECDown("Xp_syst_JECDown", "Xp", prompt_mass, 400., 1300.);
   RooRealVar sP_syst_JECDown("sP_syst_JECDown", "sP", sP_syst_nominal.getVal());
   RooRealVar xi_syst_JECDown("xi_syst_JECDown", "xi", xi_syst_nominal.getVal());
   RooRealVar rho1_syst_JECDown("rho1_syst_JECDown", "rho1", rho1_syst_nominal.getVal());
@@ -131,7 +133,7 @@ void add_systematics(RooWorkspace* w=0,
   // JER up
   RooDataHist* data_sgn_JERUp = new RooDataHist("data_sgn_JERUp", "data signal JERUp", *x, h_sgn_JERUp);
   RooRealVar Xp_syst_JERUp("Xp_syst_JERUp", "Xp", Xp_syst_nominal.getVal());
-  RooRealVar sP_syst_JERUp("sP_syst_JERUp", "sP", 50., 150.);
+  RooRealVar sP_syst_JERUp("sP_syst_JERUp", "sP", 50., 400.);
   RooRealVar xi_syst_JERUp("xi_syst_JERUp", "xi", xi_syst_nominal.getVal());
   RooRealVar rho1_syst_JERUp("rho1_syst_JERUp", "rho1", rho1_syst_nominal.getVal());
   RooRealVar rho2_syst_JERUp("rho2_syst_JERUp", "rho2", rho2_syst_nominal.getVal());
@@ -147,7 +149,7 @@ void add_systematics(RooWorkspace* w=0,
   // JER down
   RooDataHist* data_sgn_JERDown = new RooDataHist("data_sgn_JERDown", "data signal JERDown", *x, h_sgn_JERDown);
   RooRealVar Xp_syst_JERDown("Xp_syst_JERDown", "Xp", Xp_syst_nominal.getVal());
-  RooRealVar sP_syst_JERDown("sP_syst_JERDown", "sP", 50., 150.);
+  RooRealVar sP_syst_JERDown("sP_syst_JERDown", "sP", 50., 400.);
   RooRealVar xi_syst_JERDown("xi_syst_JERDown", "xi", xi_syst_nominal.getVal());
   RooRealVar rho1_syst_JERDown("rho1_syst_JERDown", "rho1", rho1_syst_nominal.getVal());
   RooRealVar rho2_syst_JERDown("rho2_syst_JERDown", "rho2", rho2_syst_nominal.getVal());
@@ -161,8 +163,8 @@ void add_systematics(RooWorkspace* w=0,
   float s_JERDown = sP_syst_JERDown.getVal();
 
   // remove constant option
-  w->var("Xp_sgn")->setConstant(kFALSE);
-  w->var("sP_sgn")->setConstant(kFALSE);
+  w->var("Xp_sgn_"+proc)->setConstant(kFALSE);
+  w->var("sP_sgn_"+proc)->setConstant(kFALSE);
 
   cout << "JEC:" << endl;
   cout << "\tNominal: " << m_nominal << endl;
@@ -174,11 +176,11 @@ void add_systematics(RooWorkspace* w=0,
   cout << "\tDown   : " << s_JERDown << endl;
 
 
-  RooRealVar Xp_shift_sgn("Xp_shift_sgn","Xp_shift_sgn", TMath::Max( TMath::Abs(m_nominal-m_JECDown), 
+  RooRealVar Xp_shift_sgn("Xp_shift_sgn_"+proc,"Xp_shift_sgn", TMath::Max( TMath::Abs(m_nominal-m_JECDown), 
 								     TMath::Abs(m_nominal-m_JECUp) ));
   w->import(Xp_shift_sgn);
 
-  RooRealVar sP_shift_sgn("sP_shift_sgn","sP_shift_sgn", TMath::Max( TMath::Abs(s_nominal-s_JERDown), 
+  RooRealVar sP_shift_sgn("sP_shift_sgn_"+proc,"sP_shift_sgn", TMath::Max( TMath::Abs(s_nominal-s_JERDown), 
 								     TMath::Abs(s_nominal-s_JERUp) ));
   w->import(sP_shift_sgn);
 
@@ -201,7 +203,7 @@ void add_systematics(RooWorkspace* w=0,
   c1->cd();
   frame->Draw();
   leg->Draw();
-  c1->SaveAs("plots/"+version+"/Systematics_mass_spectra_"+cat+".png");
+  c1->SaveAs("plots/"+version+"/Systematics_mass_spectra_"+cat+"_"+proc+".png");
 
   delete data_sgn_nominal;
   delete data_sgn_JECUp;
@@ -335,6 +337,8 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
 			     RooWorkspace* w=0,
 			     TString input_fname="plots/V2/plot.root",
 			     TString h_name_sgn = "signal_Had_MT_MinPt150_DH1p6_MassFSR_M750",
+			     TString sample_name = "Spin0_M750",
+			     float prompt_mass = 750.,
 			     RooRealVar* x=0,
 			     int rebin_factor = 1,
 			     bool set_param_const = true,
@@ -358,23 +362,23 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
   if(rebin_factor>1) h_sgn->Rebin(rebin_factor);
 
   // the signal data set
-  RooDataHist* data_sgn = new RooDataHist("data_sgn", "data signal", *x, h_sgn);
+  RooDataHist* data_sgn = new RooDataHist("data_sgn_"+sample_name, "data signal", *x, h_sgn);
   w->import(*data_sgn);
 
   // the hist pdf of the signal
-  RooHistPdf* hist_pdf_sgn = new RooHistPdf("hist_pdf_sgn","hist pdf for signal", *x, *data_sgn);
-  RooRealVar hist_pdf_sgn_norm("hist_pdf_sgn_norm", "signal normalisation", data_sgn->sumEntries());
+  RooHistPdf* hist_pdf_sgn = new RooHistPdf("hist_pdf_sgn_"+sample_name,"hist pdf for signal", *x, *data_sgn);
+  RooRealVar hist_pdf_sgn_norm("hist_pdf_sgn_"+sample_name+"_norm", "signal normalisation", data_sgn->sumEntries());
   w->import(*hist_pdf_sgn);
   w->import(hist_pdf_sgn_norm);
 
   // Bukin pdf: http://arxiv.org/abs/0711.4449
-  RooRealVar Xp("Xp_sgn", "Xp", 650.,850.);
-  RooRealVar sP("sP_sgn", "sP", 50., 150.);
-  RooRealVar xi("xi_sgn", "xi",-2.,0.);
-  RooRealVar rho1("rho1_sgn", "rho1", -0.2,0.2);
-  RooRealVar rho2("rho2_sgn", "rho2", -1.,1.);
-  RooBukinPdf* buk_pdf_sgn = new RooBukinPdf("buk_pdf_sgn","RooBukinPdf for signal", *x, Xp, sP, xi, rho1, rho2);
-  RooRealVar buk_pdf_sgn_norm("buk_pdf_sgn_norm","signal normalisation", data_sgn->sumEntries());
+  RooRealVar Xp("Xp_sgn_"+sample_name, "Xp", prompt_mass, 400, 1300.);
+  RooRealVar sP("sP_sgn_"+sample_name, "sP", 50., 400.);
+  RooRealVar xi("xi_sgn_"+sample_name, "xi",-2.,0.);
+  RooRealVar rho1("rho1_sgn_"+sample_name, "rho1", -0.2,0.2);
+  RooRealVar rho2("rho2_sgn_"+sample_name, "rho2", -1.,1.);
+  RooBukinPdf* buk_pdf_sgn = new RooBukinPdf("buk_pdf_sgn_"+sample_name,"RooBukinPdf for signal", *x, Xp, sP, xi, rho1, rho2);
+  RooRealVar buk_pdf_sgn_norm("buk_pdf_sgn_"+sample_name+"_norm","signal normalisation", data_sgn->sumEntries());
   std::cout << "######## FIT BUKIN  ###########" << std::endl;
   buk_pdf_sgn->fitTo(*data_sgn);
   if(set_param_const){
@@ -387,6 +391,7 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
   w->import(*buk_pdf_sgn);
   w->import(buk_pdf_sgn_norm);
   
+  /*
   // CB pdf
   RooRealVar mean("mean_sgn", "mean", 710, 600, 900);
   RooRealVar sigma("sigma_sgn", "sigma", 60, 0,150);
@@ -404,6 +409,7 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
   }
   w->import(*cb_pdf_sgn);
   w->import(cb_pdf_sgn_norm);
+  */
 
   TLegend* leg = new TLegend(0.55,0.65,0.80,0.88, "","brNDC");
   leg->SetFillStyle(0);
@@ -415,19 +421,19 @@ void add_signal_to_workspace(TCanvas* c1 = 0,
   frame->SetName("frame");
   frame->SetTitle(title);
   data_sgn->plotOn(frame, Name("data"));
-  buk_pdf_sgn->plotOn(frame, LineColor(kRed), Name("buk_pdf_sgn"));
-  cb_pdf_sgn->plotOn(frame, LineColor(kOrange), Name("cb_pdf_sgn"));
+  buk_pdf_sgn->plotOn(frame, LineColor(kRed), Name("buk_pdf_sgn_"+sample_name));
+  //cb_pdf_sgn->plotOn(frame, LineColor(kOrange), Name("cb_pdf_sgn"));
 
   c1->cd(1);  
   frame->Draw();
 
-  double chi2_buk = frame->chiSquare("buk_pdf_sgn","data", 5);
-  double chi2_cb = frame->chiSquare("cb_pdf_sgn","data", 1);
+  double chi2_buk = frame->chiSquare("buk_pdf_sgn_"+sample_name,"data", 5);
+  //double chi2_cb = frame->chiSquare("cb_pdf_sgn","data", 1);
 
   leg->SetHeader(Form("Range: [%.0f,%.0f] GeV", x->getMin(), x->getMax()) );
   
-  leg->AddEntry(frame->getCurve("buk_pdf_sgn"), Form("Bukin: #chi^{2}/ndof=%.2f", chi2_buk), "L");
-  leg->AddEntry(frame->getCurve("cb_pdf_sgn"), Form("CB: #chi^{2}/ndof=%.2f", chi2_cb), "L");
+  leg->AddEntry(frame->getCurve("buk_pdf_sgn_"+sample_name), Form("Bukin: #chi^{2}/ndof=%.2f", chi2_buk), "L");
+  //leg->AddEntry(frame->getCurve("cb_pdf_sgn"), Form("CB: #chi^{2}/ndof=%.2f", chi2_cb), "L");
   leg->Draw();
 
   //input_file->Close();
@@ -477,12 +483,12 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   RooExponential* exp_pdf_bkg = new RooExponential("exp_pdf_bkg","Exponential for background", *x, c);
   RooRealVar exp_pdf_bkg_norm("exp_pdf_bkg_norm", "background normalisation", data_bkg->sumEntries());
   std::cout << "######## FIT Exponential  ###########" << std::endl;
-  exp_pdf_bkg->fitTo(*data_bkg); 
+  //exp_pdf_bkg->fitTo(*data_bkg); 
   if( set_param_const ){
     c.setConstant();
   }
-  w->import(*exp_pdf_bkg);
-  w->import(exp_pdf_bkg_norm);
+  //w->import(*exp_pdf_bkg);
+  //w->import(exp_pdf_bkg_norm);
 
   // Polynomial Pdf
   RooRealVar a0("a0_bkg","a0",  1); a0.setConstant();
@@ -494,7 +500,7 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   RooBernstein* pol_pdf_bkg = new RooBernstein("pol_pdf_bkg","Polynomial for background", *x, RooArgList(a0,a1,a2,a3,a4,a5));
   RooRealVar pol_pdf_bkg_norm("pol_pdf_bkg_norm", "background normalisation", data_bkg->sumEntries());
   std::cout << "######## FIT Pol 6  ###########" << std::endl;
-  pol_pdf_bkg->fitTo(*data_bkg, PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE));
+  //pol_pdf_bkg->fitTo(*data_bkg, PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE));
   if( set_param_const ){ 
     a0.setConstant();
     a1.setConstant();
@@ -503,8 +509,8 @@ void add_background_to_workspace(TCanvas* c1 = 0,
     a4.setConstant();
     a5.setConstant();
   }
-  w->import(*pol_pdf_bkg);
-  w->import(pol_pdf_bkg_norm);
+  //w->import(*pol_pdf_bkg);
+  //w->import(pol_pdf_bkg_norm);
 
   // Empirical mass function
   RooRealVar p1("p1_bkg","p1",0.0, 20.);
@@ -531,7 +537,7 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   TString mass_formula_t = "0.5*(TMath::Erf((x-m0_t_bkg)/s0_t_bkg)+1)*TMath::Power(1-x/13000.,p1_t_bkg)/(TMath::Power(x/13000.,p2_t_bkg+p3_t_bkg*TMath::Log(x/13000.)))";
   RooGenericPdf* mass_t_pdf_bkg = new RooGenericPdf("mass_t_pdf_bkg", mass_formula_t, RooArgSet(*x,m0_t,s0_t,p1_t,p2_t,p3_t));
   RooRealVar mass_t_pdf_bkg_norm("mass_t_pdf_bkg_norm", "background normalisation", data_bkg->sumEntries());
-  mass_t_pdf_bkg->fitTo(*data_bkg, PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE));
+  //mass_t_pdf_bkg->fitTo(*data_bkg, PrintLevel(-1), PrintEvalErrors(0), Warnings(kFALSE));
   if( set_param_const ){  
     m0_t.setConstant();  
     s0_t.setConstant();  
@@ -539,8 +545,8 @@ void add_background_to_workspace(TCanvas* c1 = 0,
     p2_t.setConstant();  
     p3_t.setConstant();  
   }
-  w->import(*mass_t_pdf_bkg);
-  w->import(mass_t_pdf_bkg_norm);
+  //w->import(*mass_t_pdf_bkg);
+  //w->import(mass_t_pdf_bkg_norm);
 
   TLegend* leg = new TLegend(0.45,0.65,0.75,0.88, "","brNDC");
   leg->SetFillStyle(0);
@@ -552,25 +558,25 @@ void add_background_to_workspace(TCanvas* c1 = 0,
   frame->SetName("frame");
   frame->SetTitle(title);
   data_bkg->plotOn(frame, Name("data"));
-  exp_pdf_bkg->plotOn(frame, LineColor(kRed), Name("exp_pdf_bkg"));
-  pol_pdf_bkg->plotOn(frame, LineColor(kOrange), Name("pol_pdf_bkg"));
+  //exp_pdf_bkg->plotOn(frame, LineColor(kRed), Name("exp_pdf_bkg"));
+  //pol_pdf_bkg->plotOn(frame, LineColor(kOrange), Name("pol_pdf_bkg"));
   mass_pdf_bkg->plotOn(frame, LineColor(kBlue), Name("mass_pdf_bkg"));
-  mass_t_pdf_bkg->plotOn(frame, LineColor(kBlue), LineStyle(kDashed),Name("mass_t_pdf_bkg"));
+  //mass_t_pdf_bkg->plotOn(frame, LineColor(kBlue), LineStyle(kDashed),Name("mass_t_pdf_bkg"));
 
   c1->cd(2);  
   frame->Draw();
 
-  double chi2_exp = frame->chiSquare("exp_pdf_bkg","data", 1);
-  double chi2_pol = frame->chiSquare("pol_pdf_bkg","data", 5);
+  //double chi2_exp = frame->chiSquare("exp_pdf_bkg","data", 1);
+  //double chi2_pol = frame->chiSquare("pol_pdf_bkg","data", 5);
   double chi2_mass = frame->chiSquare("mass_pdf_bkg","data", 3);
-  double chi2_mass_t = frame->chiSquare("mass_t_pdf_bkg","data", 3+2);
+  //double chi2_mass_t = frame->chiSquare("mass_t_pdf_bkg","data", 3+2);
 
   leg->SetHeader(Form("Range: [%.0f,%.0f] GeV", x->getMin(), x->getMax()) );
   
-  leg->AddEntry(frame->getCurve("exp_pdf_bkg"), Form("Exponential: #chi^{2}/ndof=%.2f", chi2_exp), "L");
-  leg->AddEntry(frame->getCurve("pol_pdf_bkg"), Form("Pol. 5th: #chi^{2}/ndof=%.2f", chi2_pol), "L");
+  //leg->AddEntry(frame->getCurve("exp_pdf_bkg"), Form("Exponential: #chi^{2}/ndof=%.2f", chi2_exp), "L");
+  //leg->AddEntry(frame->getCurve("pol_pdf_bkg"), Form("Pol. 5th: #chi^{2}/ndof=%.2f", chi2_pol), "L");
   leg->AddEntry(frame->getCurve("mass_pdf_bkg"), Form("Mass: #chi^{2}/ndof=%.2f", chi2_mass), "L");
-  leg->AddEntry(frame->getCurve("mass_t_pdf_bkg"), Form("Mass w/ turn-on: #chi^{2}/ndof=%.2f", chi2_mass_t), "L");
+  //leg->AddEntry(frame->getCurve("mass_t_pdf_bkg"), Form("Mass w/ turn-on: #chi^{2}/ndof=%.2f", chi2_mass_t), "L");
   leg->Draw();
 
   return;  
@@ -614,7 +620,6 @@ void create_workspace(TString ws_name="Xbb_workspace",
 		      TString cat_kin = "MinPt150_DH1p6",		      
 		      float x_min=550., float x_max=1500.,
 		      TString mass = "MassFSR",
-		      TString proc="M750",
 		      TString version="V2"){
 
   TString cat = cat_btag+"_"+cat_kin;
@@ -625,25 +630,40 @@ void create_workspace(TString ws_name="Xbb_workspace",
   RooWorkspace *w = new RooWorkspace( ws_name, "workspace") ;
 
   // the fitting variable
-  RooRealVar x("x","x", 400., 4000.);
-  x.setMin(x_min);
-  x.setMax(x_max);
+  RooRealVar x("x","x", x_min, x_max);
+  //x.setMin(x_min);
+  //x.setMax(x_max);
   w->import(x);
 
-  add_signal_to_workspace(c1, w, 
-			  "plots/"+version+"/plot.root", "signal_"+cat+"_"+mass+"_"+proc,
-			  &x, 1, true,
-			  ("Signal, m_{X}="+proc+" GeV")
-			  );
+  map<TString, float> signals;
+  signals.insert( make_pair("Spin0_M650", 600.)  );
+  signals.insert( make_pair("Spin0_M750", 700.)  );
+  signals.insert( make_pair("Spin0_M850", 800.)  );
+  signals.insert( make_pair("Spin0_M1000", 900.)  );
+  signals.insert( make_pair("Spin0_M1200", 1100.)  );
+  signals.insert( make_pair("Spin2_M650", 600.)  );
+  signals.insert( make_pair("Spin2_M750", 700.)  );
+  signals.insert( make_pair("Spin2_M850", 800.)  );
+  signals.insert( make_pair("Spin2_M1000", 900.)  );
+  signals.insert( make_pair("Spin2_M1200", 1100.)  );
 
-  add_systematics(w, &x,
-		  "plots/"+version+"/plot.root",
-		  "signal_"+cat,
-		  "signal_"+cat_btag+"_CSVSFUp_"+cat_kin,
-		  "signal_"+cat_btag+"_CSVSFDown_"+cat_kin,
-		  mass, proc,  
-		  1, "JEC/JER", version
-		  );
+  for( map<TString, float>::iterator it = signals.begin() ; it!=signals.end(); ++it){
+    add_signal_to_workspace(c1, w, 
+			    "plots/"+version+"/plot.root", "signal_"+cat+"_"+mass+"_"+(it->first),
+			    it->first, it->second,
+			    &x, 1, true,
+			    it->first
+			    );
+    
+    add_systematics(w, &x,
+		    "plots/"+version+"/plot.root",
+		    "signal_"+cat,
+		    "signal_"+cat_btag+"_CSVSFUp_"+cat_kin,
+		    "signal_"+cat_btag+"_CSVSFDown_"+cat_kin,
+		    mass, it->first, it->second,  
+		    20, "JEC/JER", version
+		    );
+  }
 
   
   add_background_to_workspace(c1, w, 
@@ -675,16 +695,16 @@ void create_workspace(TString ws_name="Xbb_workspace",
 void create_all(TString version="V2"){
 
   vector<TString> cats_btag = {
-    "Had_MT",
+    //"Had_MT",
     "Had_LT"
   };
 
   vector<TString> cats_kin = {
-    "MinPt150_DH2p0",
-    "MinPt150_DH1p6",
+    "MinPt150_DH2p0"
+    //"MinPt150_DH1p6"
     //"MinPt150_DH1p1",
-    "MinPt200_DH2p0",
-    "MinPt200_DH1p6"
+    //"MinPt200_DH2p0",
+    //"MinPt200_DH1p6"
     //"MinPt200_DH1p1"
   };
 
@@ -693,14 +713,18 @@ void create_all(TString version="V2"){
   for(unsigned int btag = 0 ; btag < cats_btag.size(); ++btag){
     for(unsigned int kin = 0 ; kin < cats_kin.size(); ++kin){
       for(unsigned int m = 0 ; m < masses.size(); ++m){
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 540., 1200., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1200., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 560., 1200., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 570., 1200., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 580., 1200., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1300., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1400., masses[m], "M750", version);
-	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1500., masses[m], "M750", version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 540., 1200., masses[m], version);
+	create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1200., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 560., 1200., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 570., 1200., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 580., 1200., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1000., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1050., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1100., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1150., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1300., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1400., masses[m], version);
+	//create_workspace("Xbb_workspace", cats_btag[btag], cats_kin[kin], 550., 1500., masses[m], version);
       }
     }
   }
