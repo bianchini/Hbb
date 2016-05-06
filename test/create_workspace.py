@@ -93,10 +93,12 @@ class XbbFactory:
         self.imp(self.x)
     
     # save plots to png
-    def save(self, data=None, pdfs=[], legs=[], ran="", n_par=1, title=""):
+    def plot(self, data=None, pdfs=[], res=None, add_pulls=False, legs=[], ran="", n_par=1, title=""):
 
         #return
         c1 = ROOT.TCanvas("c1_"+title,"c1",600,600)
+        if add_pulls:
+            c1.Divide(2)
 
         leg = ROOT.TLegend(0.40,0.65,0.70,0.88, "","brNDC")
         leg.SetHeader( "[%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
@@ -112,15 +114,28 @@ class XbbFactory:
         data.plotOn(frame, RooFit.Name("data"))
         for p,pdf in enumerate(pdfs):
             opt_color = RooFit.LineColor(ROOT.kRed) if len(pdfs)==1 else RooFit.LineColor(1+p) 
-            pdf.plotOn(frame, opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
+            if res!=None:
+                pdf.plotOn(frame, RooFit.VisualizeError(res, 1, ROOT.kFALSE), opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
+                data.plotOn(frame, RooFit.Name("data"))
+            else:
+                pdf.plotOn(frame, opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
 
-        c1.cd()  
+        c1.cd(1)  
         frame.Draw()
         for p,pdf in enumerate(pdfs):
             chi2 = frame.chiSquare(pdf.GetName(), "data", n_par )
             leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+", #chi^{2}=%.2f" % chi2, "L")
         leg.Draw()
-        
+
+        if add_pulls:
+            c1.cd(2)
+            frame2 = self.x.frame(RooFit.Range(ran))
+            frame2.SetName("frame2")
+            frame2.SetTitle(title)        
+            hresid = frame.residHist()
+            frame2.addPlotable(hresid,"P")
+            frame2.Draw()
+
         c1.SaveAs(self.saveDir+"/"+title+".png")
         return
 
@@ -153,9 +168,9 @@ class XbbFactory:
         buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
         buk_pdf_sgn_norm = ROOT.RooRealVar("buk_pdf_sgn_"+sgn_name+"_norm","", norm)
 
-        buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
+        res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
 
-        self.save( data_sgn, [buk_pdf_sgn], ["Bukin"], sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
+        self.plot( data_sgn, [buk_pdf_sgn], res, False, ["Bukin"], sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
 
         if set_param_const:
             mean.setConstant()
@@ -200,7 +215,7 @@ class XbbFactory:
             rho2.setConstant()
 
             buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+syst+"_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
-            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
+            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
             shifts[syst] = [mean.getVal(), sigma.getVal(), norm]
             self.imp( buk_pdf_sgn )
 
@@ -231,12 +246,12 @@ class XbbFactory:
         pdfs = [ self.w.pdf("buk_pdf_sgn"+syst+"_"+sgn_name) for syst in ["","_JECUp", "_JECDown", "_JERUp", "_JERDown"]]
         legs = ["Nominal", "JEC up", "JEC down", "JER up", "JER down"]
 
-        self.save( self.w.data("data_sgn_"+sgn_name), pdfs, legs, sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name+"_JEC-JER")
+        self.plot( self.w.data("data_sgn_"+sgn_name), pdfs, None, False, legs, sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name+"_JEC-JER")
 
     # add background pdf to ws
     def add_bkg_to_ws(self, pdf_name="dijet", rebin_factor=1.0, set_param_const=False):
 
-        hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
+        hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
         h = self.file.Get(hname)
         if rebin_factor>1. :
@@ -265,9 +280,9 @@ class XbbFactory:
         pdf_bkg = ROOT.RooGenericPdf(pdf_name+"_pdf_bkg", formula, ROOT.RooArgList(self.x,p0,p1,p2))
         pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
 
-        pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name))
+        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
 
-        self.save( data_bkg, [pdf_bkg], [pdf_name], pdf_name, 2, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
+        self.plot( data_bkg, [pdf_bkg], None, False, [pdf_name], pdf_name, 2, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
 
         if set_param_const:
             p0.setConstant()
@@ -304,8 +319,8 @@ class XbbFactory:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=400, set_param_const=True)
             self.add_syst_to_ws(sgn_name=sgn, rebin_factor=400)
         
-        self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=400, set_param_const=False)
-        self.add_data_to_ws(rebin_factor=200)
+        self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=500, set_param_const=False)
+        self.add_data_to_ws(rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.get_save_name()+".root")
@@ -317,6 +332,6 @@ class XbbFactory:
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V3", saveDir="/scratch/bianchi/")
 xbbfact.add_category(cat_btag="Had_LT", cat_kin="MinPt150_DH1p6")
 xbbfact.create_mass(name="MassFSR", xmin=550., xmax=1200.)
-xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200" ] )
-#xbbfact.create_workspace( ["Spin0_M650"] )
+#xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200" ] )
+xbbfact.create_workspace( ["Spin0_M650"] )
 
