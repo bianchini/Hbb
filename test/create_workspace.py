@@ -16,7 +16,7 @@ FitParam = {
         'p0' : [0.,10.],
         'p1' : [0., 50.],
         'p2' : [-5., 5.],
-        'range' : [550., 1200.],
+        'fit_range' : [550., 1200.],
         },
     "Spin0_M650" : {
         'mean' : [550.,650.],
@@ -24,7 +24,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'range' : [550., 800.],
+        'fit_range' : [500., 800.],
         },
     "Spin0_M750" : {
         'mean' : [650.,750.],
@@ -32,7 +32,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'range' : [550., 900.],
+        'fit_range' : [550., 900.],
         },
     "Spin0_M850" : {
         'mean' : [750.,900.],
@@ -40,13 +40,14 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'range' : [550., 1100.],
+        'fit_range' : [550., 1100.],
         }
 }
 
 
 
 class XbbFactory:
+
     def __init__(self, fname="plot.root", ws_name="Xbb_workspace", version="V3", saveDir="/scratch/bianchi/"):
         self.file = ROOT.TFile.Open("plots/"+version+"/"+fname, "READ")
         if self.file==None or self.file.IsZombie():
@@ -55,12 +56,30 @@ class XbbFactory:
         self.version = version
         self.saveDir = saveDir
         self.w = ROOT.RooWorkspace( ws_name, "workspace") ; 
+        self.bin_size = 1.
 
+    # import into workspace
     def imp(self, obj):
         getattr(self.w,"import")(obj, ROOT.RooCmdArg())
 
-    def save(self, data=None, pdfs=[], legs=[], ran=ROOT.RooCmdArg(), n_par=1, title=""):
+    # define the category 
+    def add_category(self, cat_btag="Had_MT", cat_kin="MinPt150_DH1p6"):
+        self.cat_btag = cat_btag
+        self.cat_kin = cat_kin
 
+    # create and import the fitting variable
+    def create_mass(self, name="MassFSR", xmin=550., xmax=1200.):        
+        self.x = ROOT.RooRealVar("x", "", 400., 2000.)
+        self.x_name = name
+        self.x.setRange(name, xmin, xmax)
+        for k in FitParam.keys():
+            self.x.setRange(k, FitParam[k]['fit_range'][0], FitParam[k]['fit_range'][1])
+        self.imp(self.x)
+    
+    # save plots to png
+    def save(self, data=None, pdfs=[], legs=[], ran="", n_par=1, title=""):
+
+        #return
         c1 = ROOT.TCanvas("c1_"+title,"c1",600,600)
 
         leg = ROOT.TLegend(0.40,0.65,0.80,0.88, "","brNDC")
@@ -68,9 +87,10 @@ class XbbFactory:
         leg.SetFillStyle(0)
         leg.SetBorderSize(0)
         leg.SetTextSize(0.03)
-        leg.SetFillColor(10)
-        
-        frame = self.x.frame(ran)
+        leg.SetFillColor(10)    
+
+        self.x.setRange( FitParam[ran]['fit_range'][0], FitParam[ran]['fit_range'][1] )
+        frame = self.x.frame(RooFit.Range(ran))
         frame.SetName("frame")
         frame.SetTitle(title)
         data.plotOn(frame, RooFit.Name("data"))
@@ -86,17 +106,52 @@ class XbbFactory:
         leg.Draw()
         
         c1.SaveAs(self.saveDir+"/"+title+".png")
+        return
 
-    def add_category(self, cat_btag="Had_MT", cat_kin="MinPt150_DH1p6"):
-        self.cat_btag = cat_btag
-        self.cat_kin = cat_kin
+    # add a signal sample to the ws
+    def add_sgn_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, set_param_const=True):
 
-    def create_mass(self, name="MassFSR", xmin=550., xmax=1200.):        
-        self.x = ROOT.RooRealVar("x", "", xmin, xmax)
-        self.x_name = name
-        self.x.setRange(name, xmin, xmax)
-        self.imp(self.x)
+        hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
+        print hname
+        h = self.file.Get(hname)
+        if rebin_factor>1. :
+            h.Rebin(rebin_factor)
+
+        self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
+        data_sgn = ROOT.RooDataHist("data_sgn_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
+        self.imp(data_sgn)
+
+        norm = data_sgn.sumEntries()
+
+        hist_pdf_sgn = ROOT.RooHistPdf("hist_pdf_sgn_"+sgn_name,"", ROOT.RooArgSet(self.x), data_sgn, 0)        
+        hist_pdf_sgn_norm = ROOT.RooRealVar("hist_pdf_sgn_"+sgn_name+"_norm", "signal normalisation", norm )
+        self.imp(hist_pdf_sgn)
+        self.imp(hist_pdf_sgn_norm)
+
+        mean = ROOT.RooRealVar("mean_sgn_"+sgn_name, "", FitParam[sgn_name]['mean'][0], FitParam[sgn_name]['mean'][1])
+        sigma = ROOT.RooRealVar("sigma_sgn_"+sgn_name, "", FitParam[sgn_name]['sigma'][0], FitParam[sgn_name]['sigma'][1])
+        xi = ROOT.RooRealVar("xi_sgn_"+sgn_name, "", FitParam[sgn_name]['xi'][0], FitParam[sgn_name]['xi'][1])
+        rho1 = ROOT.RooRealVar("rho1_sgn_"+sgn_name, "", FitParam[sgn_name]['rho1'][0], FitParam[sgn_name]['rho1'][1])
+        rho2 = ROOT.RooRealVar("rho2_sgn_"+sgn_name, "", FitParam[sgn_name]['rho2'][0], FitParam[sgn_name]['rho2'][1])
     
+        buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
+        buk_pdf_sgn_norm = ROOT.RooRealVar("buk_pdf_sgn_"+sgn_name+"_norm","", norm)
+
+        buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
+
+        self.save( data_sgn, [buk_pdf_sgn], ["Bukin"], sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
+
+        if set_param_const:
+            mean.setConstant()
+            sigma.setConstant()
+            xi.setConstant()
+            rho1.setConstant()
+            rho2.setConstant()
+
+        self.imp(buk_pdf_sgn)
+        self.imp(buk_pdf_sgn_norm)
+
+    # add signal systematics to ws
     def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0):
 
         shifts = {}
@@ -105,21 +160,25 @@ class XbbFactory:
             h = self.file.Get(hname)
             if rebin_factor>1. :
                 h.Rebin(rebin_factor)
-            norm = h.Integral()
 
+            self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
             data_sgn = ROOT.RooDataHist("data_sgn_"+syst+"_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
+            norm = data_sgn.sumEntries()
+
             hist_pdf_sgn = ROOT.RooHistPdf("hist_pdf_sgn_"+syst+"_"+sgn_name,"", ROOT.RooArgSet(self.x), data_sgn, 0)        
             mean = ROOT.RooRealVar("mean_sgn_"+syst+"_"+sgn_name, "", FitParam[sgn_name]['mean'][0], FitParam[sgn_name]['mean'][1])
             sigma = ROOT.RooRealVar("sigma_sgn_"+syst+"_"+sgn_name, "", FitParam[sgn_name]['sigma'][0], FitParam[sgn_name]['sigma'][1])
             mean.setVal( self.w.var("mean_sgn_"+sgn_name).getVal() )
             sigma.setVal( self.w.var("sigma_sgn_"+sgn_name).getVal() )
-            if "JEC" in syst:
-                sigma.setConstant()
-            if "JER" in syst:
-                mean.setConstant()
             xi = ROOT.RooRealVar("xi_sgn_"+syst+"_"+sgn_name, "", self.w.var("xi_sgn_"+sgn_name).getVal())
             rho1 = ROOT.RooRealVar("rho1_sgn_"+syst+"_"+sgn_name, "", self.w.var("rho1_sgn_"+sgn_name).getVal())
             rho2 = ROOT.RooRealVar("rho2_sgn_"+syst+"_"+sgn_name, "", self.w.var("rho2_sgn_"+sgn_name).getVal())
+            if "JEC" in syst:
+                mean.setConstant(0)
+                sigma.setConstant(1)
+            if "JER" in syst:
+                mean.setConstant(1)
+                sigma.setConstant(0)
             xi.setConstant()
             rho1.setConstant()
             rho2.setConstant()
@@ -155,54 +214,10 @@ class XbbFactory:
 
         pdfs = [ self.w.pdf("buk_pdf_sgn"+syst+"_"+sgn_name) for syst in ["","_JECUp", "_JECDown", "_JERUp", "_JERDown"]]
         legs = ["Nominal", "JEC up", "JEC down", "JER up", "JER down"]
-        self.save( self.w.data("data_sgn_"+sgn_name), pdfs, legs, RooFit.Range(sgn_name), 5, 
-                   self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name+"JEC_JER")
 
+        self.save( self.w.data("data_sgn_"+sgn_name), pdfs, legs, sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name+"_JEC-JER")
 
-    def add_sgn_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, set_param_const=True):
-
-        hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
-        print hname
-        h = self.file.Get(hname)
-        if rebin_factor>1. :
-            h.Rebin(rebin_factor)
-
-        norm = h.Integral()
-
-        data_sgn = ROOT.RooDataHist("data_sgn_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
-        self.imp(data_sgn)
-
-        hist_pdf_sgn = ROOT.RooHistPdf("hist_pdf_sgn_"+sgn_name,"", ROOT.RooArgSet(self.x), data_sgn, 0)        
-        hist_pdf_sgn_norm = ROOT.RooRealVar("hist_pdf_sgn_"+sgn_name+"_norm", "signal normalisation", norm )
-        self.imp(hist_pdf_sgn)
-        self.imp(hist_pdf_sgn_norm)
-
-        mean = ROOT.RooRealVar("mean_sgn_"+sgn_name, "", FitParam[sgn_name]['mean'][0], FitParam[sgn_name]['mean'][1])
-        sigma = ROOT.RooRealVar("sigma_sgn_"+sgn_name, "", FitParam[sgn_name]['sigma'][0], FitParam[sgn_name]['sigma'][1])
-        xi = ROOT.RooRealVar("xi_sgn_"+sgn_name, "", FitParam[sgn_name]['xi'][0], FitParam[sgn_name]['xi'][1])
-        rho1 = ROOT.RooRealVar("rho1_sgn_"+sgn_name, "", FitParam[sgn_name]['rho1'][0], FitParam[sgn_name]['rho1'][1])
-        rho2 = ROOT.RooRealVar("rho2_sgn_"+sgn_name, "", FitParam[sgn_name]['rho2'][0], FitParam[sgn_name]['rho2'][1])
-    
-        buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
-        buk_pdf_sgn_norm = ROOT.RooRealVar("buk_pdf_sgn_"+sgn_name+"_norm","", norm)
-
-        self.x.setRange(sgn_name, FitParam[sgn_name]['range'][0], FitParam[sgn_name]['range'][1])
-        buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
-
-        self.save( data_sgn, [buk_pdf_sgn], ["Bukin"], RooFit.Range(sgn_name) , 5, 
-                   self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
-
-        if set_param_const:
-            mean.setConstant()
-            sigma.setConstant()
-            xi.setConstant()
-            rho1.setConstant()
-            rho2.setConstant()
-
-        self.imp(buk_pdf_sgn)
-        self.imp(buk_pdf_sgn_norm)
-
-
+    # add background pdf to ws
     def add_bkg_to_ws(self, pdf_name="dijet", rebin_factor=1.0, set_param_const=False):
 
         hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
@@ -211,10 +226,11 @@ class XbbFactory:
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
-        norm = h.Integral()
-
+        self.x.setRange( FitParam[pdf_name]['fit_range'][0], FitParam[pdf_name]['fit_range'][1] )
         data_bkg = ROOT.RooDataHist("data_bkg", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_bkg)
+
+        norm = data_bkg.sumEntries()
 
         hist_pdf_bkg = ROOT.RooHistPdf("hist_pdf_bkg","", ROOT.RooArgSet(self.x), data_bkg, 0)        
         hist_pdf_bkg_norm = ROOT.RooRealVar("hist_pdf_bkg_norm", "", norm )
@@ -233,11 +249,9 @@ class XbbFactory:
         pdf_bkg = ROOT.RooGenericPdf(pdf_name+"_pdf_bkg", formula, ROOT.RooArgList(self.x,p0,p1,p2))
         pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
 
-        self.x.setRange(pdf_name, FitParam[pdf_name]['range'][0], FitParam[pdf_name]['range'][1])
         pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name))
 
-        self.save( data_bkg, [pdf_bkg], [pdf_name], RooFit.Range(pdf_name) , 2, 
-                   self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
+        self.save( data_bkg, [pdf_bkg], [pdf_name], pdf_name, 2, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
 
         if set_param_const:
             p0.setConstant()
@@ -247,16 +261,27 @@ class XbbFactory:
         self.imp(pdf_bkg)
         self.imp(pdf_bkg_norm)
 
+    # add data_obs to ws
     def add_data_to_ws(self, rebin_factor=1.0):
 
         hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
         h = self.file.Get(hname)
         if rebin_factor>1. :
-            h.Rebin(rebin_factor)
+            h.Rebin(rebin_factor)            
+
+        # set default range to Range(self.x_name)
+        self.w.var("x").setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
+
+        self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         data_obs = ROOT.RooDataHist("data_obs", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_obs)
+        self.bin_size = data_obs.binVolume(ROOT.RooArgSet(self.x))
 
+    def get_save_name(self):        
+        return  self.saveDir+self.ws_name+"_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)-self.bin_size*0.5))+"to"+("%.0f" % (self.x.getMax(self.x_name)+self.bin_size*0.5))
+
+    # create the ws
     def create_workspace(self, signals=[]):                            
 
         for sgn in signals:
@@ -267,8 +292,7 @@ class XbbFactory:
         self.add_data_to_ws(rebin_factor=-1)
 
         self.w.Print()
-        savename = self.saveDir+self.ws_name+"_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % self.x.getMin())+"to"+("%.0f" % self.x.getMax())
-        self.w.writeToFile(savename+".root")
+        self.w.writeToFile(self.get_save_name()+".root")
 
         self.file.Close()
 
