@@ -32,7 +32,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [550., 900.],
+        'fit_range' : [500., 900.],
         },
     "Spin0_M850" : {
         'mean' : [750.,900.],
@@ -41,6 +41,22 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [550., 1100.],
+        },
+    "Spin0_M1000" : {
+        'mean' : [800.,1100.],
+        'sigma' : [50., 400.],
+        'xi' : [-3., 3.],
+        'rho1' : [-1., 1.],
+        'rho2' : [-1., 1.],
+        'fit_range' : [600., 1200.],
+        },
+    "Spin0_M1200" : {
+        'mean' : [900.,1300.],
+        'sigma' : [50., 400.],
+        'xi' : [-3., 3.],
+        'rho1' : [-1., 1.],
+        'rho2' : [-1., 1.],
+        'fit_range' : [700., 1400.],
         }
 }
 
@@ -82,8 +98,8 @@ class XbbFactory:
         #return
         c1 = ROOT.TCanvas("c1_"+title,"c1",600,600)
 
-        leg = ROOT.TLegend(0.40,0.65,0.80,0.88, "","brNDC")
-        leg.SetHeader( "Range: [%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
+        leg = ROOT.TLegend(0.40,0.65,0.70,0.88, "","brNDC")
+        leg.SetHeader( "[%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
         leg.SetFillStyle(0)
         leg.SetBorderSize(0)
         leg.SetTextSize(0.03)
@@ -94,15 +110,15 @@ class XbbFactory:
         frame.SetName("frame")
         frame.SetTitle(title)
         data.plotOn(frame, RooFit.Name("data"))
-        offset = 2 if len(pdfs)==1 else 0
         for p,pdf in enumerate(pdfs):
-            pdf.plotOn(frame, RooFit.LineColor(offset+p), RooFit.LineStyle(ROOT.kSolid if p%2 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
+            opt_color = RooFit.LineColor(ROOT.kRed) if len(pdfs)==1 else RooFit.LineColor(1+p) 
+            pdf.plotOn(frame, opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
 
         c1.cd()  
         frame.Draw()
         for p,pdf in enumerate(pdfs):
             chi2 = frame.chiSquare(pdf.GetName(), "data", n_par )
-            leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+", #chi^{2}/ndof=%.2f" % chi2, "L")
+            leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+", #chi^{2}=%.2f" % chi2, "L")
         leg.Draw()
         
         c1.SaveAs(self.saveDir+"/"+title+".png")
@@ -289,7 +305,7 @@ class XbbFactory:
             self.add_syst_to_ws(sgn_name=sgn, rebin_factor=400)
         
         self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=400, set_param_const=False)
-        self.add_data_to_ws(rebin_factor=-1)
+        self.add_data_to_ws(rebin_factor=200)
 
         self.w.Print()
         self.w.writeToFile(self.get_save_name()+".root")
@@ -301,5 +317,6 @@ class XbbFactory:
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V3", saveDir="/scratch/bianchi/")
 xbbfact.add_category(cat_btag="Had_LT", cat_kin="MinPt150_DH1p6")
 xbbfact.create_mass(name="MassFSR", xmin=550., xmax=1200.)
-xbbfact.create_workspace( ["Spin0_M650"] )
+xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200" ] )
+#xbbfact.create_workspace( ["Spin0_M650"] )
 
