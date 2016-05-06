@@ -33,15 +33,11 @@ Produce histograms and total signal/background templates:
 A ROOT file with all shapes is saved under plots/VERSION/plots.root
 Produce the workspace:
 
-> root -b
-
-> root [0] .L create_workspace.C++
-
-> root [1] create_all()
+> python create_workspace.py
 
 Dump the workspace into a datacard:
 
-> dump_to_datacard.py
+> python dump_to_datacard.py
 
 Go into a release with an official Combine package (CMSSW_7_1_5).
 To run the limits do:
