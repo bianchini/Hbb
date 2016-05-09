@@ -71,11 +71,11 @@ for cat in [
         'dijet',
         ]:
         for sgn in [
-            'Spin0_M650',
+            #'Spin0_M650',
             'Spin0_M750',
-            'Spin0_M850',
-            'Spin0_M1000',
-            'Spin0_M1200',
+            #'Spin0_M850',
+            #'Spin0_M1000',
+            #'Spin0_M1200',
             ]:
             for x_range in [
                 '550to1200'

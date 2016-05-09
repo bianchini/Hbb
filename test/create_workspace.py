@@ -98,41 +98,75 @@ class XbbFactory:
         #return
         c1 = ROOT.TCanvas("c1_"+title,"c1",600,600)
         if add_pulls:
-            c1.Divide(2)
+            pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
+            pad1.SetBottomMargin(0) 
+            pad1.SetGridx()  
+            pad1.Draw()      
+            pad1.cd()    
 
-        leg = ROOT.TLegend(0.40,0.65,0.70,0.88, "","brNDC")
+        leg = ROOT.TLegend(0.15,0.65,0.45,0.88, "","brNDC")
         leg.SetHeader( "[%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
         leg.SetFillStyle(0)
         leg.SetBorderSize(0)
-        leg.SetTextSize(0.03)
+        leg.SetTextSize(0.04)
         leg.SetFillColor(10)    
 
         self.x.setRange( FitParam[ran]['fit_range'][0], FitParam[ran]['fit_range'][1] )
         frame = self.x.frame(RooFit.Range(ran))
         frame.SetName("frame")
         frame.SetTitle(title)
+        frame.GetYaxis().SetTitleSize(20)
+        frame.GetYaxis().SetTitleFont(43)
+        frame.GetYaxis().SetTitleOffset(1.35)
+        frame.GetYaxis().SetLabelFont(43) 
+        frame.GetYaxis().SetLabelSize(15)
+
         data.plotOn(frame, RooFit.Name("data"))
         for p,pdf in enumerate(pdfs):
             opt_color = RooFit.LineColor(ROOT.kRed) if len(pdfs)==1 else RooFit.LineColor(1+p) 
             if res!=None:
-                pdf.plotOn(frame, RooFit.VisualizeError(res, 1, ROOT.kFALSE), opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
+                pdf.plotOn(frame, RooFit.VisualizeError(res, 1, ROOT.kFALSE), RooFit.LineColor(ROOT.kGreen), RooFit.LineStyle(ROOT.kSolid), RooFit.FillColor(ROOT.kGreen) )
+                pdf.plotOn(frame, RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf.GetName()))
                 data.plotOn(frame, RooFit.Name("data"))
             else:
                 pdf.plotOn(frame, opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
 
-        c1.cd(1)  
+        if add_pulls:
+            pad1.cd()
+
         frame.Draw()
         for p,pdf in enumerate(pdfs):
             chi2 = frame.chiSquare(pdf.GetName(), "data", n_par )
-            leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+", #chi^{2}=%.2f" % chi2, "L")
+            leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+ ((", #chi^{2}=%.2f" % chi2) if len(pdfs)==1 else ""), "L")
         leg.Draw()
 
         if add_pulls:
-            c1.cd(2)
+            c1.cd()
+            pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
+            pad2.SetTopMargin(0)
+            pad2.SetBottomMargin(0.2)
+            pad2.SetGridx()   
+            pad2.SetGridy() 
+            pad2.Draw()
+            pad2.cd()       
             frame2 = self.x.frame(RooFit.Range(ran))
             frame2.SetName("frame2")
             frame2.SetTitle(title)        
             hresid = frame.residHist()
+            frame2.SetTitle("") 
+            frame2.GetYaxis().SetTitle("Residuals")
+            frame2.GetYaxis().SetNdivisions(505)
+            frame2.GetYaxis().SetTitleSize(20)
+            frame2.GetYaxis().SetTitleFont(43)
+            frame2.GetYaxis().SetTitleOffset(1.35)
+            frame2.GetYaxis().SetLabelFont(43) 
+            frame2.GetYaxis().SetLabelSize(15)
+            frame2.GetXaxis().SetTitle(self.x_name)
+            frame2.GetXaxis().SetTitleSize(20)
+            frame2.GetXaxis().SetTitleFont(43)
+            frame2.GetXaxis().SetTitleOffset(4.)
+            frame2.GetXaxis().SetLabelFont(43) 
+            frame2.GetXaxis().SetLabelSize(15)            
             frame2.addPlotable(hresid,"P")
             frame2.Draw()
 
@@ -156,6 +190,7 @@ class XbbFactory:
 
         hist_pdf_sgn = ROOT.RooHistPdf("hist_pdf_sgn_"+sgn_name,"", ROOT.RooArgSet(self.x), data_sgn, 0)        
         hist_pdf_sgn_norm = ROOT.RooRealVar("hist_pdf_sgn_"+sgn_name+"_norm", "signal normalisation", norm )
+        hist_pdf_sgn_norm.setConstant(1)
         self.imp(hist_pdf_sgn)
         self.imp(hist_pdf_sgn_norm)
 
@@ -167,17 +202,18 @@ class XbbFactory:
     
         buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
         buk_pdf_sgn_norm = ROOT.RooRealVar("buk_pdf_sgn_"+sgn_name+"_norm","", norm)
+        buk_pdf_sgn_norm.setConstant(1)
 
         res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
 
-        self.plot( data_sgn, [buk_pdf_sgn], res, False, ["Bukin"], sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
+        self.plot( data=data_sgn, pdfs=[buk_pdf_sgn], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
 
         if set_param_const:
-            mean.setConstant()
-            sigma.setConstant()
-            xi.setConstant()
-            rho1.setConstant()
-            rho2.setConstant()
+            mean.setConstant(1)
+            sigma.setConstant(1)
+            xi.setConstant(1)
+            rho1.setConstant(1)
+            rho2.setConstant(1)
 
         self.imp(buk_pdf_sgn)
         self.imp(buk_pdf_sgn_norm)
@@ -210,9 +246,9 @@ class XbbFactory:
             if "JER" in syst:
                 mean.setConstant(1)
                 sigma.setConstant(0)
-            xi.setConstant()
-            rho1.setConstant()
-            rho2.setConstant()
+            xi.setConstant(1)
+            rho1.setConstant(1)
+            rho2.setConstant(1)
 
             buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+syst+"_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
             buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
@@ -251,7 +287,7 @@ class XbbFactory:
     # add background pdf to ws
     def add_bkg_to_ws(self, pdf_name="dijet", rebin_factor=1.0, set_param_const=False):
 
-        hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
+        hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
         h = self.file.Get(hname)
         if rebin_factor>1. :
@@ -265,6 +301,7 @@ class XbbFactory:
 
         hist_pdf_bkg = ROOT.RooHistPdf("hist_pdf_bkg","", ROOT.RooArgSet(self.x), data_bkg, 0)        
         hist_pdf_bkg_norm = ROOT.RooRealVar("hist_pdf_bkg_norm", "", norm )
+        hist_pdf_bkg_norm.setConstant(0)
         self.imp(hist_pdf_bkg)
         self.imp(hist_pdf_bkg_norm)
 
@@ -273,21 +310,22 @@ class XbbFactory:
         
         p0 = ROOT.RooRealVar("p0_bkg_"+pdf_name, "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
         p0.setVal(0.)
-        p0.setConstant()
+        p0.setConstant(1)
         p1 = ROOT.RooRealVar("p1_bkg_"+pdf_name, "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
         p2 = ROOT.RooRealVar("p2_bkg_"+pdf_name, "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
     
         pdf_bkg = ROOT.RooGenericPdf(pdf_name+"_pdf_bkg", formula, ROOT.RooArgList(self.x,p0,p1,p2))
         pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
+        pdf_bkg_norm.setConstant(0)
 
         res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
 
-        self.plot( data_bkg, [pdf_bkg], None, False, [pdf_name], pdf_name, 2, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
+        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title=self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
 
         if set_param_const:
-            p0.setConstant()
-            p1.setConstant()
-            p2.setConstant()
+            p0.setConstant(1)
+            p1.setConstant(1)
+            p2.setConstant(1)
 
         self.imp(pdf_bkg)
         self.imp(pdf_bkg_norm)
@@ -308,6 +346,8 @@ class XbbFactory:
         data_obs = ROOT.RooDataHist("data_obs", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_obs)
         self.bin_size = data_obs.binVolume(ROOT.RooArgSet(self.x))
+
+        self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title=self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_data")
 
     def get_save_name(self):        
         return  self.saveDir+self.ws_name+"_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)-self.bin_size*0.5))+"to"+("%.0f" % (self.x.getMax(self.x_name)+self.bin_size*0.5))
@@ -333,5 +373,5 @@ xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V3", s
 xbbfact.add_category(cat_btag="Had_LT", cat_kin="MinPt150_DH1p6")
 xbbfact.create_mass(name="MassFSR", xmin=550., xmax=1200.)
 #xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200" ] )
-xbbfact.create_workspace( ["Spin0_M650"] )
+xbbfact.create_workspace( ["Spin0_M750"] )
 
