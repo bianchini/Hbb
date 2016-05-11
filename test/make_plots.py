@@ -15,7 +15,7 @@ def k_factor_QCD():
     return 1.45
 
 def get_samples():
-    samples = ["Run2015D",
+    samples = ["Run2015",
                "HT100to200", 
                "HT200to300", 
                "HT300to500", 
@@ -25,6 +25,10 @@ def get_samples():
                "HT1500to2000", 
                "HT2000toInf",
                "TT_ext3",
+               "ST_t_atop",
+               "ST_t_top",
+               "ST_tW_atop",
+               "ST_tW_top", 
                "Spin0_M650",
                "Spin0_M750",
                "Spin0_M850",
@@ -40,16 +44,16 @@ def get_samples():
 
 def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix = "", option_signal = "HIST", option_bkg = "PE", option_data = "PE", option_shape = "", out_name = "plot", version = "V3"):
     
-    out = ROOT.TFile.Open("plots/"+version+"/"+out_name+".root", "UPDATE")
+    out = ROOT.TFile.Open("/scratch/bianchi/"+version+"/"+out_name+".root", "UPDATE")
     if out!=None and out.IsZombie():
         print "Remove file because is corrupted" 
-        os.system('rm plots/'+version+'/'+out_name+'.root')
-        out = ROOT.TFile.Open("plots/"+version+"/"+out_name+".root", "RECREATE")
+        os.system('rm /scratch/bianchi/'+version+'/'+out_name+'.root')
+        out = ROOT.TFile.Open("/scratch/bianchi/"+version+"/"+out_name+".root", "RECREATE")
 
     s = ROOT.THStack("stack_background_"+h_name,"");
 
     leg = ROOT.TLegend(0.45,0.55,0.80,0.88, "","brNDC");
-    leg.SetHeader("Selection: "+dir_name+", L=2.63 fb^{-1}");
+    leg.SetHeader("#splitline{CMS Preliminary 2015, L=2.63 fb^{-1}}{Selection: "+dir_name+"}");
     leg.SetFillStyle(0);
     leg.SetBorderSize(0);
     leg.SetTextSize(0.03);
@@ -70,7 +74,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
         if h_sample==None:
             continue
 
-        if sample=="Run2015D":
+        if "Run2015" in sample:
             data = h_sample.Clone("data_"+h_name)
             data.SetDirectory(0)
             data.SetMarkerColor(ROOT.kBlack);
@@ -104,7 +108,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
             hqcd.append(ht)
             hbackground.append(ht)
 
-        elif "TT_" in sample:
+        elif "TT_" in sample or "ST_" in sample:
             top = h_sample.Clone("top_"+h_name)
             top.SetDirectory(0)
             top.SetFillColor(ROOT.kMagenta)
@@ -165,14 +169,14 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     s.SetMaximum( max(data.GetMaximum()*1.5, background.GetMaximum()*1.5) )
     s.Draw("HIST")
     if(s.GetHistogram()!=None):
-        s.GetHistogram().SetXTitle(h_name.split('_')[4])
+        s.GetHistogram().SetXTitle(h_name.split('_')[-1])
         s.GetHistogram().SetTitle(dir_name)
 
     for signal in hsignal:
         if "M750" not in signal[1]:
             continue
         if option_shape=="Shape":
-            signal[0].Scale(background.Integral()/signal[0].Integral())
+            signal[0].Scale(background.Integral()/signal[0].Integral() if signal[0].Integral()>0. else 1.0)
             leg.AddEntry(signal[0], signal[1]+" normalised to Bkg.", "L") 
         else:
             leg.AddEntry(signal[0], signal[1]+" , #sigma=1.0 pb", "L")
@@ -234,14 +238,22 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
         hratioErr.SetBinError(b+1, err/val if val>0. else 0.)
     hratioErr.Draw(option_bkg+"E2SAME")
 
-    c.SaveAs("plots/"+version+"/"+h_name+postfix+".png")  
+    c.SaveAs("/scratch/bianchi/"+version+"/"+h_name+postfix+".png")  
   
     out.cd()
-    s.Write("", ROOT.TObject.kOverwrite);
-    for h in hsignal:
-        h[0].Write("", ROOT.TObject.kOverwrite)
-    background.Write("", ROOT.TObject.kOverwrite)
-    data.Write("", ROOT.TObject.kOverwrite)
+    # save only once
+    if option_shape!="Shape":
+        if not out.cd(dir_name):
+            out.mkdir(dir_name)
+            out.cd(dir_name)
+        for h in hsignal:
+            h[0].Write("", ROOT.TObject.kOverwrite)
+        background.Write("", ROOT.TObject.kOverwrite)
+        top.Write("", ROOT.TObject.kOverwrite)
+        qcd.Write("", ROOT.TObject.kOverwrite)
+        data.Write("", ROOT.TObject.kOverwrite)
+        #s.Write("", ROOT.TObject.kOverwrite);
+
     out.Close()
 
     ROOT.gDirectory.Remove(c)
@@ -258,7 +270,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
 
 ########################################################
 
-def plot_all( version = "V3" ):
+def plot_all( version = "V4" ):
 
     files = {}
     for ns,sample in enumerate( get_samples() ):    
@@ -268,44 +280,42 @@ def plot_all( version = "V3" ):
             continue
         files[sample] = f
 
-    for cat in [
-        "Had_LT_MinPt150_DH2p0",
-        "Had_LT_MinPt150_DH1p6",
-        "Had_LT_CSVSFUp_MinPt150_DH2p0",
-        "Had_LT_CSVSFUp_MinPt150_DH1p6",
-        "Had_LT_CSVSFDown_MinPt150_DH2p0",
-        "Had_LT_CSVSFDown_MinPt150_DH1p6"
-        ]:
-        for hist in [    
-            "MinJetPt",
-            "MaxJetPt",
-            "Mass",
-            "MassAK08",
-            "Pt",
-            "Eta",
-            "DeltaEta",
-            "DeltaPhi",
-            "MaxJetCSV",
-            "MinJetCSV",
-            "Vtype",
-            "njet30",
-            "njet50",
-            "njet70",
-            "njet100",
-            "MET",
-            "PtBalance",
-            "MaxJetPtoMass",
-            "MinJetPtoMass",
-            "MaxEta",
-            "MassFSR",
-            "MassFSR_JECUp",
-            "MassFSR_JECDown",
-            "MassFSR_JERUp",
-            "MassFSR_JERDown"
-            ]:
-            plot(files, cat, cat+"_"+hist, "",       "HIST", "PE", "PE", "",      "plot", "V3")
-            plot(files, cat, cat+"_"+hist, "_shape", "HIST", "PE", "PE", "Shape", "plot", "V3")
-            exit(1)
+    for cat_btag in ["Had_LT", "Had_MT", "Lep_LT"]:
+        for cat_kin in ["MinPt150_DH2p0", "MinPt150_DH1p6", "MinPt180_DH2p0", "MinPt180_DH1p6"]:            
+            for syst in ["", "_CSVSFUp", "_CSVSFDown"]:
+                if cat_btag=="Lep_LT" and syst!="":
+                    continue
+                for hist in [    
+                    "MassFSR",
+                    "MassFSR_JECUp",
+                    "MassFSR_JECDown",
+                    "MassFSR_JERUp",
+                    "MassFSR_JERDown",
+                    "MinJetPt",
+                    "MaxJetPt",
+                    "Mass",
+                    "MassAK08",
+                    "Pt",
+                    "Eta",
+                    "DeltaEta",
+                    "DeltaPhi",
+                    "MaxJetCSV",
+                    "MinJetCSV",
+                    "Vtype",
+                    "njet30",
+                    "njet50",
+                    "njet70",
+                    "njet100",
+                    "MET",
+                    "PtBalance",
+                    "MaxJetPtoMass",
+                    "MinJetPtoMass",
+                    "MaxEta",
+                    ]:
+                    cat = cat_btag+syst+"_"+cat_kin
+                    plot(files=files, dir_name=cat, h_name=cat+"_"+hist, postfix="",       option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="",      out_name="plot", version=version)
+                    plot(files=files, dir_name=cat, h_name=cat+"_"+hist, postfix="_shape", option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="Shape", out_name="plot", version=version)
+                    #exit(1)
 
     for f in files.keys():
         files[f].Close()

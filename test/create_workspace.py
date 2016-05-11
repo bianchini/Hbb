@@ -178,7 +178,7 @@ class XbbFactory:
 
         hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
         print hname
-        h = self.file.Get(hname)
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
@@ -224,7 +224,7 @@ class XbbFactory:
         shifts = {}
         for syst in ["JECUp", "JECDown", "JERUp", "JERDown"]:
             hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+syst+"_"+sgn_name
-            h = self.file.Get(hname)
+            h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
             if rebin_factor>1. :
                 h.Rebin(rebin_factor)
 
@@ -257,7 +257,7 @@ class XbbFactory:
 
         for syst in ["CSVSFUp", "CSVSFDown"]:
             hname = "signal_"+self.cat_btag+"_"+syst+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
-            h = self.file.Get(hname)
+            h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
             norm = self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()
             if h!=None:
                 norm = h.Integral()
@@ -289,7 +289,7 @@ class XbbFactory:
 
         hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
-        h = self.file.Get(hname)
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
@@ -335,9 +335,13 @@ class XbbFactory:
 
         hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
-        h = self.file.Get(hname)
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
         if rebin_factor>1. :
             h.Rebin(rebin_factor)            
+
+        data_norm = h.Integral()
+        data_notm_int = int(data_norm)
+        h.Scale(data_notm_int/data_norm)
 
         # set default range to Range(self.x_name)
         self.w.var("x").setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
@@ -360,7 +364,7 @@ class XbbFactory:
             self.add_syst_to_ws(sgn_name=sgn, rebin_factor=400)
         
         self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=500, set_param_const=False)
-        self.add_data_to_ws(rebin_factor=-1)
+        self.add_data_to_ws(rebin_factor=10)
 
         self.w.Print()
         self.w.writeToFile(self.get_save_name()+".root")
@@ -369,7 +373,7 @@ class XbbFactory:
 
 ###########################
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V3", saveDir="/scratch/bianchi/")
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/V4/")
 xbbfact.add_category(cat_btag="Had_LT", cat_kin="MinPt150_DH1p6")
 xbbfact.create_mass(name="MassFSR", xmin=550., xmax=1200.)
 #xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200" ] )

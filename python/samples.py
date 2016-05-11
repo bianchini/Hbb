@@ -14,6 +14,10 @@ samples_V21 = {
   "HT2000toInf" :  ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT2000toInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8//VHBB_HEPPY_V21_QCD_HT2000toInf_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1//160316_144521/0000/", 25.24], 
   "M750" : ["root://eoscms.cern.ch//eos/cms/store/group/cmst3/user/degrutto/VHBBHeppyV21_add/RSGravitonTobb_kMpl001_M_750_Tune4C_13TeV_pythia8/VHBB_HEPPY_F21_add_RSGravitonTobb_kMpl001_M_750_Tune4C_13TeV_Py8__khurana-MINIAODSIM-17d438ff51ec6b3cada9e499a5a978e0/160405_155957/0000/", 1.0],
   "TT_ext3" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/TT_TuneCUETP8M1_13TeV-powheg-pythia8/VHBB_HEPPY_V21a_TT_TuneCUETP8M1_13TeV-powheg-Py8__fall15MAv2-pu25ns15v1_76r2as_v12_ext3-v1/160324_170631/0000/", 832.],
+  "ST_t_top" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/ntuples/V21/user/arizzi/VHBBHeppyV21/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/VHBB_HEPPY_V21_ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-Py8_TuneCUETP8M1__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_151136/0000/", 45.34],
+  "ST_t_atop" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/ntuples/V21/user/arizzi/VHBBHeppyV21/ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/VHBB_HEPPY_V21_ST_t-channel_top_4f_leptonDecays_13TeV-powheg-Py8_TuneCUETP8M1__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_145139/0000/", 26.98 ],
+   "ST_tW_top" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/ntuples/V21/user/arizzi/VHBBHeppyV21/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/VHBB_HEPPY_V21_ST_tW_top_5f_inclusiveDecays_13TeV-powheg-Py8_TuneCUETP8M1__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_145310/0000/",  35.6],
+  "ST_tW_atop" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/ntuples/V21/user/arizzi/VHBBHeppyV21/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/VHBB_HEPPY_V21_ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-Py8_TuneCUETP8M1__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_145243/0000/",  35.6],
   "Spin0_M650" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/Xbb/GluGluSpin0ToBBbar_W_1p0_M_650_TuneCUEP8M1_13TeV_pythia8/VHBB_HEPPY_F21_add_GluGluSpin0ToBBbar_W_1p0_M_650_TuneCUEP8M1_13TeV_Py8__bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/160430_172522/0000/", 1.0],
   "Spin0_M750" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/Xbb//GluGluSpin0ToBBbar_W_1p0_M_750_TuneCUEP8M1_13TeV_pythia8/VHBB_HEPPY_F21_add_GluGluSpin0ToBBbar_W_1p0_M_750_TuneCUEP8M1_13TeV_Py8__bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/160430_172549/0000/", 1.0],
   "Spin0_M850" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/Xbb/GluGluSpin0ToBBbar_W_1p0_M_850_TuneCUEP8M1_13TeV_pythia8/VHBB_HEPPY_F21_add_GluGluSpin0ToBBbar_W_1p0_M_850_TuneCUEP8M1_13TeV_Py8__bianchi-MiniAODv2-17d438ff51ec6b3cada9e499a5a978e0/160430_172620/0000/", 1.0],
@@ -50,5 +54,9 @@ samples_pruned = {
  "Spin2_M1000" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Spin2_M1000/",1.0],
  "Spin2_M1200" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Spin2_M1200/",1.0],
  "TT_ext3" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/TT_ext3/",832.],
+ "ST_t_top" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/ST_t_top/", 45.34],
+ "ST_t_atop" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/ST_t_atop/", 26.98],
+ "ST_tW_top" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/ST_tW_top/", 35.6],
+ "ST_tW_atop" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/ST_tW_atop/", 35.6],
 }
 

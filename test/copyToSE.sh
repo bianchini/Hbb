@@ -12,7 +12,7 @@ version=V3
 
 declare -a arr=(
     #Run2015D
-    Run2015C
+    #Run2015C
     #HT100to200
     #HT200to300
     #HT300to500
@@ -33,6 +33,10 @@ declare -a arr=(
     #Spin2_M1000
     #Spin2_M1200
     #TT_ext3
+    ST_t_top
+    ST_t_atop
+    ST_tW_top
+    ST_tW_atop
 )
 
 for i in ${arr[@]}
