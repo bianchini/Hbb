@@ -3,6 +3,7 @@ version = "V3"
 
 samples_V21 = {
   "Run2015D" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21//BTagCSV//VHBB_HEPPY_V21_BTagCSV__Run2015D-16Dec2015-v1/160317_132347/0000/", -1],
+  "Run2015C" : ["root://188.184.38.46:1094//store/group/phys_higgs/hbb/ntuples/V21/user/arizzi/VHBBHeppyV21/BTagCSV/VHBB_HEPPY_V21_BTagCSV__Run2015C_25ns-16Dec2015-v1/160318_133752/0000/", -1],
   "HT100to200" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT100to200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/VHBB_HEPPY_V21_QCD_HT100to200_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_144616/0000/", 27990000],
   "HT200to300" : ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21//QCD_HT200to300_TuneCUETP8M1_13TeV-madgraphMLM-pythia8//VHBB_HEPPY_V21_QCD_HT200to300_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160316_151338/0000/", 1712000.],
   "HT300to500" :   ["root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/VHBB_HEPPY_V21_QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-Py8__fall15MAv2-pu25ns15v1_76r2as_v12-v1/160321_090315/0000/",347700.],
@@ -37,6 +38,7 @@ samples_pruned = {
  "HT2000toInf" :  ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/HT2000toInf/", 25.24], 
  "M750" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/M750/", 1.0],
  "Run2015D" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Run2015D/", -1],
+ "Run2015C" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Run2015C/", -1],
  "Spin0_M650" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Spin0_M650/",1.0],
  "Spin0_M750" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Spin0_M750/",1.0],
  "Spin0_M850" : ["dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"+version+"/Spin0_M850/",1.0],

@@ -106,7 +106,7 @@ if int(argv[2])<0:
 else:
   f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
 
-luminosity = 2540.
+luminosity = 2630.
 lumi_factor = sample_to_process[1]*luminosity/processed if processed>0 else -1
 print "Luminosity: %.0f pb-1 --- xsection: %.0f pb --- Processed: %.0f ==> Lumi factor: %.2f" % (luminosity, sample_to_process[1], processed, lumi_factor)
 
@@ -134,15 +134,16 @@ cuts_BTag = {
 cuts_MinPt = {
   #"All" :  lambda ev : True,
   #"MinPt200" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>200. if len(ev.hJCidx)==2 else False,
-  #"MinPt175" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>180. if len(ev.hJCidx)==2 else False,
-  "MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>160. if len(ev.hJCidx)==2 else False,
+  "MinPt180" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>180. if len(ev.hJCidx)==2 else False,
+  "MinPt160" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>160. if len(ev.hJCidx)==2 else False,
+  "MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
 }
 
 cuts_DH = {
   #"All" :  lambda ev : True,
   "DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
   "DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
-  #"DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
+  "DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
 }
 
 cuts_in_chain = False

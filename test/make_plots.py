@@ -48,8 +48,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
 
     s = ROOT.THStack("stack_background_"+h_name,"");
 
-    leg = ROOT.TLegend(0.45,0.45,0.80,0.88, "","brNDC");
-    leg.SetHeader("Selection: "+dir_name+", L=2.54 fb^{-1}");
+    leg = ROOT.TLegend(0.45,0.55,0.80,0.88, "","brNDC");
+    leg.SetHeader("Selection: "+dir_name+", L=2.63 fb^{-1}");
     leg.SetFillStyle(0);
     leg.SetBorderSize(0);
     leg.SetTextSize(0.03);
@@ -87,7 +87,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
         if "Spin" in sample:
             signal = h_sample.Clone("signal_"+h_name+"_"+sample+option_shape)
             signal.SetDirectory(0)
-            signal.SetLineColor(ROOT.kRed-len(hsignal) if "Spin0" in sample else ROOT.kBlue-len(hsignal))
+            signal.SetLineColor(ROOT.kRed if "Spin0" in sample else ROOT.kBlue)
             signal.SetLineStyle(ROOT.kDashed)
             signal.SetLineWidth(3)
             hsignal.append( [signal, sample] )
@@ -126,7 +126,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     qcd.SetLineColor(ROOT.kBlack)
     qcd.SetLineWidth(2)
     qcd.SetFillColor(0);
-    leg.AddEntry(qcd, "Multi-jet, K-factor=%.1f" % k_factor_QCD(), "F");
+    leg.AddEntry(qcd, "Multi-jet, K-factor=%.1f" % k_factor_QCD(), "L");
     qcd.Reset();
     for h in hqcd:
         qcd.Add(h,1.0)
@@ -135,7 +135,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     top.SetLineColor(ROOT.kMagenta)
     top.SetLineWidth(2)
     top.SetFillColor(0);
-    leg.AddEntry(top, "Top", "F");
+    leg.AddEntry(top, "Top", "L");
     top.Reset();
     for h in htop:
         top.Add(h,1.0)
@@ -152,7 +152,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     for h in hbackground:
         background.Add(h,1.0)
 
-    c = ROOT.TCanvas("c_"+dir_name+"_"+h_name, "canvas", 800, 800) 
+    c = ROOT.TCanvas("c_"+dir_name+"_"+h_name, "canvas", 600, 600) 
     pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)     
     if option_shape!="Shape":
         pad1.SetLogy(1)
@@ -165,10 +165,12 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     s.SetMaximum( max(data.GetMaximum()*1.5, background.GetMaximum()*1.5) )
     s.Draw("HIST")
     if(s.GetHistogram()!=None):
-        s.GetHistogram().SetXTitle(h_name)
+        s.GetHistogram().SetXTitle(h_name.split('_')[4])
         s.GetHistogram().SetTitle(dir_name)
 
     for signal in hsignal:
+        if "M750" not in signal[1]:
+            continue
         if option_shape=="Shape":
             signal[0].Scale(background.Integral()/signal[0].Integral())
             leg.AddEntry(signal[0], signal[1]+" normalised to Bkg.", "L") 
@@ -215,15 +217,22 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     hratio.GetYaxis().SetNdivisions(505)
     hratio.GetYaxis().SetTitleSize(20)
     hratio.GetYaxis().SetTitleFont(43)
-    hratio.GetYaxis().SetTitleOffset(1.55)
+    hratio.GetYaxis().SetTitleOffset(1.35)
     hratio.GetYaxis().SetLabelFont(43) 
     hratio.GetYaxis().SetLabelSize(15)
-    hratio.GetXaxis().SetTitle(h_name)
+    hratio.GetXaxis().SetTitle(h_name.split('_')[4])
     hratio.GetXaxis().SetTitleSize(20)
     hratio.GetXaxis().SetTitleFont(43)
     hratio.GetXaxis().SetTitleOffset(4.)
     hratio.GetXaxis().SetLabelFont(43) 
     hratio.GetXaxis().SetLabelSize(15)
+    hratioErr = background.Clone("hratioErr")
+    for b in range(hratioErr.GetNbinsX()+1):
+        val = hratioErr.GetBinContent(b+1)
+        err = hratioErr.GetBinError(b+1)
+        hratioErr.SetBinContent(b+1,1.0)
+        hratioErr.SetBinError(b+1, err/val if val>0. else 0.)
+    hratioErr.Draw(option_bkg+"E2SAME")
 
     c.SaveAs("plots/"+version+"/"+h_name+postfix+".png")  
   
@@ -296,6 +305,7 @@ def plot_all( version = "V3" ):
             ]:
             plot(files, cat, cat+"_"+hist, "",       "HIST", "PE", "PE", "",      "plot", "V3")
             plot(files, cat, cat+"_"+hist, "_shape", "HIST", "PE", "PE", "Shape", "plot", "V3")
+            exit(1)
 
     for f in files.keys():
         files[f].Close()
