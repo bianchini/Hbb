@@ -70,9 +70,12 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
         f = files[sample]
 
         count = f.Get("Count").GetBinContent(1)
-        h_sample = f.Get(dir_name+"/"+h_name)
+        h_sample = f.Get(dir_name+"/"+h_name).Clone(h_name+"_clone")
         if h_sample==None:
             continue
+
+        if "Lep" in dir_name and "Mass" in h_name and "toMass" not in h_name:
+            h_sample.Rebin(500 if "MassFSR" in h_name else 10)
 
         if "Run2015" in sample:
             data = h_sample.Clone("data_"+h_name)
@@ -280,8 +283,12 @@ def plot_all( version = "V4" ):
             continue
         files[sample] = f
 
-    for cat_btag in ["Had_LT", "Had_MT", "Lep_LT"]:
-        for cat_kin in ["MinPt150_DH2p0", "MinPt150_DH1p6", "MinPt180_DH2p0", "MinPt180_DH1p6"]:            
+    for cat_btag in [#"Had_LT", "Had_MT", 
+                     "Lep_LT"
+                     ]:
+        for cat_kin in ["MinPt150_DH2p0", 
+                        #"MinPt150_DH1p6", "MinPt180_DH2p0", "MinPt180_DH1p6"
+                        ]:            
             for syst in ["", "_CSVSFUp", "_CSVSFDown"]:
                 if cat_btag=="Lep_LT" and syst!="":
                     continue

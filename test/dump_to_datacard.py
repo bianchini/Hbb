@@ -15,32 +15,36 @@ def make_datacard( version='V3', ws_name='Xbb_workspace',
 
     outname = ws_name+'_'+cat+'_'+mass+'_'+x_range
     postfix = '_'+pdf_sgn+'_'+pdf_bkg+'_'+sgn
-    ws_file = ROOT.TFile.Open('plots/'+version+'/'+outname+'.root')
+    ws_file = ROOT.TFile.Open('/scratch/bianchi/'+version+'/'+outname+'.root')
     ws = ws_file.Get(ws_name)
     obs = ws.data(data_obs).sumEntries()
+    bias = ws.var('bias_sgn_'+sgn).getVal()
 
-    f = open( 'plots/'+version+'/'+outname+postfix+'.txt','w')
+    f = open( '/scratch/bianchi/'+version+'/'+outname+postfix+'.txt','w')
     f.write('imax 1 number of bins\n')
-    f.write('jmax 1 number of processes minus 1\n')
+    f.write('jmax 2 number of processes minus 1\n')
     f.write('kmax * number of nuisance parameters\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('shapes bkg          '+cat+'     '+outname+'.root '+ws_name+':'+pdf_bkg+'_pdf_bkg\n')
-    f.write('shapes '+sgn+'   '+cat+'     '+outname+'.root '+ws_name+':'+pdf_sgn+'_pdf_sgn_'+sgn+'\n')
-    f.write('shapes data_obs     '+cat+'      '+outname+'.root '+ws_name+':'+data_obs+'\n')
+    f.write('shapes bkg          '+cat+'          '+outname+'.root '+ws_name+':'+pdf_bkg+'_pdf_bkg\n')
+    f.write('shapes '+sgn+'   '+cat+'          '+outname+'.root '+ws_name+':'+pdf_sgn+'_pdf_sgn_'+sgn+'\n')
+    f.write('shapes '+sgn+'_bias   '+cat+'     '+outname+'.root '+ws_name+':'+pdf_sgn+'_pdf_sgn_'+sgn+'\n')
+    f.write('shapes data_obs     '+cat+'          '+outname+'.root '+ws_name+':'+data_obs+'\n')
     f.write('--------------------------------------------------------------\n')
     f.write('bin          '+cat+'\n')
     f.write(('observation  %.0f' % obs)+'\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('bin               '+cat+'   '+cat+'\n')
-    f.write('process           '+sgn+'                bkg\n')
-    f.write('process            -1                       1  \n')
-    f.write('rate              1.0                       1.0\n')
+    f.write('bin               '+cat+'   '+cat+'   '+cat+'\n')
+    f.write('process           '+sgn+'                '+sgn+'_bias                  bkg\n')
+    f.write('process             0                       1                                2  \n')
+    f.write('rate              1.0                       1e-06                            1.0\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('sgn_unc    lnN    1.10                        -\n')
+    f.write('CMS_Xbb_trigger    lnN    1.10                       1.10                        -\n')
+    f.write('signal_bias        lnN     -                         '+('%.2f' % (1.+bias))+'                        -\n')
+    f.write('lumi_13TeV         lnN    1.027                      1.027                       -\n')
 
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
-    if ws.var('CSV_shift_sgn_'+sgn) != None:
-        f.write('CMS_btag   lnN   '+("%.2f" % (1+ws.var('CSV_shift_sgn_'+sgn).getVal()/sgn_norm))+'        -\n')  
+    if ws.var('CSV_shift_'+sgn) != None:
+        f.write('CMS_btag           lnN    '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                       '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                      -\n')  
         
     if pdf_bkg=='dijet':
         for param in ['p1_bkg_'+pdf_bkg,'p2_bkg_'+pdf_bkg]:
@@ -54,7 +58,7 @@ def make_datacard( version='V3', ws_name='Xbb_workspace',
 
     if pdf_sgn=='buk':
         if not ws.var('mean_sgn_'+sgn).getAttribute("Constant"):
-            f.write('mean_sgn_'+sgn+'  param  '+( "%.3E" % mean) + ("  %.1f" % d_mean) + '\n')
+            f.write('mean_sgn_'+sgn+'   param  '+( "%.3E" % mean) + ("  %.1f" % d_mean) + '\n')
         if not ws.var('sigma_sgn_'+sgn).getAttribute("Constant"):
             f.write('sigma_sgn_'+sgn+'  param  '+( "%.2E" % sigma) + ("  %.1f" % d_sigma) + '\n')
 
@@ -71,11 +75,11 @@ for cat in [
         'dijet',
         ]:
         for sgn in [
-            #'Spin0_M650',
+            'Spin0_M650',
             'Spin0_M750',
-            #'Spin0_M850',
-            #'Spin0_M1000',
-            #'Spin0_M1200',
+            'Spin0_M850',
+            'Spin0_M1000',
+            'Spin0_M1200',
             ]:
             for x_range in [
                 '550to1200'
@@ -83,5 +87,5 @@ for cat in [
                 for mass in [
                     'MassFSR', 
                     ]:
-                    make_datacard('V3', 'Xbb_workspace', cat, mass, x_range, sgn, 'buk', pdf, 'data_obs')
+                    make_datacard('V4', 'Xbb_workspace', cat, mass, x_range, sgn, 'buk', pdf, 'data_obs')
 

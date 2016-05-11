@@ -25,6 +25,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [500., 800.],
+        'bias' : 0.0,
         },
     "Spin0_M750" : {
         'mean' : [650.,750.],
@@ -33,6 +34,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [500., 900.],
+        'bias' : 0.0,
         },
     "Spin0_M850" : {
         'mean' : [750.,900.],
@@ -41,6 +43,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [550., 1100.],
+        'bias' : 0.0,
         },
     "Spin0_M1000" : {
         'mean' : [800.,1100.],
@@ -49,6 +52,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [600., 1200.],
+        'bias' : 0.0,
         },
     "Spin0_M1200" : {
         'mean' : [900.,1300.],
@@ -57,6 +61,52 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [700., 1400.],
+        'bias' : 0.0,
+        },
+    "Spin2_M650" : {
+        'mean' : [550.,650.],
+        'sigma' : [30., 100.],
+        'xi' : [-0.5, 0.],
+        'rho1' : [-0.8, -0.4],
+        'rho2' : [0., 0.5],
+        'fit_range' : [500., 800.],
+        'bias' : 0.0,
+        },
+    "Spin2_M750" : {
+        'mean' : [650.,750.],
+        'sigma' : [20., 100.],
+        'xi' : [-3., 3.],
+        'rho1' : [-1., 1.],
+        'rho2' : [-1., 1.],
+        'fit_range' : [500., 900.],
+        'bias' : 0.0,
+        },
+    "Spin2_M850" : {
+        'mean' : [750.,900.],
+        'sigma' : [20., 200.],
+        'xi' : [-3., 3.],
+        'rho1' : [-1., 1.],
+        'rho2' : [-1., 1.],
+        'fit_range' : [550., 1100.],
+        'bias' : 0.0,
+        },
+    "Spin2_M1000" : {
+        'mean' : [800.,1100.],
+        'sigma' : [50., 400.],
+        'xi' : [-3., 3.],
+        'rho1' : [-1., 1.],
+        'rho2' : [-1., 1.],
+        'fit_range' : [600., 1200.],
+        'bias' : 0.0,
+        },
+    "Spin2_M1200" : {
+        'mean' : [900.,1300.],
+        'sigma' : [50., 400.],
+        'xi' : [-3., 3.],
+        'rho1' : [-1., 1.],
+        'rho2' : [-1., 1.],
+        'fit_range' : [700., 1400.],
+        'bias' : 0.0,
         }
 }
 
@@ -64,13 +114,13 @@ FitParam = {
 
 class XbbFactory:
 
-    def __init__(self, fname="plot.root", ws_name="Xbb_workspace", version="V3", saveDir="/scratch/bianchi/"):
-        self.file = ROOT.TFile.Open("plots/"+version+"/"+fname, "READ")
+    def __init__(self, fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/"):
+        self.file = ROOT.TFile.Open(saveDir+"/"+version+"/"+fname, "READ")
         if self.file==None or self.file.IsZombie():
             return
         self.ws_name = ws_name
         self.version = version
-        self.saveDir = saveDir
+        self.saveDir = saveDir+'/'+version+'/'
         self.w = ROOT.RooWorkspace( ws_name, "workspace") ; 
         self.bin_size = 1.
 
@@ -170,7 +220,7 @@ class XbbFactory:
             frame2.addPlotable(hresid,"P")
             frame2.Draw()
 
-        c1.SaveAs(self.saveDir+"/"+title+".png")
+        c1.SaveAs(self.saveDir+"/"+self.ws_name+"_"+title+".png")
         return
 
     # add a signal sample to the ws
@@ -218,6 +268,9 @@ class XbbFactory:
         self.imp(buk_pdf_sgn)
         self.imp(buk_pdf_sgn_norm)
 
+        bias = ROOT.RooRealVar("bias_sgn_"+sgn_name, "", FitParam[sgn_name]['bias'])
+        self.imp(bias)
+
     # add signal systematics to ws
     def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0):
 
@@ -257,7 +310,7 @@ class XbbFactory:
 
         for syst in ["CSVSFUp", "CSVSFDown"]:
             hname = "signal_"+self.cat_btag+"_"+syst+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
-            h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
+            h = self.file.Get(self.cat_btag+"_"+syst+"_"+self.cat_kin+"/"+hname)
             norm = self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()
             if h!=None:
                 norm = h.Integral()
@@ -360,11 +413,11 @@ class XbbFactory:
     def create_workspace(self, signals=[]):                            
 
         for sgn in signals:
-            self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=400, set_param_const=True)
-            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=400)
+            self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True)
+            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50)
         
-        self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=500, set_param_const=False)
-        self.add_data_to_ws(rebin_factor=10)
+        self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=50, set_param_const=False)
+        self.add_data_to_ws(rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.get_save_name()+".root")
@@ -373,9 +426,9 @@ class XbbFactory:
 
 ###########################
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/V4/")
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
 xbbfact.add_category(cat_btag="Had_LT", cat_kin="MinPt150_DH1p6")
 xbbfact.create_mass(name="MassFSR", xmin=550., xmax=1200.)
-#xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200" ] )
-xbbfact.create_workspace( ["Spin0_M750"] )
+xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200", ] )
+#xbbfact.create_workspace( ["Spin0_M750"] )
 
