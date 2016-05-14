@@ -9,25 +9,25 @@ import string
 from os import listdir
 import ROOT
 
-def make_datacard( version='V3', ws_name='Xbb_workspace', 
+def make_datacard( ws_name='Xbb_workspace', 
                    cat='Had_LT_MinPt150_DH1p6', mass='MassFSR', x_range='550to1200', sgn='Spin0_M650',
-                   pdf_sgn='buk', pdf_bkg='dijet', data_obs='data_obs' ):
+                   pdf_sgn='buk', pdf_bkg='dijet', data_obs='data_obs', save_dir='./plots/V4/' ):
 
     outname = ws_name+'_'+cat+'_'+mass+'_'+x_range
     postfix = '_'+pdf_sgn+'_'+pdf_bkg+'_'+sgn
-    ws_file = ROOT.TFile.Open('/scratch/bianchi/'+version+'/'+outname+'.root')
+    ws_file = ROOT.TFile.Open(save_dir+'/'+outname+'.root')
     ws = ws_file.Get(ws_name)
     obs = ws.data(data_obs).sumEntries()
     bias = ws.var('bias_sgn_'+sgn).getVal()
 
-    f = open( '/scratch/bianchi/'+version+'/'+outname+postfix+'.txt','w')
+    f = open( save_dir+'/'+outname+postfix+'.txt','w')
     f.write('imax 1 number of bins\n')
     f.write('jmax 2 number of processes minus 1\n')
     f.write('kmax * number of nuisance parameters\n')
     f.write('--------------------------------------------------------------\n')
     f.write('shapes bkg          '+cat+'          '+outname+'.root '+ws_name+':'+pdf_bkg+'_pdf_bkg\n')
     f.write('shapes '+sgn+'   '+cat+'          '+outname+'.root '+ws_name+':'+pdf_sgn+'_pdf_sgn_'+sgn+'\n')
-    f.write('shapes '+sgn+'_bias   '+cat+'     '+outname+'.root '+ws_name+':'+pdf_sgn+'_pdf_sgn_'+sgn+'\n')
+    f.write('shapes '+sgn+'_bias   '+cat+'     '+outname+'.root '+ws_name+':'+pdf_sgn+'_pdf_sgn_bias_'+sgn+'\n')
     f.write('shapes data_obs     '+cat+'          '+outname+'.root '+ws_name+':'+data_obs+'\n')
     f.write('--------------------------------------------------------------\n')
     f.write('bin          '+cat+'\n')
@@ -64,28 +64,32 @@ def make_datacard( version='V3', ws_name='Xbb_workspace',
 
     f.close()
     ws_file.Close()
-    print 'Created datacard '+'plots/'+version+'/'+outname+postfix+'.txt'
+    print 'Created datacard '+save_dir+'/'+outname+postfix+'.txt'
 
 ########################################
 
-for cat in [    
-    'Had_LT_MinPt150_DH1p6',
+for cat_btag in [
+    'Had_LT', 'Had_MT'
     ]:
-    for pdf in [
-        'dijet',
-        ]:
-        for sgn in [
-            'Spin0_M650',
-            'Spin0_M750',
-            'Spin0_M850',
-            'Spin0_M1000',
-            'Spin0_M1200',
+    for cat_kin in [
+        'MinPt150_DH1p6', 'MinPt150_DH2p0', 
+        'MinPt180_DH1p6', 'MinPt180_DH2p0',
+        ]:        
+        for pdf in [
+            'dijet',
             ]:
-            for x_range in [
-                '550to1200'
+            for sgn in [
+                #'Spin0_M650',
+                'Spin0_M750',
+                #'Spin0_M850',
+                #'Spin0_M1000',
+                #'Spin0_M1200',
                 ]:
-                for mass in [
-                    'MassFSR', 
+                for x_range in [
+                    '550to1200'
                     ]:
-                    make_datacard('V4', 'Xbb_workspace', cat, mass, x_range, sgn, 'buk', pdf, 'data_obs')
-
+                    for mass in [
+                        'MassFSR', 
+                        ]:
+                        make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, x_range, sgn, 'buk', pdf, 'data_bkg', './plots/V4/')
+                        

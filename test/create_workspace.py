@@ -25,7 +25,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [500., 800.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin0_M750" : {
         'mean' : [650.,750.],
@@ -34,7 +34,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [500., 900.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin0_M850" : {
         'mean' : [750.,900.],
@@ -43,7 +43,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [550., 1100.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin0_M1000" : {
         'mean' : [800.,1100.],
@@ -52,7 +52,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [600., 1200.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin0_M1200" : {
         'mean' : [900.,1300.],
@@ -61,7 +61,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [700., 1400.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin2_M650" : {
         'mean' : [550.,650.],
@@ -70,7 +70,7 @@ FitParam = {
         'rho1' : [-0.8, -0.4],
         'rho2' : [0., 0.5],
         'fit_range' : [500., 800.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin2_M750" : {
         'mean' : [650.,750.],
@@ -79,7 +79,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [500., 900.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin2_M850" : {
         'mean' : [750.,900.],
@@ -88,7 +88,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [550., 1100.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin2_M1000" : {
         'mean' : [800.,1100.],
@@ -97,7 +97,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [600., 1200.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         },
     "Spin2_M1200" : {
         'mean' : [900.,1300.],
@@ -106,7 +106,7 @@ FitParam = {
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
         'fit_range' : [700., 1400.],
-        'bias' : 0.0,
+        'bias' : 0.01,
         }
 }
 
@@ -146,7 +146,7 @@ class XbbFactory:
     def plot(self, data=None, pdfs=[], res=None, add_pulls=False, legs=[], ran="", n_par=1, title=""):
 
         #return
-        c1 = ROOT.TCanvas("c1_"+title,"c1",600,600)
+        c1 = ROOT.TCanvas("c1_"+self.get_save_name()+"_"+title,"c1",600,600)
         if add_pulls:
             pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
             pad1.SetBottomMargin(0) 
@@ -164,7 +164,7 @@ class XbbFactory:
         self.x.setRange( FitParam[ran]['fit_range'][0], FitParam[ran]['fit_range'][1] )
         frame = self.x.frame(RooFit.Range(ran))
         frame.SetName("frame")
-        frame.SetTitle(title)
+        frame.SetTitle(self.get_save_name()+"_"+title)
         frame.GetYaxis().SetTitleSize(20)
         frame.GetYaxis().SetTitleFont(43)
         frame.GetYaxis().SetTitleOffset(1.35)
@@ -201,7 +201,7 @@ class XbbFactory:
             pad2.cd()       
             frame2 = self.x.frame(RooFit.Range(ran))
             frame2.SetName("frame2")
-            frame2.SetTitle(title)        
+            frame2.SetTitle(self.get_save_name()+"_"+title)        
             hresid = frame.residHist()
             frame2.SetTitle("") 
             frame2.GetYaxis().SetTitle("Residuals")
@@ -220,7 +220,7 @@ class XbbFactory:
             frame2.addPlotable(hresid,"P")
             frame2.Draw()
 
-        c1.SaveAs(self.saveDir+"/"+self.ws_name+"_"+title+".png")
+        c1.SaveAs(self.saveDir+self.ws_name+"_"+self.get_save_name()+"_"+title+".png")
         return
 
     # add a signal sample to the ws
@@ -228,7 +228,7 @@ class XbbFactory:
 
         hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
         print hname
-        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_clone")
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
@@ -256,7 +256,7 @@ class XbbFactory:
 
         res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
 
-        self.plot( data=data_sgn, pdfs=[buk_pdf_sgn], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name)
+        self.plot( data=data_sgn, pdfs=[buk_pdf_sgn], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=sgn_name)
 
         if set_param_const:
             mean.setConstant(1)
@@ -268,7 +268,12 @@ class XbbFactory:
         self.imp(buk_pdf_sgn)
         self.imp(buk_pdf_sgn_norm)
 
+        buk_pdf_sgn_bias = ROOT.RooBukinPdf("buk_pdf_sgn_bias_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
+        buk_pdf_sgn_bias_norm = ROOT.RooRealVar("buk_pdf_sgn_bias_"+sgn_name+"_norm","", norm*FitParam[sgn_name]['bias'])
+        buk_pdf_sgn_norm.setConstant(1)
         bias = ROOT.RooRealVar("bias_sgn_"+sgn_name, "", FitParam[sgn_name]['bias'])
+        self.imp(buk_pdf_sgn_bias)
+        self.imp(buk_pdf_sgn_bias_norm)
         self.imp(bias)
 
     # add signal systematics to ws
@@ -277,7 +282,7 @@ class XbbFactory:
         shifts = {}
         for syst in ["JECUp", "JECDown", "JERUp", "JERDown"]:
             hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+syst+"_"+sgn_name
-            h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
+            h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_name")
             if rebin_factor>1. :
                 h.Rebin(rebin_factor)
 
@@ -335,14 +340,14 @@ class XbbFactory:
         pdfs = [ self.w.pdf("buk_pdf_sgn"+syst+"_"+sgn_name) for syst in ["","_JECUp", "_JECDown", "_JERUp", "_JERDown"]]
         legs = ["Nominal", "JEC up", "JEC down", "JER up", "JER down"]
 
-        self.plot( self.w.data("data_sgn_"+sgn_name), pdfs, None, False, legs, sgn_name, 5, self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name+"_JEC-JER")
+        self.plot( data=self.w.data("data_sgn_"+sgn_name), pdfs=pdfs, res=None, add_pulls=False, legs=legs, ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER")
 
     # add background pdf to ws
     def add_bkg_to_ws(self, pdf_name="dijet", rebin_factor=1.0, set_param_const=False):
 
         hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
-        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_clone")
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
@@ -373,7 +378,7 @@ class XbbFactory:
 
         res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
 
-        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title=self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_background")
+        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="background")
 
         if set_param_const:
             p0.setConstant(1)
@@ -388,7 +393,7 @@ class XbbFactory:
 
         hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
-        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_clone")
         if rebin_factor>1. :
             h.Rebin(rebin_factor)            
 
@@ -404,10 +409,39 @@ class XbbFactory:
         self.imp(data_obs)
         self.bin_size = data_obs.binVolume(ROOT.RooArgSet(self.x))
 
-        self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title=self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_data")
+        self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title="data")
+
+    # add data_obs to ws
+    def add_datafit_to_ws(self, pdf_name='dijet', rebin_factor=1.0):
+
+        hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
+        print hname
+        h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_clone")
+        if rebin_factor>1. :
+            h.Rebin(rebin_factor)            
+
+        self.x.setRange( FitParam[pdf_name]['fit_range'][0], FitParam[pdf_name]['fit_range'][1] )
+        data_bkg = ROOT.RooDataHist("data", "", ROOT.RooArgList(self.x), h, 1.0)
+
+        sqrts = 1.3e+04
+        formula = ("TMath::Max(1e-50,TMath::Power(1-@0/%E,@1)/(TMath::Power(@0/%E,@2+@3*TMath::Log(@0/%E))))" % (sqrts,sqrts,sqrts))
+        
+        p0 = ROOT.RooRealVar("p0", "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
+        p0.setVal(0.)
+        p0.setConstant(1)
+        p1 = ROOT.RooRealVar("p1", "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
+        p2 = ROOT.RooRealVar("p2", "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
+    
+        pdf_bkg = ROOT.RooGenericPdf("pdf_bkg", formula, ROOT.RooArgList(self.x,p0,p1,p2))
+
+        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+
+        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="datafit")
+
+
 
     def get_save_name(self):        
-        return  self.saveDir+self.ws_name+"_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)-self.bin_size*0.5))+"to"+("%.0f" % (self.x.getMax(self.x_name)+self.bin_size*0.5))
+        return  self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)-self.bin_size*0.5))+"to"+("%.0f" % (self.x.getMax(self.x_name)+self.bin_size*0.5))
 
     # create the ws
     def create_workspace(self, signals=[]):                            
@@ -418,17 +452,25 @@ class XbbFactory:
         
         self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=50, set_param_const=False)
         self.add_data_to_ws(rebin_factor=-1)
+        self.add_datafit_to_ws(pdf_name="dijet", rebin_factor=50)
 
         self.w.Print()
-        self.w.writeToFile(self.get_save_name()+".root")
+        self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
 
         self.file.Close()
 
 ###########################
 
+cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_LT"
+cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt180_DH1p6" 
+cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 550.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
+
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
-xbbfact.add_category(cat_btag="Had_LT", cat_kin="MinPt150_DH1p6")
-xbbfact.create_mass(name="MassFSR", xmin=550., xmax=1200.)
-xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200", ] )
-#xbbfact.create_workspace( ["Spin0_M750"] )
+#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="./plots/")
+xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
+xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
+#xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
+xbbfact.create_workspace( ["Spin0_M750"] )
 
