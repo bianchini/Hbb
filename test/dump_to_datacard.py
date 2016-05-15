@@ -16,6 +16,10 @@ def make_datacard( ws_name='Xbb_workspace',
     outname = ws_name+'_'+cat+'_'+mass+'_'+x_range
     postfix = '_'+pdf_sgn+'_'+pdf_bkg+'_'+sgn
     ws_file = ROOT.TFile.Open(save_dir+'/'+outname+'.root')
+
+    if ws_file==None or ws_file.IsZombie():
+        return
+
     ws = ws_file.Get(ws_name)
     obs = ws.data(data_obs).sumEntries()
     bias = ws.var('bias_sgn_'+sgn).getVal()
@@ -69,11 +73,12 @@ def make_datacard( ws_name='Xbb_workspace',
 ########################################
 
 for cat_btag in [
-    'Had_LT', 'Had_MT'
+    'Had_LT', 'Had_MT', 'Had_TT',
     ]:
     for cat_kin in [
-        'MinPt150_DH1p6', 'MinPt150_DH2p0', 
-        'MinPt180_DH1p6', 'MinPt180_DH2p0',
+        'MinPt150_DH1p6', 'MinPt150_DH2p0', 'MinPt150_DH1p1', 
+        'MinPt175_DH1p6', 'MinPt175_DH2p0', 'MinPt175_DH1p1',
+        'MinPt200_DH1p6', 'MinPt200_DH2p0', 'MinPt200_DH1p1',
         ]:        
         for pdf in [
             'dijet',
@@ -91,5 +96,5 @@ for cat_btag in [
                     for mass in [
                         'MassFSR', 
                         ]:
-                        make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, x_range, sgn, 'buk', pdf, 'data_bkg', './plots/V4/')
+                        make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, x_range, sgn, 'buk', pdf, 'data_obs', './plots/V4/')
                         

@@ -42,22 +42,24 @@ def submit(cfg_cat_btag='Had_LT', cfg_cat_kin='MinPt150_DH1p6', cfg_name='MassFS
 ##########################################
 
 for cfg_cat_btag in [
-    'Had_LT', 'Had_MT'
+    #'Had_LT', 
+    'Had_MT', 
+    #'Had_TT',
     ]:
     for cfg_cat_kin in [
-        'MinPt150_DH1p6', 'MinPt150_DH2p0', 
-        'MinPt180_DH1p6', 'MinPt180_DH2p0',
+        'MinPt150_DH1p6', 
+        #'MinPt150_DH2p0', 'MinPt150_DH1p1', 
+        #'MinPt175_DH1p6', 'MinPt175_DH2p0', 'MinPt175_DH1p1',
+        #'MinPt200_DH1p6', 'MinPt200_DH2p0', 'MinPt200_DH1p1',
         ]:
         for cfg_name in [
-            'MassFSR'
+            'MassFSR',
             ]:
             for xmin in [
-                550., 
-                #560., 570.
+                530., 540., 550., 560., 570.
                 ]:
                 for xmax in [
-                    1200.,
-                    #1000., 1100., 1200., 1300.
+                    1000., 1100., 1200., 1300., 1400.
                     ]:
                     submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax)
                     #exit(1)

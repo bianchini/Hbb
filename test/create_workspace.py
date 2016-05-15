@@ -10,6 +10,7 @@ import math
 import sys
 sys.path.append('./')
 
+sqrts = 1.3e+04
 
 FitParam = {
     "dijet" : {
@@ -17,6 +18,7 @@ FitParam = {
         'p1' : [0., 50.],
         'p2' : [-5., 5.],
         'fit_range' : [550., 1200.],
+        'formula' : ("TMath::Max(1e-50,TMath::Power(1-@0/%E,@1)/(TMath::Power(@0/%E,@2+@3*TMath::Log(@0/%E))))" % (sqrts,sqrts,sqrts))
         },
     "Spin0_M650" : {
         'mean' : [550.,650.],
@@ -161,7 +163,7 @@ class XbbFactory:
         leg.SetTextSize(0.04)
         leg.SetFillColor(10)    
 
-        self.x.setRange( FitParam[ran]['fit_range'][0], FitParam[ran]['fit_range'][1] )
+        #self.x.setRange( FitParam[ran]['fit_range'][0], FitParam[ran]['fit_range'][1] )
         frame = self.x.frame(RooFit.Range(ran))
         frame.SetName("frame")
         frame.SetTitle(self.get_save_name()+"_"+title)
@@ -254,7 +256,7 @@ class XbbFactory:
         buk_pdf_sgn_norm = ROOT.RooRealVar("buk_pdf_sgn_"+sgn_name+"_norm","", norm)
         buk_pdf_sgn_norm.setConstant(1)
 
-        res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
+        res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
 
         self.plot( data=data_sgn, pdfs=[buk_pdf_sgn], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=sgn_name)
 
@@ -309,7 +311,7 @@ class XbbFactory:
             rho2.setConstant(1)
 
             buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+syst+"_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
-            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
+            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name))
             shifts[syst] = [mean.getVal(), sigma.getVal(), norm]
             self.imp( buk_pdf_sgn )
 
@@ -363,20 +365,17 @@ class XbbFactory:
         self.imp(hist_pdf_bkg)
         self.imp(hist_pdf_bkg_norm)
 
-        sqrts = 1.3e+04
-        formula = ("TMath::Max(1e-50,TMath::Power(1-@0/%E,@1)/(TMath::Power(@0/%E,@2+@3*TMath::Log(@0/%E))))" % (sqrts,sqrts,sqrts))
-        
         p0 = ROOT.RooRealVar("p0_bkg_"+pdf_name, "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
         p0.setVal(0.)
         p0.setConstant(1)
         p1 = ROOT.RooRealVar("p1_bkg_"+pdf_name, "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
         p2 = ROOT.RooRealVar("p2_bkg_"+pdf_name, "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
     
-        pdf_bkg = ROOT.RooGenericPdf(pdf_name+"_pdf_bkg", formula, ROOT.RooArgList(self.x,p0,p1,p2))
+        pdf_bkg = ROOT.RooGenericPdf(pdf_name+"_pdf_bkg", FitParam[pdf_name]['formula'], ROOT.RooArgList(self.x,p0,p1,p2))
         pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
         pdf_bkg_norm.setConstant(0)
 
-        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
 
         self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="background")
 
@@ -420,23 +419,20 @@ class XbbFactory:
         if rebin_factor>1. :
             h.Rebin(rebin_factor)            
 
-        self.x.setRange( FitParam[pdf_name]['fit_range'][0], FitParam[pdf_name]['fit_range'][1] )
+        self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         data_bkg = ROOT.RooDataHist("data", "", ROOT.RooArgList(self.x), h, 1.0)
 
-        sqrts = 1.3e+04
-        formula = ("TMath::Max(1e-50,TMath::Power(1-@0/%E,@1)/(TMath::Power(@0/%E,@2+@3*TMath::Log(@0/%E))))" % (sqrts,sqrts,sqrts))
-        
         p0 = ROOT.RooRealVar("p0", "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
         p0.setVal(0.)
         p0.setConstant(1)
         p1 = ROOT.RooRealVar("p1", "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
         p2 = ROOT.RooRealVar("p2", "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
     
-        pdf_bkg = ROOT.RooGenericPdf("pdf_bkg", formula, ROOT.RooArgList(self.x,p0,p1,p2))
+        pdf_bkg = ROOT.RooGenericPdf("pdf_bkg", FitParam[pdf_name]['formula'], ROOT.RooArgList(self.x,p0,p1,p2))
 
-        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(self.x_name), RooFit.SumCoefRange(self.x_name ), RooFit.Save(1))
 
-        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="datafit")
+        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=self.x_name, n_par=2, title="datafit")
 
 
 
@@ -461,16 +457,16 @@ class XbbFactory:
 
 ###########################
 
-cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_LT"
-cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt180_DH1p6" 
+cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_TT"
+cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt150_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
 cfg_xmin = float(argv[4]) if len(argv)>=5 else 550.
 cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
-#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="./plots/")
+#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="./plots/")
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
-#xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
-xbbfact.create_workspace( ["Spin0_M750"] )
+xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
+#xbbfact.create_workspace( ["Spin0_M750"] )
 
