@@ -457,7 +457,7 @@ class XbbFactory:
 
 ###########################
 
-cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_TT"
+cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt150_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
 cfg_xmin = float(argv[4]) if len(argv)>=5 else 550.

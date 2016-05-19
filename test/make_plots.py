@@ -38,7 +38,7 @@ def get_samples():
                "Spin2_M750",
                "Spin2_M850",
                "Spin2_M1000",
-               "Spin2_M1200"
+               "Spin2_M1200",
                ]
     return samples
 
@@ -188,7 +188,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
     background.Draw(option_bkg+"E2SAME")
     if is_blind():
         data.Reset()
-        data.add(background, 1.0)
+        data.Add(background, 1.0)
         leg.AddEntry(data, "Data = MC (blinded)", "PE")
         data.Draw(option_data+"SAME");  
     else:
@@ -283,41 +283,46 @@ def plot_all( version = "V4" ):
             continue
         files[sample] = f
 
-    for cat_btag in [#"Had_LT", "Had_MT", 
-                     "Lep_LT"
+    for cat_btag in ["Had_LT", 
+                     #"Had_MT", "Had_TT",
+                     #"Lep_LT"
                      ]:
         for cat_kin in ["MinPt150_DH2p0", 
-                        #"MinPt150_DH1p6", "MinPt180_DH2p0", "MinPt180_DH1p6"
+                        #"MinPt150_DH1p6", "MinPt150_DH1p1",
+                        #"MinPt175_DH2p0", "MinPt175_DH1p6", "MinPt175_DH1p1",
+                        #"MinPt200_DH2p0", "MinPt200_DH1p6", "MinPt200_DH1p1",
                         ]:            
-            for syst in ["", "_CSVSFUp", "_CSVSFDown"]:
+            for syst in ["", 
+                         #"_CSVSFUp", "_CSVSFDown"
+                         ]:
                 if cat_btag=="Lep_LT" and syst!="":
                     continue
                 for hist in [    
-                    "MassFSR",
-                    "MassFSR_JECUp",
-                    "MassFSR_JECDown",
-                    "MassFSR_JERUp",
-                    "MassFSR_JERDown",
+                    #"MassFSR",
+                    #"MassFSR_JECUp",
+                    #"MassFSR_JECDown",
+                    #"MassFSR_JERUp",
+                    #"MassFSR_JERDown",
                     "MinJetPt",
                     "MaxJetPt",
-                    "Mass",
-                    "MassAK08",
-                    "Pt",
-                    "Eta",
-                    "DeltaEta",
-                    "DeltaPhi",
-                    "MaxJetCSV",
-                    "MinJetCSV",
-                    "Vtype",
-                    "njet30",
-                    "njet50",
-                    "njet70",
-                    "njet100",
-                    "MET",
-                    "PtBalance",
-                    "MaxJetPtoMass",
-                    "MinJetPtoMass",
-                    "MaxEta",
+                    #"Mass",
+                    #"MassAK08",
+                    #"Pt",
+                    #"Eta",
+                    #"DeltaEta",
+                    #"DeltaPhi",
+                    #"MaxJetCSV",
+                    #"MinJetCSV",
+                    #"Vtype",
+                    #"njet30",
+                    #"njet50",
+                    #"njet70",
+                    #"njet100",
+                    #"MET",
+                    #"PtBalance",
+                    #"MaxJetPtoMass",
+                    #"MinJetPtoMass",
+                    #"MaxEta",
                     ]:
                     cat = cat_btag+syst+"_"+cat_kin
                     plot(files=files, dir_name=cat, h_name=cat+"_"+hist, postfix="",       option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="",      out_name="plot", version=version)
