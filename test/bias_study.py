@@ -6,6 +6,8 @@ from ROOT import RooFit
 ROOT.gROOT.SetBatch(True)
 argv.remove( '-b-' )
 
+import numpy as n
+
 import math
 import sys
 sys.path.append('./')
@@ -268,6 +270,13 @@ class BiasStudy:
 
     def doBiasStudy(self, pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_bkg", n_bins=-1, pdf_sgn_name="buk", sgn_name="Spin0_M750", ntoys=10):
 
+        self.out = ROOT.TFile.Open(self.saveDir+"/"+self.get_save_name()+"_bias.root", "RECREATE") 
+        tree = ROOT.TTree("toys","")
+        ns_ = n.zeros(1, dtype=float)
+        ns_e_ = n.zeros(1, dtype=float)
+        tree.Branch('ns', ns_, 'ns/D')
+        tree.Branch('ns_e', ns_e_, 'ns_e/D')
+
         ROOT.RooRandom.randomGenerator().SetSeed(0)
 
         self.data = self.w.data(data_name)
@@ -300,13 +309,20 @@ class BiasStudy:
             if res_fit==None or res_fit.status()!=0:
                 continue                
             print ">>>>>>>>>>", n_s.getVal()/n_s.getError()
+            ns_[0] = n_s.getVal()
+            ns_e_[0] = n_s.getError()
+            tree.Fill()
             ntoy += 1
+
+        self.out.cd()
+        tree.Write("", ROOT.TObject.kOverwrite)
+        self.out.Close()
 
 ########################
 bs = BiasStudy(fname="Xbb_workspace_Had_MT_MinPt150_DH1p6_MassFSR_550to1200", 
                ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
 #bs.doFTest(data_name="data_bkg")
-bs.doBiasStudy(pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_bkg", n_bins=6500, pdf_sgn_name="buk", sgn_name="Spin0_M750", ntoys=1)
+bs.doBiasStudy(pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_bkg", n_bins=100, pdf_sgn_name="buk", sgn_name="Spin0_M750", ntoys=100)
 
 for gc in gcs:
     gc.Print()
