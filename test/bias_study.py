@@ -34,8 +34,8 @@ PdfsFTest = {
         "MaxOrder" : 2,
         },
     "polyexp" : {
-        "FirstOrder" : 1,
-        "LastOrder" : 5,
+        "FirstOrder" : 2,
+        "LastOrder" : 4,
         "Match" : -1,
         "MaxOrder" : 3,
         },
@@ -72,7 +72,9 @@ class BiasStudy:
         if pdf_name=="pol":            
             coeff.removeAll()
             for p in xrange(n_param):
-                param = ROOT.RooRealVar( ("a%d_deg%d_%d" % (p,n_param,n_iter)), "", -1.5, 1.5)
+                p_min = -1. if p==0 else -1.0
+                p_max = +1. if p==0 else +1.0
+                param = ROOT.RooRealVar( ("a%d_deg%d_%d" % (p,n_param,n_iter)), "", p_min, p_max)
                 if p==0:
                     param.setVal(1.)
                     param.setConstant(1)
@@ -89,8 +91,8 @@ class BiasStudy:
                 formula += p_name
                 for exp in xrange(p+1):
                     formula += "*x"
-                p_min = -1e-04 if p!=0 else -0.2
-                p_max = +1e-04 if p!=0 else -0.
+                p_min = -math.pow(10,-p*3-2) if p!=0 else -0.02
+                p_max = +math.pow(10,-p*3-2) if p!=0 else -0.
                 param = ROOT.RooRealVar( p_name, "", p_min, p_max)
                 gcs.append(param)
                 coeff.add(param)
@@ -110,8 +112,8 @@ class BiasStudy:
                 formula += p_name
                 for exp in xrange(p):
                     formula += "*x"
-                p_min = -ROOT.TMath.Power(10,-3*p + 1)
-                p_max = +ROOT.TMath.Power(10,-3*p + 1) 
+                p_min = -10. if p==0 else -math.pow(10,-3*p)
+                p_max = +10. if p==0 else +math.pow(10,-3*p) 
                 param = ROOT.RooRealVar( p_name, "", p_min, p_max)
                 gcs.append(param)
                 if p<(n_param-1):
@@ -128,8 +130,21 @@ class BiasStudy:
             formula = "TMath::Max(1e-50,"
             for p in xrange(n_param):
                 p_name = ("a%d_deg%d_%d" % (p,n_param,n_iter))
-                p_min = -5. if p!=0 else -0.2
-                p_max = +5. if p!=0 else -0.
+                p_min = -1.
+                p_max = +1.
+                if p==0:
+                    p_min = -0.02
+                    p_max = 0.
+                elif p==1:
+                    p_min = -math.pow(10,-2) 
+                    p_max = +math.pow(10,-2) 
+                elif p==2:
+                    p_min = -math.pow(10,-5)
+                    p_max = +math.pow(10,-5) 
+                elif p==3:
+                    p_min = -math.pow(10,-8) 
+                    p_max = +math.pow(10,-8) 
+
                 param = ROOT.RooRealVar( p_name, "", p_min, p_max)
                 gcs.append(param)
                 coeff.add(param)
@@ -170,7 +185,7 @@ class BiasStudy:
                     p_max = +5.
                 elif p==2:
                     p_min = 0.
-                    p_max = 10.
+                    p_max = 1e-04
                 param = ROOT.RooRealVar( p_name, "", p_min, p_max)
                 gcs.append(param)
                 coeff.add(param)
@@ -240,9 +255,15 @@ class BiasStudy:
                 if pdf==None:
                     print "No pdf"
                     return
-                res = pdf.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))
+                res = pdf.fitTo(self.data, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))
                 pdfs.append(pdf)
-                npars.append(p)
+
+                par_fixed=0
+                if pdf_name=="pol":
+                    par_fixed += 1
+
+                npars.append(p-par_fixed)
+
                 legs.append("ndof: %d" % p)
                 thisNll = res.minNll()
                 if p==firstOrder:
@@ -262,7 +283,10 @@ class BiasStudy:
                 if prob>0.05 and not match:
                     PdfsFTest[pdf_name]["Match"] = p-1
                     match = True
-            self.plot(data=self.data, pdfs=pdfs, probs=probs, npars=npars, legs=legs, title=pdf_name)
+
+            h_rebinned = self.data.createHistogram("h_"+data_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
+            data_rebinned = ROOT.RooDataHist(data_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
+            self.plot(data=data_rebinned, pdfs=pdfs, probs=probs, npars=npars, legs=legs, title=pdf_name)
 
         print PdfsFTest
         return
@@ -321,9 +345,18 @@ class BiasStudy:
         bkg_norm = ROOT.RooRealVar("bkg_norm", "", self.w.data("data_obs").sumEntries())
         pdf_bkg_alt_ext = ROOT.RooExtendPdf("pdf_bkg_alt_ext","", pdf_bkg_alt, bkg_norm)
 
+        # fit the nominal pdf to data 
+        pdf_bkg_nom = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=1)
+        res_bkg_nom = pdf_bkg_nom.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))
+
+        # save a snapshot of the initial fits
+        h_rebinned = self.data.createHistogram("h_"+data_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
+        data_rebinned = ROOT.RooDataHist(data_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
+        self.plot(data=data_rebinned, pdfs=[pdf_bkg_nom,pdf_bkg_alt], probs=[0.,0.], npars=[PdfsFTest[pdf_fit_name]['MaxOrder'],PdfsFTest[pdf_alt_name]['MaxOrder']], legs=["Nominal: "+pdf_fit_name,"Alternative: "+pdf_alt_name], title="bias_"+pdf_fit_name+"_"+pdf_alt_name)
+
         n_s = ROOT.RooRealVar("n_s","", -5000., +5000.)
         n_b = ROOT.RooRealVar("n_b","", bkg_norm.getVal()-10*math.sqrt(bkg_norm.getVal()), bkg_norm.getVal()+10*math.sqrt(bkg_norm.getVal()))
-        pdf_bkg_fit = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=1)
+        pdf_bkg_fit = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=2)
         pdf_fit_ext = ROOT.RooAddPdf("pdf_fit_ext","", ROOT.RooArgList(pdf_sgn,pdf_bkg_fit),  ROOT.RooArgList(n_s,n_b))
 
         ntoy = 0
@@ -364,16 +397,16 @@ class BiasStudy:
 test_pdfs= [
     #"pol", 
     #"exp", 
-    #"pow", 
+    "pow", 
     #"polyexp", 
-    "dijet"
+    #"dijet"
     ]
 
-bs = BiasStudy(fname="Xbb_workspace_Had_MT_MinPt150_DH1p6_MassFSR_550to1200", 
-               ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
+bs = BiasStudy(fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", 
+               ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
 
 bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs )
-#bs.doBiasStudy(pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_bkg", n_bins=100, pdf_sgn_name="buk", sgn_name="Spin0_M750", sgn_xsec=0., ntoys=1)
+#bs.doBiasStudy(pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_obs", n_bins=-1, pdf_sgn_name="buk", sgn_name="Spin0_M750", sgn_xsec=0., ntoys=100)
 
 for gc in gcs:
     gc.Print()
