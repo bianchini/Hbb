@@ -77,7 +77,8 @@ chain.SetBranchStatus("puWeight", True)
 chain.SetBranchStatus("genWeight", True)
 
 #cut_string = "(HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v | HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v) & (TMath::Abs(Jet_eta[hJCidx[0]]-Jet_eta[hJCidx[1]])<1.6 & Jet_pt[hJCidx[0]]>200 & Jet_pt[hJCidx[1]]>200 & TMath::Abs(Jet_eta[hJCidx[0]])<2.4 & TMath::Abs(Jet_eta[hJCidx[1]])<2.4)"
-cut_string = "(HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v | HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v) & (TMath::Abs(Jet_eta[hJCidx[0]]-Jet_eta[hJCidx[1]])<2.0 & Jet_pt[hJCidx[0]]>150 & Jet_pt[hJCidx[1]]>150 & TMath::Abs(Jet_eta[hJCidx[0]])<2.4 & TMath::Abs(Jet_eta[hJCidx[1]])<2.4)"
+#cut_string = "(HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v | HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v) & (TMath::Abs(Jet_eta[hJCidx[0]]-Jet_eta[hJCidx[1]])<2.0 & Jet_pt[hJCidx[0]]>150 & Jet_pt[hJCidx[1]]>150 & TMath::Abs(Jet_eta[hJCidx[0]])<2.4 & TMath::Abs(Jet_eta[hJCidx[1]])<2.4)"
+cut_string = "(HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v | HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v) & (TMath::Abs(Jet_eta[hJCidx[0]]-Jet_eta[hJCidx[1]])<2.0 & Jet_pt[hJCidx[0]]>100 & Jet_pt[hJCidx[1]]>100 & TMath::Abs(Jet_eta[hJCidx[0]])<2.4 & TMath::Abs(Jet_eta[hJCidx[1]])<2.4)"
 
 print "Cut string: ", cut_string
 print "Copying tree with ", chain.GetEntries(), " entries..."

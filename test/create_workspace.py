@@ -123,7 +123,7 @@ class XbbFactory:
         self.ws_name = ws_name
         self.version = version
         self.saveDir = saveDir+'/'+version+'/'
-        self.w = ROOT.RooWorkspace( ws_name, "workspace") ; 
+        self.w = ROOT.RooWorkspace( ws_name, "workspace")
         self.bin_size = 1.
 
     # import into workspace
@@ -432,7 +432,10 @@ class XbbFactory:
 
         res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(self.x_name), RooFit.SumCoefRange(self.x_name ), RooFit.Save(1))
 
-        self.plot( data=data_bkg, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=self.x_name, n_par=2, title="datafit")
+        h_rebinned = data_bkg.createHistogram(hname+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
+        data_bkg_rebinned = ROOT.RooDataHist("data_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
+
+        self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=self.x_name, n_par=2, title="datafit")
 
 
 
@@ -448,7 +451,7 @@ class XbbFactory:
         
         self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=50, set_param_const=False)
         self.add_data_to_ws(rebin_factor=-1)
-        self.add_datafit_to_ws(pdf_name="dijet", rebin_factor=50)
+        self.add_datafit_to_ws(pdf_name="dijet", rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
@@ -463,10 +466,10 @@ cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
 cfg_xmin = float(argv[4]) if len(argv)>=5 else 550.
 cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
-#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="./plots/")
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/")
+#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="./plots/")
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
-xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
-#xbbfact.create_workspace( ["Spin0_M750"] )
+#xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
+xbbfact.create_workspace( ["Spin0_M750"] )
 

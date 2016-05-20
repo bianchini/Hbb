@@ -273,7 +273,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", postfix =
 
 ########################################################
 
-def plot_all( version = "V4" ):
+def plot_all( version = "V5" ):
 
     files = {}
     for ns,sample in enumerate( get_samples() ):    
@@ -283,28 +283,31 @@ def plot_all( version = "V4" ):
             continue
         files[sample] = f
 
-    for cat_btag in ["Had_LT", 
-                     #"Had_MT", "Had_TT",
+    for cat_btag in [#"Had_LT", 
+                     "Had_MT", 
+                     #"Had_TT",
                      #"Lep_LT"
                      ]:
-        for cat_kin in ["MinPt150_DH2p0", 
-                        #"MinPt150_DH1p6", "MinPt150_DH1p1",
-                        #"MinPt175_DH2p0", "MinPt175_DH1p6", "MinPt175_DH1p1",
-                        #"MinPt200_DH2p0", "MinPt200_DH1p6", "MinPt200_DH1p1",
-                        ]:            
+        for cat_kin in [
+            #"MinPt150_DH2p0", 
+            "MinPt150_DH1p6", "MinPt100_DH1p6", "MinMaxPt100150_DH1p6"
+            #"MinPt150_DH1p1",
+            #"MinPt175_DH2p0", "MinPt175_DH1p6", "MinPt175_DH1p1",
+            #"MinPt200_DH2p0", "MinPt200_DH1p6", "MinPt200_DH1p1",
+            ]:            
             for syst in ["", 
-                         #"_CSVSFUp", "_CSVSFDown"
+                         "_CSVSFUp", "_CSVSFDown"
                          ]:
                 if cat_btag=="Lep_LT" and syst!="":
                     continue
                 for hist in [    
-                    #"MassFSR",
-                    #"MassFSR_JECUp",
-                    #"MassFSR_JECDown",
-                    #"MassFSR_JERUp",
-                    #"MassFSR_JERDown",
-                    "MinJetPt",
-                    "MaxJetPt",
+                    "MassFSR",
+                    "MassFSR_JECUp",
+                    "MassFSR_JECDown",
+                    "MassFSR_JERUp",
+                    "MassFSR_JERDown",
+                    #"MinJetPt",
+                    #"MaxJetPt",
                     #"Mass",
                     #"MassAK08",
                     #"Pt",
