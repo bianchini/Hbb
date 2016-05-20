@@ -426,8 +426,8 @@ class XbbFactory:
         data_bkg = ROOT.RooDataHist("data", "", ROOT.RooArgList(self.x), h, 1.0)
 
         p0 = ROOT.RooRealVar("p0", "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
-        #p0.setVal(0.)
-        #p0.setConstant(1)
+        p0.setVal(0.)
+        p0.setConstant(1)
         p1 = ROOT.RooRealVar("p1", "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
         p2 = ROOT.RooRealVar("p2", "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
     

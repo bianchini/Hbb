@@ -41,7 +41,7 @@ PdfsFTest = {
         },
     "dijet" : {
         "FirstOrder" : 1,
-        "LastOrder" : 3,
+        "LastOrder" : 5,
         "Match" : -1,
         "MaxOrder" : 2,
         },
@@ -112,8 +112,20 @@ class BiasStudy:
                 formula += p_name
                 for exp in xrange(p):
                     formula += "*x"
-                p_min = -10. if p==0 else -math.pow(10,-3*p)
-                p_max = +10. if p==0 else +math.pow(10,-3*p) 
+                p_min = -10.
+                p_max = +10.
+                if p==0:
+                    p_min = -10
+                    p_max = +10.
+                elif p==1:
+                    p_min = -math.pow(10,-2) 
+                    p_max = +math.pow(10,-2) 
+                elif p==2:
+                    p_min = -math.pow(10,-5) 
+                    p_max = +math.pow(10,-5) 
+                elif p==3:
+                    p_min = -math.pow(10,-9) 
+                    p_max = +math.pow(10,-9) 
                 param = ROOT.RooRealVar( p_name, "", p_min, p_max)
                 gcs.append(param)
                 if p<(n_param-1):
@@ -173,6 +185,10 @@ class BiasStudy:
                 formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E)))" % (sqrts, sqrts))
             elif n_param==3:
                 formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2))" % (sqrts, sqrts, sqrts))
+            elif n_param==4:
+                return None
+            elif n_param==5:
+                formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2)*0.5*(TMath::Erf((x-@3)/@4)+1))" % (sqrts, sqrts, sqrts))
             for p in xrange(n_param):
                 p_name = ("a%d_deg%d_%d" % (p,n_param,n_iter))
                 p_min = -1.
@@ -186,7 +202,16 @@ class BiasStudy:
                 elif p==2:
                     p_min = 0.
                     p_max = 1e-04
+                elif p==3:
+                    p_min = 200.
+                    p_max = 450.
+                elif p==4:
+                    p_min = 50.
+                    p_max = 300.
                 param = ROOT.RooRealVar( p_name, "", p_min, p_max)
+                if p==3:
+                    param.setVal(260.)
+                    param.setConstant(1)
                 gcs.append(param)
                 coeff.add(param)
 
@@ -254,17 +279,19 @@ class BiasStudy:
                 pdf = self.generate_pdf(pdf_name=pdf_name, n_param=p, n_iter=0)
                 if pdf==None:
                     print "No pdf"
-                    return
+                    continue
                 res = pdf.fitTo(self.data, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))
                 pdfs.append(pdf)
 
                 par_fixed=0
                 if pdf_name=="pol":
                     par_fixed += 1
+                elif pdf_name=="dijet" and p==5:
+                    par_fixed += 1
 
                 npars.append(p-par_fixed)
 
-                legs.append("ndof: %d" % p)
+                legs.append("ndof: %d" % (p-par_fixed))
                 thisNll = res.minNll()
                 if p==firstOrder:
                     prevNll = thisNll
@@ -397,9 +424,9 @@ class BiasStudy:
 test_pdfs= [
     #"pol", 
     #"exp", 
-    "pow", 
+    #"pow", 
     #"polyexp", 
-    #"dijet"
+    "dijet"
     ]
 
 bs = BiasStudy(fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", 
