@@ -9,110 +9,12 @@ argv.remove( '-b-' )
 import math
 import sys
 sys.path.append('./')
+sys.path.append('../python/')
 
-sqrts = 1.3e+04
+from utilities import *
 
-FitParam = {
-    "dijet" : {
-        'p0' : [0.,10.],
-        'p1' : [0., 50.],
-        'p2' : [-5., 5.],
-        'fit_range' : [550., 1200.],
-        'formula' : ("TMath::Max(1e-50,TMath::Power(1-@0/%E,@1)/(TMath::Power(@0/%E,@2+@3*TMath::Log(@0/%E))))" % (sqrts,sqrts,sqrts))
-        },
-    "Spin0_M650" : {
-        'mean' : [550.,650.],
-        'sigma' : [30., 100.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [500., 800.],
-        'bias' : 0.01,
-        },
-    "Spin0_M750" : {
-        'mean' : [650.,750.],
-        'sigma' : [20., 100.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [500., 900.],
-        'bias' : 0.01,
-        },
-    "Spin0_M850" : {
-        'mean' : [750.,900.],
-        'sigma' : [20., 200.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [550., 1100.],
-        'bias' : 0.01,
-        },
-    "Spin0_M1000" : {
-        'mean' : [800.,1100.],
-        'sigma' : [50., 400.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [600., 1200.],
-        'bias' : 0.01,
-        },
-    "Spin0_M1200" : {
-        'mean' : [900.,1300.],
-        'sigma' : [50., 400.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [700., 1400.],
-        'bias' : 0.01,
-        },
-    "Spin2_M650" : {
-        'mean' : [550.,650.],
-        'sigma' : [30., 100.],
-        'xi' : [-0.5, 0.],
-        'rho1' : [-0.8, -0.4],
-        'rho2' : [0., 0.5],
-        'fit_range' : [500., 800.],
-        'bias' : 0.01,
-        },
-    "Spin2_M750" : {
-        'mean' : [650.,750.],
-        'sigma' : [20., 100.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [500., 900.],
-        'bias' : 0.01,
-        },
-    "Spin2_M850" : {
-        'mean' : [750.,900.],
-        'sigma' : [20., 200.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [550., 1100.],
-        'bias' : 0.01,
-        },
-    "Spin2_M1000" : {
-        'mean' : [800.,1100.],
-        'sigma' : [50., 400.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [600., 1200.],
-        'bias' : 0.01,
-        },
-    "Spin2_M1200" : {
-        'mean' : [900.,1300.],
-        'sigma' : [50., 400.],
-        'xi' : [-3., 3.],
-        'rho1' : [-1., 1.],
-        'rho2' : [-1., 1.],
-        'fit_range' : [700., 1400.],
-        'bias' : 0.01,
-        }
-}
-
-
+# for memory issues
+gcs = []
 
 class XbbFactory:
 
@@ -345,7 +247,7 @@ class XbbFactory:
         self.plot( data=self.w.data("data_sgn_"+sgn_name), pdfs=pdfs, res=None, add_pulls=False, legs=legs, ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER")
 
     # add background pdf to ws
-    def add_bkg_to_ws(self, pdf_name="dijet", rebin_factor=1.0, set_param_const=False):
+    def add_bkg_to_ws(self, pdf_names=["dijet"], rebin_factor=1.0, set_param_const=False):
 
         hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
@@ -353,7 +255,7 @@ class XbbFactory:
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
-        self.x.setRange( FitParam[pdf_name]['fit_range'][0], FitParam[pdf_name]['fit_range'][1] )
+        self.x.setRange( FitParam[pdf_names[0]]['fit_range'][0], FitParam[pdf_names[0]]['fit_range'][1] )
         data_bkg = ROOT.RooDataHist("data_bkg", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_bkg)
 
@@ -364,31 +266,28 @@ class XbbFactory:
         hist_pdf_bkg_norm.setConstant(0)
         self.imp(hist_pdf_bkg)
         self.imp(hist_pdf_bkg_norm)
+        
+        for pdf_name in pdf_names:
+            pdfs_bkg = generate_pdf(self.x, pdf_name=pdf_name, n_param=PdfsFTest[pdf_name]['MaxOrder'], n_iter=0, gcs=gcs)
+            pdf_bkg = pdfs_bkg[0]
+            param_bkg = pdfs_bkg[1]
 
-        p0 = ROOT.RooRealVar("p0_bkg_"+pdf_name, "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
-        p0.setVal(0.)
-        p0.setConstant(1)
-        p1 = ROOT.RooRealVar("p1_bkg_"+pdf_name, "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
-        p2 = ROOT.RooRealVar("p2_bkg_"+pdf_name, "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
-    
-        pdf_bkg = ROOT.RooGenericPdf(pdf_name+"_pdf_bkg", FitParam[pdf_name]['formula'], ROOT.RooArgList(self.x,p0,p1,p2))
-        pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
-        pdf_bkg_norm.setConstant(0)
+            pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
+            pdf_bkg_norm.setConstant(0) 
+            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+            
+            h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
+            data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="background_"+pdf_name)
 
-        h_rebinned = data_bkg.createHistogram(hname+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
-        data_bkg_rebinned = ROOT.RooDataHist("data_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
+            self.imp(pdf_bkg)
+            self.imp(pdf_bkg_norm)
 
-        self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="background")
+            for p in xrange(param_bkg.getSize()):            
+                if set_param_const:
+                    param_bkg[p].setConstant(1)
 
-        if set_param_const:
-            p0.setConstant(1)
-            p1.setConstant(1)
-            p2.setConstant(1)
-
-        self.imp(pdf_bkg)
-        self.imp(pdf_bkg_norm)
 
     # add data_obs to ws
     def add_data_to_ws(self, rebin_factor=1.0):
@@ -414,7 +313,7 @@ class XbbFactory:
         self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title="data")
 
     # add data_obs to ws
-    def add_datafit_to_ws(self, pdf_name='dijet', rebin_factor=1.0):
+    def add_datafit_to_ws(self, pdf_names=['dijet'], rebin_factor=1.0):
 
         hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
@@ -425,36 +324,32 @@ class XbbFactory:
         self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         data_bkg = ROOT.RooDataHist("data", "", ROOT.RooArgList(self.x), h, 1.0)
 
-        p0 = ROOT.RooRealVar("p0", "", FitParam[pdf_name]['p0'][0], FitParam[pdf_name]['p0'][1])
-        p0.setVal(0.)
-        p0.setConstant(1)
-        p1 = ROOT.RooRealVar("p1", "", FitParam[pdf_name]['p1'][0], FitParam[pdf_name]['p1'][1])
-        p2 = ROOT.RooRealVar("p2", "", FitParam[pdf_name]['p2'][0], FitParam[pdf_name]['p2'][1])
-    
-        pdf_bkg = ROOT.RooGenericPdf("pdf_bkg", FitParam[pdf_name]['formula'], ROOT.RooArgList(self.x,p0,p1,p2))
+        for pdf_name in pdf_names:
+            pdfs_bkg = generate_pdf(self.x, pdf_name=pdf_name, n_param=PdfsFTest[pdf_name]['MaxOrder'], n_iter=1, gcs=gcs)
+            pdf_bkg = pdfs_bkg[0]
+            param_bkg = pdfs_bkg[1]
 
-        res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(self.x_name), RooFit.SumCoefRange(self.x_name ), RooFit.Save(1))
+            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+            
+            h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
+            data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-        h_rebinned = data_bkg.createHistogram(hname+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
-        data_bkg_rebinned = ROOT.RooDataHist("data_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="datafit_"+pdf_name)
 
-        self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=self.x_name, n_par=2, title="datafit")
-
-
-
+    # name for final root and png
     def get_save_name(self):        
         return  self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)-self.bin_size*0.5))+"to"+("%.0f" % (self.x.getMax(self.x_name)+self.bin_size*0.5))
 
     # create the ws
-    def create_workspace(self, signals=[]):                            
+    def create_workspace(self, signals=[], pdf_names=["dijet"]):                            
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True)
             self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50)
         
-        self.add_bkg_to_ws(pdf_name="dijet", rebin_factor=-1, set_param_const=False)
+        self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
         self.add_data_to_ws(rebin_factor=-1)
-        self.add_datafit_to_ws(pdf_name="dijet", rebin_factor=-1)
+        self.add_datafit_to_ws(pdf_names=pdf_names, rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
@@ -464,15 +359,15 @@ class XbbFactory:
 ###########################
 
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
-cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt150_DH1p6" 
+cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 550.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
 cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
-#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
+#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
 #xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
-xbbfact.create_workspace( ["Spin0_M750"] )
+xbbfact.create_workspace( signals=[], pdf_names=["dijet", "polydijet"] )
 

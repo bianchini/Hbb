@@ -11,41 +11,9 @@ import numpy as n
 import math
 import sys
 sys.path.append('./')
+sys.path.append('../python/')
 
-sqrts = 1.3e+04
-
-PdfsFTest = {
-    "pol" : {
-        "FirstOrder" : 4,
-        "LastOrder" : 9,
-        "Match" : -1,
-        "MaxOrder" : 6,
-        },
-    "exp" : {
-        "FirstOrder" : 1,
-        "LastOrder" : 4,
-        "Match" : -1,
-        "MaxOrder" : 3,
-        },
-    "pow" : {
-        "FirstOrder" : 1,
-        "LastOrder" : 4,
-        "Match" : -1,
-        "MaxOrder" : 2,
-        },
-    "polyexp" : {
-        "FirstOrder" : 2,
-        "LastOrder" : 4,
-        "Match" : -1,
-        "MaxOrder" : 3,
-        },
-    "dijet" : {
-        "FirstOrder" : 1,
-        "LastOrder" : 5,
-        "Match" : -1,
-        "MaxOrder" : 2,
-        },
-}
+from utilities import *
 
 # global variables (for memory issues)
 gcs = []
@@ -63,165 +31,6 @@ class BiasStudy:
         self.saveDir = saveDir+'/'+version+'/'
         self.w = self.file.Get(ws_name)
         self.x = self.w.var("x")        
-
-    def generate_pdf(self, pdf_name="pol", n_param=4, n_iter=0):
-
-        pdf = None
-        coeff = ROOT.RooArgList()
-
-        if pdf_name=="pol":            
-            coeff.removeAll()
-            for p in xrange(n_param):
-                p_min = -1. if p==0 else -1.0
-                p_max = +1. if p==0 else +1.0
-                param = ROOT.RooRealVar( ("a%d_deg%d_%d" % (p,n_param,n_iter)), "", p_min, p_max)
-                if p==0:
-                    param.setVal(1.)
-                    param.setConstant(1)
-                gcs.append(param)
-                coeff.add(param)
-            coeff.Print()
-            pdf = ROOT.RooBernstein( ("pol_deg%d_%d" % (n_param,n_iter)) , "", self.x, coeff)
-
-        elif pdf_name=="exp":            
-            coeff.removeAll()
-            formula = "TMath::Exp("
-            for p in xrange(n_param):
-                p_name = ("a%d_deg%d_%d" % (p,n_param,n_iter))
-                formula += p_name
-                for exp in xrange(p+1):
-                    formula += "*x"
-                p_min = -math.pow(10,-p*3-2) if p!=0 else -0.02
-                p_max = +math.pow(10,-p*3-2) if p!=0 else -0.
-                param = ROOT.RooRealVar( p_name, "", p_min, p_max)
-                gcs.append(param)
-                coeff.add(param)
-                if p<(n_param-1):
-                    formula += " + "
-            formula += ")"
-            print formula
-            coeff.add(self.x)
-            coeff.Print()
-            pdf = ROOT.RooGenericPdf( ("exp_deg%d_%d" % (n_param,n_iter)), "", formula, coeff )
-
-        elif pdf_name=="pow":            
-            coeff.removeAll()
-            formula = "TMath::Power(x, "
-            for p in xrange(n_param):
-                p_name = ("a%d_deg%d_%d" % (p,n_param,n_iter))
-                formula += p_name
-                for exp in xrange(p):
-                    formula += "*x"
-                p_min = -10.
-                p_max = +10.
-                if p==0:
-                    p_min = -10
-                    p_max = +10.
-                elif p==1:
-                    p_min = -math.pow(10,-2) 
-                    p_max = +math.pow(10,-2) 
-                elif p==2:
-                    p_min = -math.pow(10,-5) 
-                    p_max = +math.pow(10,-5) 
-                elif p==3:
-                    p_min = -math.pow(10,-9) 
-                    p_max = +math.pow(10,-9) 
-                param = ROOT.RooRealVar( p_name, "", p_min, p_max)
-                gcs.append(param)
-                if p<(n_param-1):
-                    formula += " + "
-                coeff.add(param)
-            formula += ")"
-            print formula
-            coeff.add(self.x)
-            coeff.Print()
-            pdf = ROOT.RooGenericPdf( ("pow_deg%d_%d" % (n_param,n_iter)), "", formula, coeff )
-
-        elif pdf_name=="polyexp":            
-            coeff.removeAll()
-            formula = "TMath::Max(1e-50,"
-            for p in xrange(n_param):
-                p_name = ("a%d_deg%d_%d" % (p,n_param,n_iter))
-                p_min = -1.
-                p_max = +1.
-                if p==0:
-                    p_min = -0.02
-                    p_max = 0.
-                elif p==1:
-                    p_min = -math.pow(10,-2) 
-                    p_max = +math.pow(10,-2) 
-                elif p==2:
-                    p_min = -math.pow(10,-5)
-                    p_max = +math.pow(10,-5) 
-                elif p==3:
-                    p_min = -math.pow(10,-8) 
-                    p_max = +math.pow(10,-8) 
-
-                param = ROOT.RooRealVar( p_name, "", p_min, p_max)
-                gcs.append(param)
-                coeff.add(param)
-                if p==0:
-                    formula += "TMath::Exp(x*" + p_name
-                elif p==1:
-                    formula += ")*(1+"+p_name+"*x"
-                else:
-                    formula += (" + " + p_name)
-                    for exp in xrange(p):
-                        formula += "*x"
-                    if p<(n_param-1):
-                        formula += " + "
-            formula += "))"
-            print formula
-            coeff.add(self.x)
-            coeff.Print()
-            pdf = ROOT.RooGenericPdf( ("polyexp_deg%d_%d" % (n_param,n_iter)), "", formula, coeff )
-
-        elif pdf_name=="dijet":            
-            coeff.removeAll()
-            formula = ""
-            if n_param==1:
-                formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0))" % (sqrts))
-            elif n_param==2:
-                formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E)))" % (sqrts, sqrts))
-            elif n_param==3:
-                formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2))" % (sqrts, sqrts, sqrts))
-            elif n_param==4:
-                return None
-            elif n_param==5:
-                formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2)*0.5*(TMath::Erf((x-@3)/@4)+1))" % (sqrts, sqrts, sqrts))
-            for p in xrange(n_param):
-                p_name = ("a%d_deg%d_%d" % (p,n_param,n_iter))
-                p_min = -1.
-                p_max = +1.
-                if p==0:
-                    p_min = 0.
-                    p_max = 20.
-                elif p==1:
-                    p_min = -5.
-                    p_max = +5.
-                elif p==2:
-                    p_min = 0.
-                    p_max = 1e-04
-                elif p==3:
-                    p_min = 200.
-                    p_max = 450.
-                elif p==4:
-                    p_min = 50.
-                    p_max = 300.
-                param = ROOT.RooRealVar( p_name, "", p_min, p_max)
-                if p==3:
-                    param.setVal(260.)
-                    param.setConstant(1)
-                gcs.append(param)
-                coeff.add(param)
-
-            print formula
-            coeff.add(self.x)
-            coeff.Print()
-            pdf = ROOT.RooGenericPdf( ("dijet_deg%d_%d" % (n_param,n_iter)), "", formula, coeff )
-
-        pdf.Print()
-        return pdf
 
     def get_save_name(self):
         return "ftest_"+self.fname
@@ -276,7 +85,8 @@ class BiasStudy:
             prevNll = 0.
             match = False
             for p in range(firstOrder, lastOrder+1):
-                pdf = self.generate_pdf(pdf_name=pdf_name, n_param=p, n_iter=0)
+                #pdf = self.generate_pdf(pdf_name=pdf_name, n_param=p, n_iter=0)[0]
+                pdf = generate_pdf(self.x, pdf_name=pdf_name, n_param=p, n_iter=0, gcs=gcs)[0]
                 if pdf==None:
                     print "No pdf"
                     continue
@@ -366,14 +176,14 @@ class BiasStudy:
         pdf_sgn_ext = ROOT.RooExtendPdf("pdf_sgn_ext","", pdf_sgn, sgn_norm)
 
         # fit the alternative pdf to data (use it for toy generation)
-        pdf_bkg_alt = self.generate_pdf(pdf_name=pdf_alt_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=0)
+        pdf_bkg_alt = self.generate_pdf(pdf_name=pdf_alt_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=0)[0]
         res_bkg_alt = pdf_bkg_alt.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))        
         # normalise the background to data_obs
         bkg_norm = ROOT.RooRealVar("bkg_norm", "", self.w.data("data_obs").sumEntries())
         pdf_bkg_alt_ext = ROOT.RooExtendPdf("pdf_bkg_alt_ext","", pdf_bkg_alt, bkg_norm)
 
         # fit the nominal pdf to data 
-        pdf_bkg_nom = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=1)
+        pdf_bkg_nom = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=1)[0]
         res_bkg_nom = pdf_bkg_nom.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))
 
         # save a snapshot of the initial fits
@@ -383,7 +193,7 @@ class BiasStudy:
 
         n_s = ROOT.RooRealVar("n_s","", -5000., +5000.)
         n_b = ROOT.RooRealVar("n_b","", bkg_norm.getVal()-10*math.sqrt(bkg_norm.getVal()), bkg_norm.getVal()+10*math.sqrt(bkg_norm.getVal()))
-        pdf_bkg_fit = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=2)
+        pdf_bkg_fit = self.generate_pdf(pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=2)[0]
         pdf_fit_ext = ROOT.RooAddPdf("pdf_fit_ext","", ROOT.RooArgList(pdf_sgn,pdf_bkg_fit),  ROOT.RooArgList(n_s,n_b))
 
         ntoy = 0
@@ -426,7 +236,8 @@ test_pdfs= [
     #"exp", 
     #"pow", 
     #"polyexp", 
-    "dijet"
+    #"dijet"
+    "polydijet"
     ]
 
 bs = BiasStudy(fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", 
