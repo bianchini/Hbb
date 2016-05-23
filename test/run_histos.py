@@ -291,7 +291,7 @@ for n_cut,cut in enumerate(cuts_map):
     #"Mass_JECDown" : ROOT.TH1F(cut[0]+"_Mass_JECDown", argv[1]+": "+cut[0]+"_Mass_JECDown", 180, 400, 4000),
     #"Mass_JERUp" : ROOT.TH1F(cut[0]+"_Mass_JERUp", argv[1]+": "+cut[0]+"_Mass_JERUp", 180, 400, 4000),
     #"Mass_JERDown" : ROOT.TH1F(cut[0]+"_Mass_JERDown", argv[1]+": "+cut[0]+"_Mass_JERDown", 180, 400, 4000),
-    "MassFSR" : ROOT.TH1F(cut[0]+"_MassFSR", argv[1]+": "+cut[0]+"_MassFSR", 37000, 300, 4000),
+    "MassFSR" : ROOT.TH1F(cut[0]+"_MassFSR", argv[1]+": "+cut[0]+"_MassFSR", 3700, 300, 4000),
     "MassFSR_JECUp" : ROOT.TH1F(cut[0]+"_MassFSR_JECUp", argv[1]+": "+cut[0]+"_MassFSR_JECUp", 3700, 300, 4000),
     "MassFSR_JECDown" : ROOT.TH1F(cut[0]+"_MassFSR_JECDown", argv[1]+": "+cut[0]+"_MassFSR_JECDown", 3700, 300, 4000),
     "MassFSR_JERUp" : ROOT.TH1F(cut[0]+"_MassFSR_JERUp", argv[1]+": "+cut[0]+"_MassFSR_JERUp", 3700, 300, 4000),
