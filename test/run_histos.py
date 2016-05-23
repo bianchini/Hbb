@@ -10,6 +10,89 @@ sys.path.append('./')
 sys.path.append('../python/')
 from samples import *
 
+
+def deltaPhi(phi1, phi2):
+    result = phi1 - phi2
+    while (result > math.pi): result -= 2*math.pi
+    while (result <= -math.pi): result += 2*math.pi
+    return result
+
+
+def deltaR2( e1, p1, e2=None, p2=None):
+    """Take either 4 arguments (eta,phi, eta,phi) or two objects that have 'eta', 'phi' methods)"""
+    if (e2 == None and p2 == None):
+        return deltaR2(e1.eta(),e1.phi(), p1.eta(), p1.phi())
+    de = e1 - e2
+    dp = deltaPhi(p1, p2)
+    return de*de + dp*dp
+
+def deltaR( *args ):
+    return math.sqrt( deltaR2(*args) )
+
+
+
+def projectionMETOntoJet(met, metphi, jet, jetphi, onlyPositive=True, threshold = math.pi/4.0):
+  deltaphi = deltaPhi(metphi, jetphi)
+  projection = met * math.cos(deltaphi)  
+  if onlyPositive and abs(deltaphi) >= threshold:
+      return 0.0
+  else:
+      return projection
+
+def projMetOntoH(ev, tryAlsoWNoLept, recoverAlsoFSR):
+  if len(ev.hJCidx)<2:
+    return ev.HCSV_mass
+  lep0pt = ev.Jet_leptonPt[ev.hJCidx[0]]
+  lep1pt = ev.Jet_leptonPt[ev.hJCidx[1]]
+
+  nu = ROOT.TLorentzVector()
+  j0 = ROOT.TLorentzVector()
+  j1 = ROOT.TLorentzVector()
+  j0.SetPtEtaPhiM( ev.Jet_pt[ev.hJCidx[0]],  ev.Jet_eta[ev.hJCidx[0]],  ev.Jet_phi[ev.hJCidx[0]],  ev.Jet_mass[ev.hJCidx[0]])
+  j1.SetPtEtaPhiM( ev.Jet_pt[ev.hJCidx[1]],  ev.Jet_eta[ev.hJCidx[1]],  ev.Jet_phi[ev.hJCidx[1]],  ev.Jet_mass[ev.hJCidx[1]])
+
+  proj0 = projectionMETOntoJet(ev.met_pt, ev.met_phi, j0.Pt() , j0.Phi(), False, 999)
+  dPhi0= deltaPhi(ev.met_phi,  j0.Phi())    
+  proj1 = projectionMETOntoJet(ev.met_pt, ev.met_phi, j1.Pt() ,j1.Phi(), False, 999)
+  dPhi1= deltaPhi(ev.met_phi,  j1.Phi())    
+
+  if recoverAlsoFSR:
+      FSRjet = ROOT.TLorentzVector()
+      idxtoAdd = []
+      idxtoAdd =  [x for x in range(ev.nJet)  if ( x not in ev.hJCidx and ev.Jet_pt[x]>15. and abs(ev.Jet_eta[x])<3.0 and  ev.Jet_id[x]>=3 and ev.Jet_puId[x]>=4 and  min( deltaR(ev.Jet_eta[x],ev.Jet_phi[x], j0.Eta(), j0.Phi()), deltaR(ev.Jet_eta[x],ev.Jet_phi[x], j1.Eta(), j1.Phi() ) ) <0.8 )  ] 
+      for ad in idxtoAdd:        
+            FSRjet.SetPtEtaPhiM( ev.Jet_pt[ad],  ev.Jet_eta[ad],  ev.Jet_phi[ad],  ev.Jet_mass[ad])
+            dR0 = deltaR(ev.Jet_eta[ad],ev.Jet_phi[ad], j0.Eta(), j0.Phi() )
+            dR1 = deltaR(ev.Jet_eta[ad],ev.Jet_phi[ad], j1.Eta(), j1.Phi() )
+            if dR0<dR1:
+                   j0 +=FSRjet
+            else:
+                   j1 +=FSRjet
+
+
+  if not tryAlsoWNoLept:
+      if (lep0pt>0 or lep1pt>0):  
+              if ( (abs(dPhi0)<abs(dPhi1)) and lep0pt>0) :
+                  nu.SetPtEtaPhiM( proj0,  j0.Eta(),  j0.Phi(), 0)
+                  j0+=nu
+              elif ( (abs(dPhi0)>abs(dPhi1))  and lep1pt>0 ):
+                  nu.SetPtEtaPhiM( proj1,  j1.Eta(),  j1.Phi(), 0)
+                  j1+=nu
+
+      return (j0+j1).M()
+ 
+  else : 
+          if (abs(dPhi0)<abs(dPhi1)) :
+                 nu.SetPtEtaPhiM( proj0,  j0.Eta(),  j0.Phi(), 0)
+                 j0+=nu
+          else:
+                 nu.SetPtEtaPhiM( proj1,  j1.Eta(),  j1.Phi(), 0)
+                 j1+=nu
+  
+  return (j0+j1).M()
+
+
+
 def weight(ev, lumi):
   if lumi<0:
     return 1.0
@@ -102,9 +185,11 @@ if is_empty:
   exit(1)
 
 if int(argv[2])<0:
-  f = ROOT.TFile("/scratch/bianchi/"+argv[1]+".root", "RECREATE")
+    f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+".root", "RECREATE")
+  #f = ROOT.TFile("/scratch/bianchi/"+argv[1]+".root", "RECREATE")
 else:
-  f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
+    f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
+  #f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
 
 luminosity = 2630.
 lumi_factor = sample_to_process[1]*luminosity/processed if processed>0 else -1
@@ -211,6 +296,8 @@ for n_cut,cut in enumerate(cuts_map):
     "MassFSR_JECDown" : ROOT.TH1F(cut[0]+"_MassFSR_JECDown", argv[1]+": "+cut[0]+"_MassFSR_JECDown", 3700, 300, 4000),
     "MassFSR_JERUp" : ROOT.TH1F(cut[0]+"_MassFSR_JERUp", argv[1]+": "+cut[0]+"_MassFSR_JERUp", 3700, 300, 4000),
     "MassFSR_JERDown" : ROOT.TH1F(cut[0]+"_MassFSR_JERDown", argv[1]+": "+cut[0]+"_MassFSR_JERDown", 3700, 300, 4000),
+    "MassFSRProjMET" : ROOT.TH1F(cut[0]+"_MassFSRProjMET", argv[1]+": "+cut[0]+"_MassFSRProjMET", 3700, 300, 4000),
+
     #"MassAK08" : ROOT.TH1F(cut[0]+"_MassAK08", argv[1]+": "+cut[0]+"_MassAK08", 180, 400, 4000),
     #"njetAK08" : ROOT.TH1F(cut[0]+"_njetAK08", argv[1]+": "+cut[0]+"_njetAK08", 10, 0, 10),
     #"Pt" : ROOT.TH1F(cut[0]+"_Pt", argv[1]+": "+cut[0]+"_Pt", 20, 0, 500),
@@ -278,6 +365,8 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
     variables["MassFSR_JECDown"] = ev.HaddJetsdR08_mass * math.sqrt( ev.Jet_corr_JECDown[ev.hJCidx[0]]*ev.Jet_corr_JECDown[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JECDown[ev.hJCidx[0]]>0. and ev.Jet_corr_JECDown[ev.hJCidx[1]]>0. else ev.HaddJetsdR08_mass
     variables["MassFSR_JERUp"] = ev.HaddJetsdR08_mass * math.sqrt( ev.Jet_corr_JERUp[ev.hJCidx[0]]*ev.Jet_corr_JERUp[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HaddJetsdR08_mass
     variables["MassFSR_JERDown"] = ev.HaddJetsdR08_mass * math.sqrt( ev.Jet_corr_JERDown[ev.hJCidx[0]]*ev.Jet_corr_JERDown[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HaddJetsdR08_mass
+    variables["MassFSRProjMET"] =  projMetOntoH(ev, True, True) 
+
     #variables["MassAK08"] = ak08_mass(ev) 
     #variables["njetAK08"] = getattr(ev, "nFatjetAK08ungroomed", 2)
     #variables["Pt"] = ev.HCSV_pt 
