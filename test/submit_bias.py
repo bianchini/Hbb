@@ -53,6 +53,6 @@ for fname in [
             for sgn_name in [
                 'Spin0_M750'
                 ]:
-                for nproc in xrange(10):
-                    submit(fname, pdf_alt_name, pdf_fit_name, -1, "buk", sgn_name, 0., 100, nproc)
+                for nproc in xrange(100):
+                    submit(fname, pdf_alt_name, pdf_fit_name, -1, "buk", sgn_name, 0., 10, nproc)
                     #exit(1)

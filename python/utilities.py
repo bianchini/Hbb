@@ -319,27 +319,27 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
         coeff.removeAll()
         formula = ""
         if n_param==1:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E)))" % (sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E)))" % (sqrts, sqrts))
         elif n_param==2:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*(-1+@2*(x/%E)))" % (sqrts, sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E)))*(-1+@2*(x/%E)))" % (sqrts, sqrts, sqrts))
         elif n_param==3:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*(-1+@2*(x/%E)+@3*(x*x/%E/%E)))" % (sqrts, sqrts, sqrts, sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*(-1+@2*(x/%E)+@3*(x*x/%E/%E)))" % (sqrts, sqrts, sqrts, sqrts, sqrts))
             
         for p in xrange(n_param+1):
             p_name = ("a%d_%s_deg%d_%d" % (p,pdf_name,n_param,n_iter))
             p_min = -1.
             p_max = +1.
             if p==0:
-                p_min = 0.
-                p_max = 20.
+                p_min = 0.#0.
+                p_max = 15.#20.
             elif p==1:
-                p_min = -5.
-                p_max = +5.
+                p_min = -0.05#-5.
+                p_max = +0.1#+5.
             elif p==2:
-                p_min = 0.
-                p_max = 1e+02
+                p_min = 35.
+                p_max = +1e+02
             elif p==3:
-                p_min = 0
+                p_min = 0.
                 p_max = 1e+04
 
             param = ROOT.RooRealVar( p_name, "", p_min, p_max)

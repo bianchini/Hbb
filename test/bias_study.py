@@ -183,23 +183,33 @@ class BiasStudy:
 
         # fit the alternative pdf to data (use it for toy generation)
         pdf_bkg_alt = generate_pdf(x=self.x, pdf_name=pdf_alt_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=0)[0]
-        res_bkg_alt = pdf_bkg_alt.fitTo(self.data, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))        
+        res_bkg_alt = pdf_bkg_alt.fitTo(self.data, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE))        
+        res_bkg_alt.Print()
+
         # normalise the background to data_obs
         bkg_norm = ROOT.RooRealVar("bkg_norm", "", self.w.data("data_obs").sumEntries())
         pdf_bkg_alt_ext = ROOT.RooExtendPdf("pdf_bkg_alt_ext","", pdf_bkg_alt, bkg_norm)
 
         # fit the nominal pdf to data 
         pdf_bkg_nom = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=1)[0]
-        res_bkg_nom = pdf_bkg_nom.fitTo(self.data, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1))
+        res_bkg_nom = pdf_bkg_nom.fitTo(self.data, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE))
+        res_bkg_nom.Print()
 
         # save a snapshot of the initial fits
         h_rebinned = self.data.createHistogram("h_"+data_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
         data_rebinned = ROOT.RooDataHist(data_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
         self.plot(data=data_rebinned, pdfs=[pdf_bkg_nom,pdf_bkg_alt], probs=[0.,0.], npars=[PdfsFTest[pdf_fit_name]['MaxOrder'],PdfsFTest[pdf_alt_name]['MaxOrder']], legs=["Nominal: "+pdf_fit_name,"Alternative: "+pdf_alt_name], title="bias_"+pdf_fit_name+"_"+pdf_alt_name)
 
-        n_s = ROOT.RooRealVar("n_s","", -2000., +2000.)
-        n_b = ROOT.RooRealVar("n_b","", bkg_norm.getVal()-6*math.sqrt(bkg_norm.getVal()), bkg_norm.getVal()+6*math.sqrt(bkg_norm.getVal()))
-        pdf_bkg_fit = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=2)[0]
+        n_s = ROOT.RooRealVar("n_s","", 0., -1000., +1000.)
+        n_b = ROOT.RooRealVar("n_b","", bkg_norm.getVal(), bkg_norm.getVal()-10*math.sqrt(bkg_norm.getVal()), bkg_norm.getVal()+10*math.sqrt(bkg_norm.getVal()))
+
+        pdfs_bkg_fit = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=PdfsFTest[pdf_alt_name]['MaxOrder'], n_iter=2)
+        pdf_bkg_fit = pdfs_bkg_fit[0]
+        coeff_bkg_fit = pdfs_bkg_fit[1]
+        coeff_bkg_fit_reset = []
+        for p in xrange(coeff_bkg_fit.getSize()):
+            coeff_bkg_fit_reset[p] = coeff_bkg_fit[p].getVal()
+
         pdf_fit_ext = ROOT.RooAddPdf("pdf_fit_ext","", ROOT.RooArgList(pdf_sgn,pdf_bkg_fit),  ROOT.RooArgList(n_s,n_b))
 
         ntoy = 0
@@ -214,10 +224,17 @@ class BiasStudy:
             ns_toy = data_toy_sgn.sumEntries() if data_toy_sgn!=None else 0.
             n_toy = data_toy.sumEntries()
 
-            res_fit = pdf_fit_ext.fitTo(data_toy, RooFit.Strategy(2), RooFit.Minimizer("Minuit2", "migrad"), RooFit.Minos(1), RooFit.Save(1))
+            # reset all fit parameters
+            n_s.setVal(0.)
+            n_b.setVal(bkg_norm.getVal())
+            for p in xrange(coeff_bkg_fit.getSize()):
+                coeff_bkg_fit[p].setVal(coeff_bkg_fit_reset[p])
+
+            res_fit = pdf_fit_ext.fitTo(data_toy, RooFit.Strategy(1), RooFit.Minimizer("Minuit2", "migrad"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE), RooFit.Extended(ROOT.kTRUE))
             if res_fit==None or res_fit.status()!=0:
                 continue                
 
+            res_fit.Print()
             print "Nb=%.0f -- Ns=%.0f ==> tot:  %.0f" % (nb_toy, ns_toy, n_toy)
             print ">>>>>>>>>>", n_s.getVal()/n_s.getError()
             ns_fit[0] = n_s.getVal()
@@ -254,7 +271,7 @@ cfg_n_bins = int(argv[4]) if len(argv)>=5 else -1
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
 cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M750"
 cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 0.
-cfg_ntoys = int(argv[8]) if len(argv)>=9 else 10
+cfg_ntoys = int(argv[8]) if len(argv)>=9 else 100
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 
