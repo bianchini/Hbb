@@ -128,7 +128,7 @@ class XbbFactory:
         return
 
     # add a signal sample to the ws
-    def add_sgn_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, set_param_const=True):
+    def add_sgn_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, set_param_const=True, spin_symmetric=False):
 
         hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name
         print hname
@@ -153,10 +153,25 @@ class XbbFactory:
         xi = ROOT.RooRealVar("xi_sgn_"+sgn_name, "", FitParam[sgn_name]['xi'][0], FitParam[sgn_name]['xi'][1])
         rho1 = ROOT.RooRealVar("rho1_sgn_"+sgn_name, "", FitParam[sgn_name]['rho1'][0], FitParam[sgn_name]['rho1'][1])
         rho2 = ROOT.RooRealVar("rho2_sgn_"+sgn_name, "", FitParam[sgn_name]['rho2'][0], FitParam[sgn_name]['rho2'][1])
-    
-        buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
+        gcs.append(mean)
+        gcs.append(sigma)
+        gcs.append(xi)
+        gcs.append(rho1)
+        gcs.append(rho2)
+
+        buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)       
         buk_pdf_sgn_norm = ROOT.RooRealVar("buk_pdf_sgn_"+sgn_name+"_norm","", norm)
         buk_pdf_sgn_norm.setConstant(1)
+
+        if spin_symmetric:
+            sgn_name2 = "Spin0"+sgn_name[5:] if "Spin2" in sgn_name else "Spin2"+sgn_name[5:]
+            hname2 = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name2
+            print hname2
+            h2 = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname2).Clone(hname2+"_clone")
+            if rebin_factor>1.:
+                h2.Rebin(rebin_factor)            
+                data_sgn2 = ROOT.RooDataHist("data_sgn_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
+            data_sgn.add(data_sgn2)
 
         res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
 
@@ -181,7 +196,7 @@ class XbbFactory:
         self.imp(bias)
 
     # add signal systematics to ws
-    def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0):
+    def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, spin_symmetric=True):
 
         shifts = {}
         for syst in ["JECUp", "JECDown", "JERUp", "JERDown"]:
@@ -192,9 +207,19 @@ class XbbFactory:
 
             self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
             data_sgn = ROOT.RooDataHist("data_sgn_"+syst+"_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
+
+            if spin_symmetric:
+                sgn_name2 = "Spin0"+sgn_name[5:] if "Spin2" in sgn_name else "Spin2"+sgn_name[5:]
+                hname2 = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name2
+                print hname2
+                h2 = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname2).Clone(hname2+"_clone")
+                if rebin_factor>1.:
+                    h2.Rebin(rebin_factor)            
+                    data_sgn2 = ROOT.RooDataHist("data_sgn_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
+                data_sgn.add(data_sgn2)
+
             norm = data_sgn.sumEntries()
 
-            hist_pdf_sgn = ROOT.RooHistPdf("hist_pdf_sgn_"+syst+"_"+sgn_name,"", ROOT.RooArgSet(self.x), data_sgn, 0)        
             mean = ROOT.RooRealVar("mean_sgn_"+syst+"_"+sgn_name, "", FitParam[sgn_name]['mean'][0], FitParam[sgn_name]['mean'][1])
             sigma = ROOT.RooRealVar("sigma_sgn_"+syst+"_"+sgn_name, "", FitParam[sgn_name]['sigma'][0], FitParam[sgn_name]['sigma'][1])
             mean.setVal( self.w.var("mean_sgn_"+sgn_name).getVal() )
@@ -255,7 +280,7 @@ class XbbFactory:
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
-        self.x.setRange( FitParam[pdf_names[0]]['fit_range'][0], FitParam[pdf_names[0]]['fit_range'][1] )
+        self.x.setRange( PdfsFTest[pdf_names[0]]['fit_range'][0], PdfsFTest[pdf_names[0]]['fit_range'][1] )
         data_bkg = ROOT.RooDataHist("data_bkg", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_bkg)
 
@@ -279,7 +304,7 @@ class XbbFactory:
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="background_"+pdf_name)
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="background_"+pdf_name)
 
             self.imp(pdf_bkg)
             self.imp(pdf_bkg_norm)
@@ -313,7 +338,7 @@ class XbbFactory:
         self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title="data")
 
     # add data_obs to ws
-    def add_datafit_to_ws(self, pdf_names=['dijet'], rebin_factor=1.0):
+    def test_datafit(self, pdf_names=['dijet'], rebin_factor=1.0):
 
         hname = "data_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
@@ -329,12 +354,12 @@ class XbbFactory:
             pdf_bkg = pdfs_bkg[0]
             param_bkg = pdfs_bkg[1]
 
-            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
+            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1))
             
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=res, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=2, title="datafit_"+pdf_name)
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=PdfsFTest[pdf_name]['ndof'], title="datafit_"+pdf_name)
 
     # name for final root and png
     def get_save_name(self):        
@@ -344,12 +369,12 @@ class XbbFactory:
     def create_workspace(self, signals=[], pdf_names=["dijet"]):                            
 
         for sgn in signals:
-            self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True)
-            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50)
+            self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True, spin_symmetric=True)
+            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50, spin_symmetric=True)
         
         self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
         self.add_data_to_ws(rebin_factor=-1)
-        self.add_datafit_to_ws(pdf_names=pdf_names, rebin_factor=-1)
+        self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
@@ -369,5 +394,9 @@ xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", s
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
 #xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
-xbbfact.create_workspace( signals=[], pdf_names=["dijet", "polydijet"] )
+xbbfact.create_workspace( signals=[], pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] )
+#xbbfact.create_workspace( signals=[], pdf_names=["pow"] )
+
+for gc in gcs:
+    gc.Print()
 

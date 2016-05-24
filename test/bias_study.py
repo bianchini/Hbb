@@ -234,10 +234,10 @@ class BiasStudy:
 test_pdfs= [
     #"pol", 
     #"exp", 
-    #"pow", 
+    "pow", 
     #"polyexp", 
     #"dijet"
-    "polydijet"
+    #"polydijet"
     ]
 
 bs = BiasStudy(fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", 

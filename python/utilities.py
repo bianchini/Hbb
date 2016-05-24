@@ -1,23 +1,17 @@
 import ROOT
 from ROOT import RooFit
+import math
 
 sqrts = 1.3e+04
 
 FitParam = {
-    "dijet" : {
-        'p0' : [0.,10.],
-        'p1' : [0., 50.],
-        'p2' : [-5., 5.],
-        'fit_range' : [400., 1200.],
-        'formula' : ("TMath::Max(1e-50,TMath::Power(1-@0/%E,@1)/(TMath::Power(@0/%E,@2+@3*TMath::Log(@0/%E))))" % (sqrts,sqrts,sqrts))
-        },
     "Spin0_M650" : {
         'mean' : [550.,650.],
         'sigma' : [30., 100.],
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [500., 800.],
+        'fit_range' : [400., 900.],
         'bias' : 0.01,
         },
     "Spin0_M750" : {
@@ -26,7 +20,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [500., 900.],
+        'fit_range' : [400., 1000.],
         'bias' : 0.01,
         },
     "Spin0_M850" : {
@@ -35,7 +29,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [550., 1100.],
+        'fit_range' : [400., 1100.],
         'bias' : 0.01,
         },
     "Spin0_M1000" : {
@@ -44,7 +38,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [600., 1200.],
+        'fit_range' : [400., 1200.],
         'bias' : 0.01,
         },
     "Spin0_M1200" : {
@@ -53,16 +47,16 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [700., 1400.],
+        'fit_range' : [600., 1400.],
         'bias' : 0.01,
         },
     "Spin2_M650" : {
         'mean' : [550.,650.],
         'sigma' : [30., 100.],
-        'xi' : [-0.5, 0.],
-        'rho1' : [-0.8, -0.4],
-        'rho2' : [0., 0.5],
-        'fit_range' : [500., 800.],
+        'xi' : [-3., +3.],
+        'rho1' : [-1.0, +1.0],
+        'rho2' : [-1.0, +1.0],
+        'fit_range' : [400., 900.],
         'bias' : 0.01,
         },
     "Spin2_M750" : {
@@ -71,7 +65,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [500., 900.],
+        'fit_range' : [400., 1000.],
         'bias' : 0.01,
         },
     "Spin2_M850" : {
@@ -80,7 +74,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [550., 1100.],
+        'fit_range' : [400., 1100.],
         'bias' : 0.01,
         },
     "Spin2_M1000" : {
@@ -89,7 +83,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [600., 1200.],
+        'fit_range' : [400., 1200.],
         'bias' : 0.01,
         },
     "Spin2_M1200" : {
@@ -98,7 +92,7 @@ FitParam = {
         'xi' : [-3., 3.],
         'rho1' : [-1., 1.],
         'rho2' : [-1., 1.],
-        'fit_range' : [700., 1400.],
+        'fit_range' : [600., 1400.],
         'bias' : 0.01,
         }
 }
@@ -109,37 +103,49 @@ PdfsFTest = {
         "FirstOrder" : 4,
         "LastOrder" : 9,
         "Match" : -1,
-        "MaxOrder" : 6,
+        "MaxOrder" : 8,
+        "ndof" : 7,
+        "fit_range" : [400., 1200.], 
         },
     "exp" : {
         "FirstOrder" : 1,
         "LastOrder" : 4,
         "Match" : -1,
         "MaxOrder" : 3,
+        "ndof" : 3,
+        "fit_range" : [400., 1200.], 
         },
     "pow" : {
         "FirstOrder" : 1,
-        "LastOrder" : 4,
+        "LastOrder" : 5,
         "Match" : -1,
-        "MaxOrder" : 2,
+        "MaxOrder" : 4,
+        "ndof" : 4,
+        "fit_range" : [400., 1200.], 
         },
     "polyexp" : {
         "FirstOrder" : 2,
         "LastOrder" : 4,
         "Match" : -1,
         "MaxOrder" : 3,
+        "ndof" : 3,
+        "fit_range" : [400., 1200.], 
         },
     "dijet" : {
         "FirstOrder" : 1,
-        "LastOrder" : 5,
+        "LastOrder" : 3,
         "Match" : -1,
         "MaxOrder" : 2,
+        "ndof" : 2,
+        "fit_range" : [400., 1200.], 
         },
     "polydijet" : {
         "FirstOrder" : 1,
         "LastOrder" : 3,
         "Match" : -1,
         "MaxOrder" : 2,
+        "ndof" : 3,
+        "fit_range" : [400., 1200.], 
         },
 }
 
@@ -208,6 +214,10 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
             elif p==3:
                 p_min = -math.pow(10,-9) 
                 p_max = +math.pow(10,-9) 
+            elif p==4:
+                p_min = -math.pow(10,-12) 
+                p_max = +math.pow(10,-12) 
+
             param = ROOT.RooRealVar( p_name, "", p_min, p_max)
             gcs.append(param)
             if p<(n_param-1):

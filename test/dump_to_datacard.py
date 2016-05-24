@@ -9,6 +9,13 @@ import string
 from os import listdir
 import ROOT
 
+import sys
+sys.path.append('./')
+sys.path.append('../python/')
+
+from utilities import *
+
+
 def make_datacard( ws_name='Xbb_workspace', 
                    cat='Had_LT_MinPt150_DH1p6', mass='MassFSR', x_range='550to1200', sgn='Spin0_M650',
                    pdf_sgn='buk', pdf_bkg='dijet', data_obs='data_obs', save_dir='./plots/V4/' ):
@@ -50,10 +57,11 @@ def make_datacard( ws_name='Xbb_workspace',
     if ws.var('CSV_shift_'+sgn) != None:
         f.write('CMS_btag           lnN    '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                       '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                      -\n')  
         
-    if pdf_bkg=='dijet':
-        for param in ['p1_bkg_'+pdf_bkg,'p2_bkg_'+pdf_bkg]:
-            val =  ws.var(param).getVal()
-            f.write(param+'  flatParam \n')
+    for p in xrange(PdfsFTest[pdf_bkg]['ndof']):        
+        param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,PdfsFTest[pdf_bkg]['MaxOrder']))
+        val =  ws.var(param).getVal()
+        print "Setting parameter ", param, " as flatParam with initial value ", val
+        f.write(param+'  flatParam \n')
 
     mean = ws.var('mean_sgn_'+sgn).getVal()
     d_mean = ws.var('mean_shift_'+sgn).getVal()
