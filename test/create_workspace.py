@@ -166,11 +166,11 @@ class XbbFactory:
         if spin_symmetric:
             sgn_name2 = "Spin0"+sgn_name[5:] if "Spin2" in sgn_name else "Spin2"+sgn_name[5:]
             hname2 = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name2
-            print hname2
+            print "\tAdding.....", hname2
             h2 = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname2).Clone(hname2+"_clone")
             if rebin_factor>1.:
                 h2.Rebin(rebin_factor)            
-                data_sgn2 = ROOT.RooDataHist("data_sgn_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
+            data_sgn2 = ROOT.RooDataHist("data_sgn_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
             data_sgn.add(data_sgn2)
 
         res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1))
@@ -210,12 +210,12 @@ class XbbFactory:
 
             if spin_symmetric:
                 sgn_name2 = "Spin0"+sgn_name[5:] if "Spin2" in sgn_name else "Spin2"+sgn_name[5:]
-                hname2 = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+sgn_name2
-                print hname2
+                hname2 = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+syst+"_"+sgn_name2
+                print "\tAdding.....", hname2
                 h2 = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname2).Clone(hname2+"_clone")
                 if rebin_factor>1.:
                     h2.Rebin(rebin_factor)            
-                    data_sgn2 = ROOT.RooDataHist("data_sgn_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
+                data_sgn2 = ROOT.RooDataHist("data_sgn_"+syst+"_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
                 data_sgn.add(data_sgn2)
 
             norm = data_sgn.sumEntries()
@@ -393,8 +393,11 @@ xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", s
 #xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
-#xbbfact.create_workspace( ["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"] )
-xbbfact.create_workspace( signals=[], pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] )
+xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"], 
+                          #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
+                          pdf_names=["polydijet"] 
+                          )
+#xbbfact.create_workspace( signals=["Spin0_M750"], pdf_names=["polydijet"] )
 #xbbfact.create_workspace( signals=[], pdf_names=["pow"] )
 
 for gc in gcs:

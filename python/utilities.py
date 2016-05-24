@@ -271,7 +271,6 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
 
     # (1-x)^c/(x^(a+b*log(x)))
     elif pdf_name=="dijet":            
-        print "DIJET"
         coeff.removeAll()
         formula = ""
         if n_param==1:

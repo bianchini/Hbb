@@ -16,10 +16,10 @@ sys.path.append('./')
 
 ################################################################################
 
-def submit(pdf_nom='mass', pdf_alt='mass', xsec=1.0, cat='Had_LT_MinPt150_DH1p6_MassFSR_550to1400', xMin=550., xMax=1200.):
+def submit(cfg_fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", cfg_pdf_alt_name="dijet", cfg_pdf_fit_name="dijet", cfg_n_bins=-1, cfg_pdf_sgn_name="buk", cfg_sgn_name="Spin0_M750", cfg_sgn_xsec=0., cfg_ntoys=100, cfg_nproc=0):
     print "Running: submit_bias.py"
-    scriptName = 'job_'+pdf_nom+'_'+pdf_alt+'_'+str(xsec)+'.sh'
-    jobName    = 'job_'+pdf_nom+'_'+pdf_alt+'_'+str(xsec)
+    jobName    = 'job_'+cfg_pdf_alt_name+'_'+cfg_pdf_fit_name+'_'+str(nproc)
+    scriptName = jobName+'.sh'
     f = open(scriptName,'w')
     f.write('#!/bin/bash\n\n')
     f.write('cd $HOME/TTH-76X-heppy/CMSSW/src/Hbb/test/\n')
@@ -27,7 +27,7 @@ def submit(pdf_nom='mass', pdf_alt='mass', xsec=1.0, cat='Had_LT_MinPt150_DH1p6_
     f.write('source /cvmfs/cms.cern.ch/cmsset_default.sh\n')
     f.write('eval `scramv1 runtime -sh`\n')
     f.write('\n')    
-    f.write('python bias.py '+cat+' '+pdf_nom+' '+pdf_alt+' '+str(xsec)+' '+str(xMin)+' '+str(xMax)+'\n')
+    f.write('python bias_study.py '+cfg_fname+' '+cfg_pdf_alt_name+' '+cfg_pdf_fit_name+' '+str(cfg_n_bins)+' '+cfg_pdf_sgn_name+' '+cfg_sgn_name+' '+str(cfg_sgn_xsec)+' '+str(cfg_ntoys)+' '+str(cfg_nproc)+'\n')
     f.close()
     os.system('chmod +x '+scriptName)
              
@@ -41,24 +41,18 @@ def submit(pdf_nom='mass', pdf_alt='mass', xsec=1.0, cat='Had_LT_MinPt150_DH1p6_
 
 ##########################################
 
-for cat in [
-    'Had_LT_MinPt150_DH1p6_MassFSR_540to1200', 
-    'Had_LT_MinPt150_DH1p6_MassFSR_550to1200', 
-    'Had_LT_MinPt150_DH1p6_MassFSR_560to1200',
-    'Had_LT_MinPt150_DH1p6_MassFSR_570to1200',
-    'Had_LT_MinPt150_DH1p6_MassFSR_580to1200',
-    'Had_LT_MinPt150_DH1p6_MassFSR_550to1300',
-    'Had_LT_MinPt150_DH1p6_MassFSR_550to1400'
+for fname in [
+    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200'
     ]:
-    for pdf_nom in ["mass", 
-                    #"pol", "pow", "polyexp", 
-                    #"exp"
-                    ]:
-        for pdf_alt in ["mass", 
-                        "pol", "pow", "polyexp", "exp"
-                        ]:
-            for xmin in [-1]:
-                for xmax in [-1]:
-                    for xsec in [0.]:
-                        submit(pdf_nom, pdf_alt, xsec, cat, xmin, xmax)
-                        #exit(1)
+    for pdf_alt_name in [
+        'polydijet' 
+        ]:
+        for pdf_fit_name in [
+            'polydijet', 
+            ]:
+            for sgn_name in [
+                'Spin0_M750'
+                ]:
+                for nproc in xrange(10):
+                    submit(fname, pdf_alt_name, pdf_fit_name, -1, "buk", sgn_name, 0., 100, nproc)
+                    #exit(1)

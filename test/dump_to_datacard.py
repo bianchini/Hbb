@@ -60,7 +60,7 @@ def make_datacard( ws_name='Xbb_workspace',
     for p in xrange(PdfsFTest[pdf_bkg]['ndof']):        
         param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,PdfsFTest[pdf_bkg]['MaxOrder']))
         val =  ws.var(param).getVal()
-        print "Setting parameter ", param, " as flatParam with initial value ", val
+        print "\tsetting parameter... ", param, " as flatParam with initial value ", val
         f.write(param+'  flatParam \n')
 
     mean = ws.var('mean_sgn_'+sgn).getVal()
@@ -81,15 +81,23 @@ def make_datacard( ws_name='Xbb_workspace',
 ########################################
 
 for cat_btag in [
-    'Had_LT', 'Had_MT', 'Had_TT',
+    #'Had_LT', 
+    'Had_MT', 
+    #'Had_TT',
     ]:
     for cat_kin in [
-        'MinPt150_DH1p6', 'MinPt150_DH2p0', 'MinPt150_DH1p1', 
-        'MinPt175_DH1p6', 'MinPt175_DH2p0', 'MinPt175_DH1p1',
-        'MinPt200_DH1p6', 'MinPt200_DH2p0', 'MinPt200_DH1p1',
+        #'MinPt150_DH1p6', 'MinPt150_DH2p0', 'MinPt150_DH1p1', 
+        #'MinPt175_DH1p6', 'MinPt175_DH2p0', 'MinPt175_DH1p1',
+        #'MinPt200_DH1p6', 'MinPt200_DH2p0', 'MinPt200_DH1p1',
+        'MinPt100_DH1p6'
         ]:        
         for pdf in [
             'dijet',
+            'polydijet',
+            'pow',
+            'exp',
+            'polyexp',
+            'pol'
             ]:
             for sgn in [
                 #'Spin0_M650',
@@ -99,10 +107,11 @@ for cat_btag in [
                 #'Spin0_M1200',
                 ]:
                 for x_range in [
-                    '550to1200'
+                    #'550to1200'
+                    '400to1200'
                     ]:
                     for mass in [
                         'MassFSR', 
                         ]:
-                        make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, x_range, sgn, 'buk', pdf, 'data_obs', './plots/V4/')
+                        make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, x_range, sgn, 'buk', pdf, 'data_obs', './plots/V5/')
                         
