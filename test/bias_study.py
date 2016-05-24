@@ -207,8 +207,8 @@ class BiasStudy:
         pdf_bkg_fit = pdfs_bkg_fit[0]
         coeff_bkg_fit = pdfs_bkg_fit[1]
         coeff_bkg_fit_reset = []
-        for p in xrange(coeff_bkg_fit.getSize()):
-            coeff_bkg_fit_reset[p] = coeff_bkg_fit[p].getVal()
+        for p in xrange(PdfsFTest[pdf_alt_name]['ndof']):
+            coeff_bkg_fit_reset.append(coeff_bkg_fit[p].getVal())
 
         pdf_fit_ext = ROOT.RooAddPdf("pdf_fit_ext","", ROOT.RooArgList(pdf_sgn,pdf_bkg_fit),  ROOT.RooArgList(n_s,n_b))
 
@@ -227,8 +227,9 @@ class BiasStudy:
             # reset all fit parameters
             n_s.setVal(0.)
             n_b.setVal(bkg_norm.getVal())
-            for p in xrange(coeff_bkg_fit.getSize()):
+            for p in xrange(PdfsFTest[pdf_alt_name]['ndof']):
                 coeff_bkg_fit[p].setVal(coeff_bkg_fit_reset[p])
+                print "\tReset parameter ", p, " at value ", coeff_bkg_fit[p].getVal()
 
             res_fit = pdf_fit_ext.fitTo(data_toy, RooFit.Strategy(1), RooFit.Minimizer("Minuit2", "migrad"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE), RooFit.Extended(ROOT.kTRUE))
             if res_fit==None or res_fit.status()!=0:
