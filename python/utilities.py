@@ -133,15 +133,15 @@ PdfsFTest = {
         },
     "dijet" : {
         "FirstOrder" : 1,
-        "LastOrder" : 3,
+        "LastOrder" : 5,
         "Match" : -1,
-        "MaxOrder" : 2,
-        "ndof" : 2,
+        "MaxOrder" : 5, #2,
+        "ndof" : 4, #2,
         "fit_range" : [400., 1200.], 
         },
     "polydijet" : {
-        "FirstOrder" : 1,
-        "LastOrder" : 3,
+        "FirstOrder" : 2,
+        "LastOrder" : 2,
         "Match" : -1,
         "MaxOrder" : 2,
         "ndof" : 3,
@@ -274,25 +274,25 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
         coeff.removeAll()
         formula = ""
         if n_param==1:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0))" % (sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0))" % (sqrts))
         elif n_param==2:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E)))" % (sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E))))" % (sqrts, sqrts))
         elif n_param==3:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2))" % (sqrts, sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E)))*TMath::Power(1-x/%E,@2))" % (sqrts, sqrts, sqrts))
         elif n_param==4:
             return [None,None]
         elif n_param==5:
-            formula = ("TMath::Max(1e-50,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2)*0.5*(TMath::Erf((x-@3)/@4)+1))" % (sqrts, sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E)))*TMath::Power(1-x/%E,@2)*0.5*(TMath::Erf((x-@3)/@4)+1))" % (sqrts, sqrts, sqrts))
         for p in xrange(n_param):
             p_name = ("a%d_%s_deg%d_%d" % (p,pdf_name,n_param,n_iter))
             p_min = -1.
             p_max = +1.
             if p==0:
-                p_min = 0.
-                p_max = 20.
+                p_min = 0. #0.
+                p_max = 15. #20.
             elif p==1:
-                p_min = -5.
-                p_max = +5.
+                p_min = -0.05 #-5.
+                p_max = +0.1 #+5.
             elif p==2:
                 p_min = 0.
                 p_max = 1e-04
@@ -300,7 +300,7 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
                 p_min = 200.
                 p_max = 450.
             elif p==4:
-                p_min = 50.
+                p_min = 100.
                 p_max = 300.
             param = ROOT.RooRealVar( p_name, "", p_min, p_max)
             if p==3:
@@ -319,28 +319,34 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
         coeff.removeAll()
         formula = ""
         if n_param==1:
-            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E)))" % (sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E))))" % (sqrts, sqrts))
         elif n_param==2:
             formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E)))*(-1+@2*(x/%E)))" % (sqrts, sqrts, sqrts))
+            #formula = ("TMath::Exp(-@0*TMath::Log(x/%E)-@0*@1*TMath::Log(x/%E)*TMath::Log(x/%E))*TMath::Power(1-x/%E,@2)" % (sqrts, sqrts, sqrts, sqrts))
         elif n_param==3:
-            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0 + @1*TMath::Log(x/%E))*(-1+@2*(x/%E)+@3*(x*x/%E/%E)))" % (sqrts, sqrts, sqrts, sqrts, sqrts))
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E)))*(-1+@2*(x/%E)+@3*(x*x/%E/%E)))" % (sqrts, sqrts, sqrts, sqrts, sqrts))
+        elif n_param==4:
+            formula = ("TMath::Max(1e-30,1./TMath::Power(x/%E, @0*(1 + @1*TMath::Log(x/%E)))*(-1+@2*(x/%E)+@3*(x*x/%E/%E)+@4*(x*x*x/%E/%E/%E)))" % (sqrts, sqrts, sqrts, sqrts, sqrts, sqrts, sqrts, sqrts))
             
         for p in xrange(n_param+1):
             p_name = ("a%d_%s_deg%d_%d" % (p,pdf_name,n_param,n_iter))
             p_min = -1.
-            p_max = +1.
+            p_max = +1. 
             if p==0:
-                p_min = 0.#0.
-                p_max = 15.#20.
+                p_min = 0.
+                p_max = 15.
             elif p==1:
-                p_min = -0.05#-5.
-                p_max = +0.1#+5.
+                p_min = -0.05
+                p_max = +0.1
             elif p==2:
                 p_min = 35.
                 p_max = +1e+02
             elif p==3:
-                p_min = 0.
-                p_max = 1e+04
+                p_min = -1e+04 #0.
+                p_max = +1e+04
+            elif p==4:
+                p_min = -1e+04 #0.
+                p_max = +1e+04 #0.
 
             param = ROOT.RooRealVar( p_name, "", p_min, p_max)
             gcs.append(param)

@@ -42,10 +42,16 @@ def submit(cfg_fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", cf
 ##########################################
 
 for fname in [
-    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200'
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200'
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900'
+    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to900'
     ]:
     for pdf_alt_name in [
-        'polydijet' 
+        'polydijet',
+        'pow',
+        'exp',
+        'polyexp',
+        #'pol'
         ]:
         for pdf_fit_name in [
             'polydijet', 
@@ -53,6 +59,6 @@ for fname in [
             for sgn_name in [
                 'Spin0_M750'
                 ]:
-                for nproc in xrange(100):
-                    submit(fname, pdf_alt_name, pdf_fit_name, -1, "buk", sgn_name, 0., 10, nproc)
+                for nproc in xrange(50):
+                    submit(fname, pdf_alt_name, pdf_fit_name, 200, "buk", sgn_name, 0., 20, nproc)
                     #exit(1)
