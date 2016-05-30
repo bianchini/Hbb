@@ -143,8 +143,8 @@ PdfsFTest = {
         "FirstOrder" : 2,
         "LastOrder" : 2,
         "Match" : -1,
-        "MaxOrder" : 2,
-        "ndof" : 3,
+        "MaxOrder" : 1,#2
+        "ndof" : 2,#3
         "fit_range" : [400., 1200.], 
         },
 }

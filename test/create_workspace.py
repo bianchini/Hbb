@@ -136,7 +136,8 @@ class XbbFactory:
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
-        self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
+        #self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
+        self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         data_sgn = ROOT.RooDataHist("data_sgn_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_sgn)
 
@@ -173,7 +174,8 @@ class XbbFactory:
             data_sgn2 = ROOT.RooDataHist("data_sgn_"+sgn_name2, "", ROOT.RooArgList(self.x), h2, 1.0)
             data_sgn.add(data_sgn2)
 
-        res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+        # use RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name) to adjust window, but dangerous for import!! 
+        res = buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
         res.Print()
 
         self.plot( data=data_sgn, pdfs=[buk_pdf_sgn], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=sgn_name)
@@ -212,7 +214,8 @@ class XbbFactory:
             if rebin_factor>1. :
                 h.Rebin(rebin_factor)
 
-            self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
+            #self.x.setRange( FitParam[sgn_name]['fit_range'][0], FitParam[sgn_name]['fit_range'][1] )
+            self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
             data_sgn = ROOT.RooDataHist("data_sgn_"+syst+"_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
 
             if spin_symmetric:
@@ -245,7 +248,8 @@ class XbbFactory:
             rho2.setConstant(1)
 
             buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+syst+"_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)
-            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(sgn_name), RooFit.SumCoefRange(sgn_name), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+
+            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
             shifts[syst] = [mean.getVal(), sigma.getVal(), norm]
 
             gcs.append(mean)
@@ -297,7 +301,8 @@ class XbbFactory:
         if rebin_factor>1. :
             h.Rebin(rebin_factor)
 
-        self.x.setRange( PdfsFTest[pdf_names[0]]['fit_range'][0], PdfsFTest[pdf_names[0]]['fit_range'][1] )
+        #self.x.setRange( PdfsFTest[pdf_names[0]]['fit_range'][0], PdfsFTest[pdf_names[0]]['fit_range'][1] )
+        self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         data_bkg = ROOT.RooDataHist("data_bkg", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_bkg)
 
@@ -312,11 +317,13 @@ class XbbFactory:
         for pdf_name in pdf_names:
             pdfs_bkg = generate_pdf(self.x, pdf_name=pdf_name, n_param=PdfsFTest[pdf_name]['MaxOrder'], n_iter=0, gcs=gcs)
             pdf_bkg = pdfs_bkg[0]
-            param_bkg = pdfs_bkg[1]
+            pdf_bkg.SetName(pdf_name+"_pdf_bkg")
+            param_bkg = pdfs_bkg[1]            
 
             pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
             pdf_bkg_norm.setConstant(0) 
-            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+
+            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
             res.Print()
             
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
@@ -372,7 +379,7 @@ class XbbFactory:
             pdf_bkg = pdfs_bkg[0]
             param_bkg = pdfs_bkg[1]
 
-            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Range(pdf_name), RooFit.SumCoefRange(pdf_name), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
             res.Print()
             
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
@@ -389,11 +396,11 @@ class XbbFactory:
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True, spin_symmetric=True)
-            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50, spin_symmetric=True)
+            #self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50, spin_symmetric=True)
         
-        self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
-        self.add_data_to_ws(rebin_factor=-1)
-        self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
+        #self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
+        #self.add_data_to_ws(rebin_factor=-1)
+        #self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
@@ -405,8 +412,8 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 450.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 900.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
 #xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
@@ -416,7 +423,7 @@ xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
 #                          pdf_names=["polydijet"] 
 #                          )
-xbbfact.create_workspace( signals=["Spin0_M750"], pdf_names=["polydijet"] )
+xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200"], pdf_names=["polydijet"] )
 #xbbfact.create_workspace( signals=[], pdf_names=["pow"] )
 
 for gc in gcs:
