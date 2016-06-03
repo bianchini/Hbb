@@ -78,7 +78,7 @@ class XbbFactory:
         data.plotOn(frame, RooFit.Name("data"))
         for p,pdf in enumerate(pdfs):
             opt_color = RooFit.LineColor(ROOT.kRed) if len(pdfs)==1 else RooFit.LineColor(1+p) 
-            if res!=None:
+            if res!=None and res.status()==0:
                 pdf.plotOn(frame, RooFit.VisualizeError(res, 1, ROOT.kFALSE), RooFit.LineColor(ROOT.kGreen), RooFit.LineStyle(ROOT.kSolid), RooFit.FillColor(ROOT.kGreen) )
                 pdf.plotOn(frame, RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf.GetName()))
                 data.plotOn(frame, RooFit.Name("data"))
@@ -396,11 +396,11 @@ class XbbFactory:
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True, spin_symmetric=True)
-            #self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50, spin_symmetric=True)
+            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50, spin_symmetric=True)
         
-        #self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
-        #self.add_data_to_ws(rebin_factor=-1)
-        #self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
+        self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
+        self.add_data_to_ws(rebin_factor=-1)
+        self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
 
         self.w.Print()
         self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
@@ -419,11 +419,11 @@ cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
-#xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200", "Spin2_M650", "Spin2_M750", "Spin2_M850","Spin2_M1000","Spin2_M1200"], 
+xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200"], 
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
-#                          pdf_names=["polydijet"] 
-#                          )
-xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750", "Spin0_M850","Spin0_M1000","Spin0_M1200"], pdf_names=["polydijet"] )
+                          pdf_names=["polydijet"] 
+                          )
+#xbbfact.create_workspace( signals=["Spin0_M750"], pdf_names=["polydijet"] )
 #xbbfact.create_workspace( signals=[], pdf_names=["pow"] )
 
 for gc in gcs:
