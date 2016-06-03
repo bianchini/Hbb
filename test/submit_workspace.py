@@ -47,9 +47,9 @@ for cfg_cat_btag in [
     #'Had_TT',
     ]:
     for cfg_cat_kin in [
-        'MinPt150_DH1p6', 
+        #'MinPt150_DH1p6', 
         'MinPt100_DH1p6', 
-        'MinMaxPt100150_DH1p6', 
+        #'MinMaxPt100150_DH1p6', 
         #'MinPt150_DH2p0', 'MinPt150_DH1p1', 
         #'MinPt175_DH1p6', 'MinPt175_DH2p0', 'MinPt175_DH1p1',
         #'MinPt200_DH1p6', 'MinPt200_DH2p0', 'MinPt200_DH1p1',
@@ -58,10 +58,11 @@ for cfg_cat_btag in [
             'MassFSR',
             ]:
             for xmin in [
-                400., 425., 450., 475., 500., 525., 550., 
+                #400., 425., 450.,
+                500., 525., 550.
                 ]:
                 for xmax in [
-                    1200.,
+                    900., 1000., 1200.,
                     ]:
                     submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax)
                     #exit(1)

@@ -34,7 +34,7 @@ def submit(cfg_fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", cf
     submitToQueue = 'qsub -V -cwd -q all.q -N '+jobName+' '+scriptName
     print submitToQueue
     os.system(submitToQueue)
-    time.sleep( 1.0 )
+    time.sleep( 0.5 )
 
     print "@@@@@ END JOB @@@@@@@@@@@@@@@"
 
@@ -42,23 +42,39 @@ def submit(cfg_fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", cf
 ##########################################
 
 for fname in [
-    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200'
-    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900'
-    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to900'
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900',
+    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',
+    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to900',
+    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1000',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to1000',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to1000',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to1000',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to1000',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to1000',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to1200',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to1200',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to1200',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to1200',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to1200',
     ]:
     for pdf_alt_name in [
         'polydijet',
         'pow',
         'exp',
         'polyexp',
-        #'pol'
+        'pol',        
         ]:
         for pdf_fit_name in [
+            #'polyexp', 
             'polydijet', 
             ]:
             for sgn_name in [
-                'Spin0_M750'
+                'Spin0_M750',
                 ]:
-                for nproc in xrange(50):
-                    submit(fname, pdf_alt_name, pdf_fit_name, 200, "buk", sgn_name, 0., 20, nproc)
+                for nproc in xrange(1):
+                    submit(fname, pdf_alt_name, pdf_fit_name, 200, "buk", sgn_name, 0., 0, nproc)
                     #exit(1)
