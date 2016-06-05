@@ -2,6 +2,12 @@ import ROOT
 from ROOT import RooFit
 import math
 
+import sys
+sys.path.append('./')
+
+from parameters_cfi import FitCfg
+
+
 sqrts = 1.3e+04
 
 FitParam = {
@@ -140,11 +146,11 @@ PdfsFTest = {
         "fit_range" : [400., 1200.], 
         },
     "polydijet" : {
-        "FirstOrder" : 2,
-        "LastOrder" : 2,
+        "FirstOrder" : 1,
+        "LastOrder" : 3,
         "Match" : -1,
-        "MaxOrder" : 2,#2
-        "ndof" : 3,#3
+        "MaxOrder" : 1,#2
+        "ndof" : 2,#3
         "fit_range" : [400., 1200.], 
         },
     "expdijet" : {
@@ -381,23 +387,22 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
             
         for p in xrange(n_param+1):
             p_name = ("a%d_%s_deg%d_%d" % (p,pdf_name,n_param,n_iter))
-            p_min = -1.
-            p_max = +1. 
-            if p==0:
-                p_min = 10. #0.
-                p_max = 12. #15.
-            elif p==1:
-                p_min = -0.05 #-0.05
-                p_max = +0.20  #+0.2
-            elif p==2:
-                p_min = 35 #35.
-                p_max = 100 #+1e+02
-            elif p==3:
-                p_min = -1e+04 #0.
-                p_max = +1e+04
-            elif p==4:
-                p_min = -1e+04 #0.
-                p_max = +1e+04 #0.
+            [p_min, p_max] = FitCfg[pdf_name][("deg%d" % n_param)]["default"]["default"][("a%d" % p)]
+            #if p==0:
+            #    p_min = 6.0  #10.0
+            #    p_max = 10.0 #12.
+            #elif p==1:
+            #    p_min = #+0.02 #-0.05
+            #    p_max = #+0.08 #+0.20
+            #elif p==2:
+            #    p_min = #35  #35.
+            #    p_max = #100 #+1e+02
+            #elif p==3:
+            #    p_min = -1e+04 #0.
+            #    p_max = +1e+04
+            #elif p==4:
+            #    p_min = -1e+04 #0.
+            #    p_max = +1e+04 #0.
 
             param = ROOT.RooRealVar( p_name, "", p_min, p_max)
             gcs.append(param)

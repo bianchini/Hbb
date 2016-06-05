@@ -45,6 +45,7 @@ for fname in [
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900',
+    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_475to900',
     'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',
     'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to900',
     'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to900',
@@ -75,6 +76,11 @@ for fname in [
             for sgn_name in [
                 'Spin0_M750',
                 ]:
-                for nproc in xrange(1):
-                    submit(fname, pdf_alt_name, pdf_fit_name, 200, "buk", sgn_name, 0., 0, nproc)
+                for nproc in xrange(10):
+                    submit(cfg_fname=fname, cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
+                           cfg_n_bins=200, 
+                           cfg_pdf_sgn_name="buk", cfg_sgn_name=sgn_name, 
+                           cfg_sgn_xsec=0., 
+                           cfg_ntoys=100, 
+                           cfg_nproc=nproc)
                     #exit(1)

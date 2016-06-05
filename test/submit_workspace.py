@@ -58,7 +58,7 @@ for cfg_cat_btag in [
             'MassFSR',
             ]:
             for xmin in [
-                #400., 425., 450.,
+                #400., 425., 450., 475., 
                 500., 525., 550.
                 ]:
                 for xmax in [

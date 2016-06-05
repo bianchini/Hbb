@@ -412,8 +412,8 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 475.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 900.
 
 #xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
