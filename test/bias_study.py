@@ -340,12 +340,12 @@ class BiasStudy:
         
         ntoy = 0
 
-        # run on data...
+        # run on self.data for ntoys=-1
         run_ntoys = ntoys if ntoys>=0 else 1
 
         while ntoy<run_ntoys:
 
-            # randomize parameters
+            # randomize parameters using covariance matrix
             if randomize_params:
                 coeff_bkg_alt = res_bkg_alt.randomizePars()
                 for p in xrange(PdfsFTest[pdf_alt_name]['ndof']):                
@@ -402,9 +402,9 @@ test_pdfs= [
     #"pol", 
     #"exp", 
     #"pow", 
-    "polyexp", 
-    #"dijet"
-    #"polydijet"
+    #"polyexp", 
+    #"dijet",
+    "polydijet",
     #"expdijet"
     ]
 
