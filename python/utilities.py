@@ -146,11 +146,11 @@ PdfsFTest = {
         "fit_range" : [400., 1200.], 
         },
     "polydijet" : {
-        "FirstOrder" : 1,
-        "LastOrder" : 3,
+        "FirstOrder" : 2,
+        "LastOrder" : 2,
         "Match" : -1,
-        "MaxOrder" : 1,#2
-        "ndof" : 2,#3
+        "MaxOrder" : 2,#2
+        "ndof" : 3,#3
         "fit_range" : [400., 1200.], 
         },
     "expdijet" : {
@@ -163,7 +163,7 @@ PdfsFTest = {
         },
 }
 
-def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[]):
+def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[], mass_range="default", parameter_set="default"):
 
     pdf = None
     coeff = ROOT.RooArgList()
@@ -387,7 +387,9 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
             
         for p in xrange(n_param+1):
             p_name = ("a%d_%s_deg%d_%d" % (p,pdf_name,n_param,n_iter))
-            [p_min, p_max] = FitCfg[pdf_name][("deg%d" % n_param)]["default"]["default"][("a%d" % p)]
+            m_range = mass_range if mass_range in FitCfg[pdf_name][("deg%d" % n_param)].keys() else "default"
+            p_set = parameter_set if parameter_set in FitCfg[pdf_name][("deg%d" % n_param)][m_range].keys() else "default"
+            [p_min, p_max] = FitCfg[pdf_name][("deg%d" % n_param)][m_range][p_set][("a%d" % p)]
             #if p==0:
             #    p_min = 6.0  #10.0
             #    p_max = 10.0 #12.

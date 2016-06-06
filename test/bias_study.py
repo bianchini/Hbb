@@ -171,7 +171,7 @@ class BiasStudy:
         return
 
 
-    def doFTest(self, data_name="data_bkg", test_pdfs=[]):
+    def doFTest(self, data_name="data_bkg", test_pdfs=[], parameter_set="default"):
 
         self.data = self.w.data(data_name)
         self.data.Print()
@@ -186,7 +186,9 @@ class BiasStudy:
             prevNll = 0.
             match = False
             for p in range(firstOrder, lastOrder+1):
-                [pdf,coeff] = generate_pdf(self.x, pdf_name=pdf_name, n_param=p, n_iter=0, gcs=gcs)
+                [pdf,coeff] = generate_pdf(self.x, pdf_name=pdf_name, n_param=p, n_iter=0, gcs=gcs, 
+                                           mass_range=self.fname.split("_")[-1], 
+                                           parameter_set=parameter_set)
                 if pdf==None:
                     print "No pdf"
                     continue
@@ -291,6 +293,11 @@ class BiasStudy:
         self.data.Print()      
         self.x.setBins(self.data.numEntries() if n_bins<0 else n_bins)
         print "Total number of bins: ", self.x.getBins()
+
+        # for debugging...
+        #mean = ROOT.RooRealVar("mean", "", 750)
+        #sigma = ROOT.RooRealVar("sigma", "", 5)
+        #pdf_sgn = ROOT.RooGaussian(pdf_sgn_name+"_pdf_sgn_"+sgn_name, "", self.x, mean, sigma)
 
         # sgn pdf
         #pdf_sgn = ROOT.RooBukinPdf(pdf_sgn_name+"_pdf_sgn_"+sgn_name, "", self.x, mean, sigma, xi, rho1, rho2)
@@ -408,21 +415,21 @@ test_pdfs= [
     #"expdijet"
     ]
 
-cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900"
-cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "exp"
+cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_600to1300"
+cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "polydijet"
 cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "polydijet"
 cfg_n_bins = int(argv[4]) if len(argv)>=5 else 200
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
 cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M750"
 cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 0.
-cfg_ntoys = int(argv[8]) if len(argv)>=9 else 0
+cfg_ntoys = int(argv[8]) if len(argv)>=9 else 10
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 
                ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
 
-#bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs )
-bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc)
+bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default" )
+#bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc)
 
 print PdfsFTest
 

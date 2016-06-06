@@ -45,10 +45,10 @@ for fname in [
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900',
-    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_475to900',
-    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',
-    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to900',
-    'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_475to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1000',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to1000',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to1000',
@@ -57,17 +57,17 @@ for fname in [
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to1000',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to1200',
-    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to1200',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to1300',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to1200',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to1200',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to1200',
     ]:
     for pdf_alt_name in [
         'polydijet',
-        'pow',
-        'exp',
-        'polyexp',
-        'pol',        
+        #'pow',
+        #'exp',
+        #'polyexp',
+        #'pol',        
         ]:
         for pdf_fit_name in [
             #'polyexp', 
@@ -76,11 +76,11 @@ for fname in [
             for sgn_name in [
                 'Spin0_M750',
                 ]:
-                for nproc in xrange(10):
+                for nproc in xrange(100):
                     submit(cfg_fname=fname, cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
-                           cfg_n_bins=200, 
+                           cfg_n_bins=-1, 
                            cfg_pdf_sgn_name="buk", cfg_sgn_name=sgn_name, 
                            cfg_sgn_xsec=0., 
-                           cfg_ntoys=100, 
+                           cfg_ntoys=10, 
                            cfg_nproc=nproc)
                     #exit(1)
