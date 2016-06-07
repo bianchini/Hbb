@@ -18,13 +18,13 @@ datasets = {
     'GluGluSpin0ToBBbar_W_1p0_M_X_TuneCUEP8M1_13TeV_pythia8' : {
         '550' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-5092ecd5fd8eefcc929507b2c4ed3b57/USER",
-            'DR2' : "",
+            'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
         '600' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_600_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-7db8883138087261e36f6d90b0221b23/USER",
-            'DR2' : "",
+            'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_600_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -36,7 +36,7 @@ datasets = {
             },
         '700' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-a197b7d8d18a1b0e9f318b6f3bb9c6e1/USER",
-            'DR2' : "",
+            'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -60,7 +60,7 @@ datasets = {
             },
         '900' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-9d54e30e924ff0232f26bd0dd05dc1be/USER",
-            'DR2' : "",
+            'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -72,7 +72,7 @@ datasets = {
             },
         '1100' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-31928efefcc9ca532d7bfaa305097dd3/USER",
-            'DR2' : "",
+            'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -87,13 +87,13 @@ datasets = {
     'RSGravitonToBBbar_kMpl01_M_X_TuneCUEP8M1_13TeV_pythia8' :{
         '550' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-a00cec578017bd00bd7e6edf887ded4c/USER",
-            'DR2' : "",
+            'DR2' : "/RSGravitonToBBbar_kMpl01_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
         '600' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_600_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-3814db7af6aab79425bd754b2089382a/USER",
-            'DR2' : "",
+            'DR2' : "/RSGravitonToBBbar_kMpl01_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -105,7 +105,7 @@ datasets = {
             },
         '700' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-0fe7552504e753e764e85302c06b2b08/USER",
-            'DR2' : "",
+            'DR2' : "/RSGravitonToBBbar_kMpl01_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -117,7 +117,7 @@ datasets = {
             },
         '800' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-77b125e5ddb4520db36ebbf0417887f8/USER",
-            'DR2' : "",
+            'DR2' : "/RSGravitonToBBbar_kMpl01_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
@@ -141,7 +141,7 @@ datasets = {
             },
         '1100' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-e6075b3ddc679c3957be8e3bce0b0713/USER",
-            'DR2' : "",
+            'DR2' : "/RSGravitonToBBbar_kMpl01_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },
