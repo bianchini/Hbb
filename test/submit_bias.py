@@ -43,7 +43,7 @@ def submit(cfg_fname="Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200", cf
 
 for fname in [
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to900',
-    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to900',
+    #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to900', 
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_450to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_475to900',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',
@@ -61,26 +61,29 @@ for fname in [
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to1200',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to1200',
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to1200',
+    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800',  ["Spin0_M650"] ],
+    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',  ["Spin0_M750"] ],
+    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_600to1000', ["Spin0_M850"] ],
+    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_700to1200', ["Spin0_M1000"] ],
+    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_800to1400', ["Spin0_M1200"] ],
     ]:
     for pdf_alt_name in [
         'polydijet',
-        #'pow',
-        #'exp',
-        #'polyexp',
-        #'pol',        
+        'pow',
+        'exp',
+        'polyexp',
+        'pol',        
         ]:
         for pdf_fit_name in [
             #'polyexp', 
             'polydijet', 
             ]:
-            for sgn_name in [
-                'Spin0_M750',
-                ]:
-                for nproc in xrange(100):
-                    submit(cfg_fname=fname, cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
-                           cfg_n_bins=-1, 
+            for sgn_name in fname[1]: #['Spin0_M750']:
+                for nproc in xrange(20):
+                    submit(cfg_fname=fname[0], cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
+                           cfg_n_bins=200, 
                            cfg_pdf_sgn_name="buk", cfg_sgn_name=sgn_name, 
                            cfg_sgn_xsec=0., 
-                           cfg_ntoys=10, 
+                           cfg_ntoys=50, 
                            cfg_nproc=nproc)
                     #exit(1)
