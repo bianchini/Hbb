@@ -48,7 +48,7 @@ datasets = {
             },
         '800' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-dcea3fb2e5d5b4bf975cc8af54dd90b8/USER",
-            'DR2' : "",
+            'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
             'MiniAODv2' : "", 
             'VHBB' : "",
             },

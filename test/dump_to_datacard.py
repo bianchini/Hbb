@@ -13,8 +13,7 @@ import sys
 sys.path.append('./')
 sys.path.append('../python/')
 
-from utilities import *
-
+from parameters_cfi import *
 
 def make_datacard( ws_name='Xbb_workspace', 
                    cat='Had_LT_MinPt150_DH1p6', mass='MassFSR', x_range='550to1200', sgn='Spin0_M650',
@@ -29,7 +28,7 @@ def make_datacard( ws_name='Xbb_workspace',
 
     ws = ws_file.Get(ws_name)
     obs = ws.data(data_obs).sumEntries()
-    bias = ws.var('bias_sgn_'+sgn).getVal()
+    #bias = ws.var('bias_sgn_'+sgn).getVal()
 
     f = open( save_dir+'/'+outname+postfix+'.txt','w')
     f.write('imax 1 number of bins\n')
@@ -47,21 +46,25 @@ def make_datacard( ws_name='Xbb_workspace',
     f.write('bin               '+cat+'   '+cat+'   '+cat+'\n')
     f.write('process           '+sgn+'                '+sgn+'_bias                  bkg\n')
     f.write('process             0                       1                                2  \n')
-    f.write('rate              1.0                       1e-06                            1.0\n')
+    f.write('rate              1.0                       1.0                              1.0\n')
     f.write('--------------------------------------------------------------\n')
     f.write('CMS_Xbb_trigger    lnN    1.10                       1.10                        -\n')
-    f.write('signal_bias        lnN     -                         '+('%.2f' % (1.+bias))+'                        -\n')
+    #f.write('signal_bias        lnN     -                         '+('%.2f' % (1.+bias))+'                        -\n')
     f.write('lumi_13TeV         lnN    1.027                      1.027                       -\n')
 
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
     if ws.var('CSV_shift_'+sgn) != None:
-        f.write('CMS_btag           lnN    '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                       '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                      -\n')  
-        
-    for p in xrange(PdfsFTest[pdf_bkg]['ndof']):        
-        param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,PdfsFTest[pdf_bkg]['MaxOrder']))
+        f.write('CMS_btag           lnN    '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                       '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                      -\n')      
+    f.write('\n')
+
+    for p in xrange(FTestCfg[pdf_bkg]['ndof']):        
+        param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,FTestCfg[pdf_bkg]['MaxOrder']))
         val =  ws.var(param).getVal()
         print "\tsetting parameter... ", param, " as flatParam with initial value ", val
         f.write(param+'  flatParam \n')
+    
+    f.write('bias_sgn_'+sgn+'   param  0.0 '+str(FitSgnCfg[sgn]['bias'])+'\n')
+    f.write('\n')
 
     mean = ws.var('mean_sgn_'+sgn).getVal()
     d_mean = ws.var('mean_shift_'+sgn).getVal()
@@ -92,12 +95,12 @@ for cat_btag in [
         'MinPt100_DH1p6'
         ]:        
         for pdf in [
-            'dijet',
+            #'dijet',
             'polydijet',
-            'pow',
-            'exp',
-            'polyexp',
-            'pol'
+            #'pow',
+            #'exp',
+            #'polyexp',
+            #'pol'
             ]:
             for sgn in [
                 #'Spin0_M650',
@@ -107,8 +110,8 @@ for cat_btag in [
                 #'Spin0_M1200',
                 ]:
                 for x_range in [
-                    #'550to1200'
-                    '400to1200'
+                    '525to900'
+                    #'400to1200'
                     ]:
                     for mass in [
                         'MassFSR', 
