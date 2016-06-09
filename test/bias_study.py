@@ -20,15 +20,15 @@ gcs = []
 
 class BiasStudy:
 
-    def __init__(self, fname="", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/", blind_plot=False):
+    def __init__(self, fname="", ws_name="Xbb_workspace", read_dir="/scratch/bianchi/", save_dir="/scratch/bianchi/", save_ext=['png'], blind_plot=False):
         self.fname = fname
-        self.file = ROOT.TFile.Open(saveDir+"/"+version+"/"+fname+".root", "READ")
+        self.file = ROOT.TFile.Open(read_dir+"/"+fname+".root", "READ")
         if self.file==None or self.file.IsZombie():
-            print "No file with name ", saveDir+"/"+version+"/"+fname+".root", " could be opened!"
+            print "No file with name ", save_dir+"/"+fname+".root", " could be opened!"
             return
         self.ws_name = ws_name
-        self.version = version
-        self.saveDir = saveDir+'/'+version+'/'
+        self.save_dir = save_dir+'/'
+        self.save_ext = save_ext
         self.w = self.file.Get(ws_name)
         self.x = self.w.var("x")        
         self.plot_blind = blind_plot
@@ -143,7 +143,8 @@ class BiasStudy:
             frame2.GetXaxis().SetLabelSize(15)            
             frame2.Draw()    
 
-        c1.SaveAs(self.saveDir+self.get_save_name()+"_"+title+".png")
+        for ext in self.save_ext:
+            c1.SaveAs(self.save_dir+self.get_save_name()+"_"+title+"."+ext)
 
         # for memory issues
         if hasattr(self, "out"):
@@ -225,7 +226,7 @@ class BiasStudy:
 
     def doBiasStudy(self, pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_bkg", n_bins=-1, pdf_sgn_name="buk", sgn_name="Spin0_M750", sgn_xsec=0., ntoys=10, nproc=0, randomize_params=False, parameter_set="default"):
 
-        self.out = ROOT.TFile.Open(self.saveDir+"/"+self.get_save_name()+"_bias_"+pdf_alt_name+"_"+pdf_fit_name+"_deg"+str(FTestCfg[pdf_fit_name]['ndof'])+"_"+data_name+"_"+pdf_sgn_name+"_"+sgn_name+"_"+("xsec%.0f" % sgn_xsec)+"_"+str(nproc)+".root", "RECREATE") 
+        self.out = ROOT.TFile.Open(self.save_dir+"/"+self.get_save_name()+"_bias_"+pdf_alt_name+"_"+pdf_fit_name+"_deg"+str(FTestCfg[pdf_fit_name]['ndof'])+"_"+data_name+"_"+pdf_sgn_name+"_"+sgn_name+"_"+("xsec%.0f" % sgn_xsec)+"_"+str(nproc)+".root", "RECREATE") 
         tree = ROOT.TTree("toys","")
 
         # sgn/bkg normalisation from toy fit
@@ -439,7 +440,11 @@ cfg_ntoys = int(argv[8]) if len(argv)>=9 else 0
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 
-               ws_name="Xbb_workspace", version="V5", saveDir="./plots/", blind_plot=True)
+               ws_name="Xbb_workspace", 
+               read_dir="./plots/V5/", 
+               save_dir="./plots/V5/", 
+               save_ext=['png', 'pdf'], 
+               blind_plot=True)
 
 #bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default" )
 bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc, parameter_set="default")
