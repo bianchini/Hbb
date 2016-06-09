@@ -19,7 +19,7 @@ datasets = {
         '550' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-5092ecd5fd8eefcc929507b2c4ed3b57/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_550_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '600' : {
@@ -49,7 +49,7 @@ datasets = {
         '800' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-dcea3fb2e5d5b4bf975cc8af54dd90b8/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '850' : {
@@ -61,7 +61,7 @@ datasets = {
         '900' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-9d54e30e924ff0232f26bd0dd05dc1be/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '1000' : {
@@ -73,7 +73,7 @@ datasets = {
         '1100' : {
             'DR1' : "/GluGluSpin0ToBBbar_W_1p0_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-31928efefcc9ca532d7bfaa305097dd3/USER",
             'DR2' : "/GluGluSpin0ToBBbar_W_1p0_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/GluGluSpin0ToBBbar_W_1p0_M_1100_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '1200' : {
@@ -106,7 +106,7 @@ datasets = {
         '700' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-0fe7552504e753e764e85302c06b2b08/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_700_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '750' : {
@@ -118,7 +118,7 @@ datasets = {
         '800' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-77b125e5ddb4520db36ebbf0417887f8/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_800_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '850' : {
@@ -130,7 +130,7 @@ datasets = {
         '900' : {
             'DR1' : "/RSGravitonToBBbar_kMpl01_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-GEN-SIM-a1c56712dfa04d150dba6cb0abd763a0/USER",
             'DR2' : "/RSGravitonToBBbar_kMpl01_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-1v2-32f870ac2e5a27e6c7b243a0bfc25281/USER",
-            'MiniAODv2' : "", 
+            'MiniAODv2' : "/RSGravitonToBBbar_kMpl01_M_900_TuneCUEP8M1_13TeV_pythia8/bianchi-DIGI-RECO-2-413386f6eddb08329706f28eff10fb19/USER", 
             'VHBB' : "",
             },
         '1000' : {
