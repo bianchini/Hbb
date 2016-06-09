@@ -453,16 +453,15 @@ cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
 cfg_xmin = float(argv[4]) if len(argv)>=5 else 525.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 900.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
 #xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
 xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
-xbbfact.create_workspace( signals=[
-        #"Spin0_M650", "Spin0_M750","Spin0_M850","Spin0_M1000", "Spin0_M1200",
-        #"Spin2_M650", "Spin2_M750","Spin2_M850","Spin2_M1000", "Spin2_M1200"
-        "Spin0_M750"
+xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750","Spin0_M850","Spin0_M1000", "Spin0_M1200",
+                                   "Spin2_M650", "Spin2_M750","Spin2_M850","Spin2_M1000", "Spin2_M1200"
+                                   #"Spin0_M750"
                                    ], 
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
                           pdf_names=["polydijet"] 

@@ -10,10 +10,41 @@ import os.path
 
 import ROOT
 
-def run(datacard, do_limit=True):
+signal_to_range = {
+    'Spin0_M650' : '400to800',
+    'Spin0_M750' : '525to900',
+    'Spin0_M850' : '600to1000',
+    #'Spin0_M750' : '525to1200',
+    #'Spin0_M850' : '525to1200',
+    'Spin0_M1000' : '700to1400',
+    'Spin0_M1200' : '700to1400',
+    'Spin2_M650' : '400to800',
+    'Spin2_M750' : '525to900',
+    'Spin2_M850' : '600to1000',
+    'Spin2_M1000' : '700to1400',
+    'Spin2_M1200' : '700to1400',
+}
 
-    print "Running on", datacard
-    if do_limit:
+signal_to_parameters = {
+    'Spin0_M650' : [],
+    'Spin0_M750' : [],
+    'Spin0_M850' : [[6.0, 18.0],  [-0.01,10.0], [22.0, 300.0]],
+    'Spin0_M1000' : [],
+    'Spin0_M1200' : [],
+    'Spin2_M650' :  [],
+    'Spin2_M750' :  [],
+    'Spin2_M850' :  [],
+    'Spin2_M1000' : [],
+    'Spin2_M1200' : [],
+}
+
+############################################################################################
+
+def run_combine(datacard='', what='limit', params=[]):
+
+    print "Running on datacard:", datacard
+
+    if what=='limit':
         res = []
         if not os.path.exists("higgsCombine"+datacard+".Asymptotic.mH120.root"):
             os.system('combine -M Asymptotic --run expected '+datacard+'.txt'+' -n '+datacard)
@@ -30,14 +61,26 @@ def run(datacard, do_limit=True):
             res.append(ev.limit)
         f.Close()
         return res
-    else:
-        os.system('combine -M MaxLikelihoodFit '+datacard+'.txt'+' --plots -n '+datacard+' --rMin -10 --rMax +10')
+
+    elif what=='fit':
+        #command = 'combine -M MaxLikelihoodFit '+datacard+'.txt'+' --plots -n '+datacard+' --rMin -10 --rMax +10'
+        command = 'combine -M MaxLikelihoodFit '+datacard+'.txt'+' -n '+datacard+' --rMin -10 --rMax +10 --plot '
+        if len(params)>0:
+            command += ' --setPhysicsModelParameterRanges '
+        for ip,p in enumerate(params):
+            command += ('a%d_polydijet_deg2_0=%.2f,%.2f' % (ip, p[0], p[1]))
+            if ip<len(params)-1:
+                command += ':'
+        print command
+        os.system(command)
         return []
 
-##############################################
+    else:
+        return []
 
+############################################################################################
 
-def make_plot( results=[] ):
+def make_canvas( results=[], out_name="" ):
 
     c = ROOT.TCanvas("c", "canvas", 500, 500) 
     pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
@@ -52,7 +95,6 @@ def make_plot( results=[] ):
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
     leg.SetFillColor(10)    
-
 
     mg = ROOT.TMultiGraph()
     expected = ROOT.TGraphAsymmErrors()
@@ -110,62 +152,62 @@ def make_plot( results=[] ):
 
     raw_input()
 
-    c.SaveAs("limit.png")
+    c.SaveAs("limit"+outname+".png")
 
 
-##########################################
+############################################################################################
 
-signal_to_range = {
-    'Spin0_M650' : '400to800',
-    'Spin0_M750' : '525to900',
-    'Spin0_M850' : '600to1000',
-    'Spin0_M1000' : '700to1400',
-    'Spin0_M1200' : '700to1400',
-    'Spin2_M650' : '400to800',
-    'Spin2_M750' : '525to900',
-    'Spin2_M850' : '600to1000',
-    'Spin2_M1000' : '700to1400',
-    'Spin2_M1200' : '700to1400',
-}
+def make_limit_plot(out_name=""):
 
-
-tests = []
-for cat_btag in [
-    #'Had_LT', 
-    'Had_MT',
-    #'Had_TT'
-    ]:
-    for cat_kin in [
-        'MinPt100_DH1p6', 
-        #'MinPt150_DH1p1', 
-        ##'MinPt150_DH1p6', 
-        #'MinPt150_DH2p0', 
-        #'MinPt175_DH1p1', 
-        #'MinPt175_DH1p6', 
-        #'MinPt175_DH2p0',
-        #'MinPt200_DH1p1', 
-        #'MinPt200_DH1p6', 
-        #'MinPt200_DH2p0', 
-        ]:        
-        for pdf_s in ['buk']:
-            for pdf_b in ['polydijet']:
-                for mass in ['MassFSR']:
-                    for sgn in [
-                        'Spin0_M650', 'Spin0_M750', 'Spin0_M850', 'Spin0_M1000', 'Spin0_M1200'
-                        #'Spin2_M650', 'Spin2_M750', 'Spin2_M850', 'Spin2_M1000', 'Spin2_M1200'
-                        ]:
-                        for x_range in [
-                            #'550to1200'
-                            signal_to_range[sgn]
+    tests = []
+    results = []
+    for cat_btag in ['Had_MT']:
+        for cat_kin in ['MinPt100_DH1p6']:        
+            for pdf_s in ['buk']:
+                for pdf_b in ['polydijet']:
+                    for mass in ['MassFSR']:
+                        for sgn in [
+                            'Spin0_M650', 'Spin0_M750', 'Spin0_M850', 'Spin0_M1000', 'Spin0_M1200'
+                            #'Spin0_M750', 'Spin0_M850',
+                            #'Spin2_M650', 'Spin2_M750', 'Spin2_M850', 'Spin2_M1000', 'Spin2_M1200'
                             ]:
-                            tests.append( cat_btag + '_' + cat_kin + '_' + mass + '_' + x_range + '_' + pdf_s + '_' + pdf_b + '_' + sgn)
+                            for x_range in [
+                                #'550to1200'
+                                signal_to_range[sgn]
+                                ]:
+                                tests.append(cat_btag+'_'+cat_kin+'_'+mass+'_'+x_range+'_'+pdf_s+'_'+pdf_b+'_'+sgn)
 
-print tests
+    print tests
+    for itest,test in enumerate(tests):
+        res = run_combine("Xbb_workspace_"+test, what='limit')
+        if len(res)>0:
+            results.append([test.split('_')[-1],res])
+            
+    make_canvas( results=results, out_name=out_name )
 
-results = []
-for itest,test in enumerate(tests):
-    res = run("Xbb_workspace_"+test, do_limit=True)
-    if len(res)>0:
-        results.append([test.split('_')[-1],res])
+############################################################################################
 
-make_plot(results=results)
+def make_fits():
+
+    tests = []
+    results = []
+    for cat_btag in ['Had_MT']:
+        for cat_kin in ['MinPt100_DH1p6']:        
+            for pdf_s in ['buk']:
+                for pdf_b in ['polydijet']:
+                    for mass in ['MassFSR']:
+                        for sgn in ['Spin0_M750', 'Spin0_M850']:
+                            for x_range in [
+                                signal_to_range[sgn]
+                                ]:
+                                tests.append(cat_btag+'_'+cat_kin+'_'+mass+'_'+x_range+'_'+pdf_s+'_'+pdf_b+'_'+sgn)
+
+    print tests
+    for itest,test in enumerate(tests):
+        run_combine("Xbb_workspace_"+test, what='fit', params=signal_to_parameters[test.split('_')[-2]+'_'+test.split('_')[-1]])
+            
+############################################################################################
+
+
+#make_fits()
+make_limit_plot()

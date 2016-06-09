@@ -83,6 +83,23 @@ def make_datacard( ws_name='Xbb_workspace',
 
 ########################################
 
+signal_to_range = {
+    'Spin0_M650' : '400to800',
+    #'Spin0_M750' : '525to900',
+    #'Spin0_M850' : '600to1000',
+    'Spin0_M750' : '525to1200',
+    'Spin0_M850' : '525to1200',
+    'Spin0_M1000' : '700to1400',
+    'Spin0_M1200' : '700to1400',
+    'Spin2_M650' : '400to800',
+    #'Spin2_M750' : '525to900',
+    #'Spin2_M850' : '600to1000',
+    'Spin2_M750' : '525to1200',
+    'Spin2_M850' : '525to1200',
+    'Spin2_M1000' : '700to1400',
+    'Spin2_M1200' : '700to1400',
+}
+
 for cat_btag in [
     #'Had_LT', 
     'Had_MT', 
@@ -103,15 +120,21 @@ for cat_btag in [
             #'pol'
             ]:
             for sgn in [
-                #'Spin0_M650',
+                'Spin0_M650',
                 'Spin0_M750',
-                #'Spin0_M850',
-                #'Spin0_M1000',
-                #'Spin0_M1200',
+                'Spin0_M850',
+                'Spin0_M1000',
+                'Spin0_M1200',
+                'Spin2_M650',
+                'Spin2_M750',
+                'Spin2_M850',
+                'Spin2_M1000',
+                'Spin2_M1200',
                 ]:
                 for x_range in [
-                    '525to900'
+                    #'525to900'
                     #'400to1200'
+                    signal_to_range[sgn]
                     ]:
                     for mass in [
                         'MassFSR', 
