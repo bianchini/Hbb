@@ -7,7 +7,7 @@ ROOT.gROOT.SetBatch(True)
 argv.remove( '-b-' )
 
 import numpy as n
-
+import json
 import math
 import sys
 sys.path.append('./')
@@ -20,7 +20,7 @@ gcs = []
 
 class BiasStudy:
 
-    def __init__(self, fname="", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/"):
+    def __init__(self, fname="", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/", blind_plot=False):
         self.fname = fname
         self.file = ROOT.TFile.Open(saveDir+"/"+version+"/"+fname+".root", "READ")
         if self.file==None or self.file.IsZombie():
@@ -31,6 +31,7 @@ class BiasStudy:
         self.saveDir = saveDir+'/'+version+'/'
         self.w = self.file.Get(ws_name)
         self.x = self.w.var("x")        
+        self.plot_blind = blind_plot
 
     def get_save_name(self):
         return "ftest_"+self.fname
@@ -65,15 +66,18 @@ class BiasStudy:
         data.plotOn(frame, RooFit.Name("data"))
         for p,pdf in enumerate(pdfs):
             opt_color = RooFit.LineColor(1+p) 
-            pdf.plotOn(frame, RooFit.LineColor(1+p), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf.GetName()))
+            pdf.plotOn(frame, RooFit.LineWidth(2), RooFit.LineColor(1+p), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf.GetName()))
 
         if add_ratio:
             pad1.cd()
 
-        frame.Draw()
         for p,pdf in enumerate(pdfs):
             chi2 = frame.chiSquare(pdf.GetName(), "data", npars[p] )
             leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+(", #chi^{2}=%.2f, p=%.3f" % (chi2,probs[p])), "L")
+
+        if self.plot_blind:
+            frame.remove("data", ROOT.kFALSE)
+        frame.Draw()
         leg.Draw()
 
         frame2 = None
@@ -99,30 +103,9 @@ class BiasStudy:
                 integrals.append( pdf.createIntegral(ROOT.RooArgSet(self.x), "MassFSR").getVal() )
                 param = params[p] 
                 if p<1:
-                    #for bin in xrange(hdata.GetNbinsX()):
-                    #    self.x.setVal( hdata.GetBinCenter(bin+1) )
-                    #    bkg = hdata.GetBinContent(bin+1)
-                    #    val = pdf.getVal()/integrals[p] 
-                    #    rms2 = 0.
-                    #    for toy in xrange(100):
-                    #        param_toy = res[p].randomizePars()
-                    #        for pp in xrange(param.getSize()):
-                    #            param[pp].setVal( param_toy[p].getVal() )
-                    #        new_int = pdf.createIntegral(ROOT.RooArgSet(self.x), "MassFSR").getVal()
-                    #        self.x.setVal( hdata.GetBinCenter(bin+1) )
-                    #        new_val = pdf.getVal()
-                    #        rms2 += (new_val/new_int-val/integrals[p])*(new_val/new_int-val/integrals[p])
-                    #        print toy, "Pdf: ", new_val, val, "Int: ", new_int, integrals[p] 
-                    #    rms = math.sqrt(rms2)/100. 
-                    #    rms /= val
-                    #    hsyst.SetBinContent(bin+1, 0.)
-                    #    hsyst.SetBinError(bin+1, rms )
-                    #frame2.addTH1(hsyst, "F")
-                    #hresids.append(hsyst)
                     continue
 
                 hresid = hdata.Clone(data.GetName()+"_ratio_"+pdf.GetName())
-                #hresid = data.createHistogram(data.GetName()+"_ratio_"+pdf.GetName(), self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()))                
                 hresid.SetLineColor(frame.getCurve(pdf.GetName()).GetLineColor())
                 hresid.SetLineWidth(frame.getCurve(pdf.GetName()).GetLineWidth())
                 hresid.SetLineStyle(ROOT.kSolid)                
@@ -158,7 +141,7 @@ class BiasStudy:
             frame2.GetXaxis().SetTitleOffset(4.)
             frame2.GetXaxis().SetLabelFont(43) 
             frame2.GetXaxis().SetLabelSize(15)            
-            frame2.Draw()
+            frame2.Draw()    
 
         c1.SaveAs(self.saveDir+self.get_save_name()+"_"+title+".png")
 
@@ -192,13 +175,14 @@ class BiasStudy:
                 if pdf==None:
                     print "No pdf"
                     continue
-                res = pdf.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2", "migrad"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE))
-
-                # algo to improve convergence
-                #if res.status()!=0:
-                    #for co in xrange( coeff.getSize()-1 ):
-                    #    coeff[co].setRange( coeff[co].getVal()-10*coeff[co].getError(), coeff[co].getVal()+10*coeff[co].getError())
-                    #res = pdf.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2", "migrad"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE))
+                res = pdf.fitTo(self.data, 
+                                RooFit.Strategy(1), 
+                                RooFit.Minimizer("Minuit2", "migrad"), 
+                                RooFit.Minos(1), 
+                                RooFit.Save(1), 
+                                RooFit.PrintLevel(-1), 
+                                RooFit.PrintEvalErrors(0),
+                                RooFit.Warnings(ROOT.kFALSE))
 
                 res.Print()
                 res.correlationMatrix().Print()
@@ -243,26 +227,34 @@ class BiasStudy:
 
         self.out = ROOT.TFile.Open(self.saveDir+"/"+self.get_save_name()+"_bias_"+pdf_alt_name+"_"+pdf_fit_name+"_deg"+str(FTestCfg[pdf_fit_name]['ndof'])+"_"+data_name+"_"+pdf_sgn_name+"_"+sgn_name+"_"+("xsec%.0f" % sgn_xsec)+"_"+str(nproc)+".root", "RECREATE") 
         tree = ROOT.TTree("toys","")
+
         # sgn/bkg normalisation from toy fit
         ns_fit = n.zeros(1, dtype=float) 
         nb_fit = n.zeros(1, dtype=float)
+
         # sgn/bkg normalisation error from toy fit
         ns_err = n.zeros(1, dtype=float)
         nb_err = n.zeros(1, dtype=float)
+
         # number of sgn/bkg events generated in toy
         ns_gen = n.zeros(1, dtype=float)
         nb_gen = n.zeros(1, dtype=float)
+
         # central value of sgn/bkg normalisation used for toy generation 
         ns_asy = n.zeros(1, dtype=float)
         nb_asy = n.zeros(1, dtype=float)
+
         # expected signal yield from workspace
         ns_exp = n.zeros(1, dtype=float)
+
         # parameters
         nparams = n.zeros(1, dtype=int)
         params = n.zeros(8, dtype=float)
+
         # edm, minll
         edm = n.zeros(1, dtype=float)
         minll = n.zeros(1, dtype=float)
+
         # pdf index
         alt = n.zeros(1, dtype=int)
         fit = n.zeros(1, dtype=int)
@@ -311,7 +303,13 @@ class BiasStudy:
 
         # fit the alternative pdf to data (use it for toy generation)
         [pdf_bkg_alt, coeff_bkg_alt] = generate_pdf(x=self.x, pdf_name=pdf_alt_name, n_param=FTestCfg[pdf_alt_name]['MaxOrder'], n_iter=0, mass_range=self.fname.split("_")[-1], parameter_set=parameter_set)
-        res_bkg_alt = pdf_bkg_alt.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE))
+        res_bkg_alt = pdf_bkg_alt.fitTo(self.data, 
+                                        RooFit.Strategy(1), 
+                                        RooFit.Minimizer("Minuit2"), 
+                                        RooFit.Minos(1), RooFit.Save(1), 
+                                        RooFit.PrintLevel(-1), 
+                                        RooFit.PrintEvalErrors(0), 
+                                        RooFit.Warnings(ROOT.kFALSE))
         res_bkg_alt.Print()
         res_bkg_alt.correlationMatrix().Print()
         
@@ -321,7 +319,14 @@ class BiasStudy:
 
         # fit the nominal pdf to data 
         [pdf_bkg_nom, coeff_bkg_nom] = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=FTestCfg[pdf_fit_name]['MaxOrder'], n_iter=1, mass_range=self.fname.split("_")[-1], parameter_set=parameter_set)
-        res_bkg_nom = pdf_bkg_nom.fitTo(self.data, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE))
+        res_bkg_nom = pdf_bkg_nom.fitTo(self.data, 
+                                        RooFit.Strategy(1), 
+                                        RooFit.Minimizer("Minuit2"), 
+                                        RooFit.Minos(1), 
+                                        RooFit.Save(1), 
+                                        RooFit.PrintLevel(-1), 
+                                        RooFit.PrintEvalErrors(0), 
+                                        RooFit.Warnings(ROOT.kFALSE))
         res_bkg_nom.Print()
         res_bkg_nom.correlationMatrix().Print()
 
@@ -376,7 +381,15 @@ class BiasStudy:
                 coeff_bkg_fit[p].setVal(coeff_bkg_fit_reset[p])
                 print "\tReset parameter ", p, " at value ", coeff_bkg_fit[p].getVal()
 
-            res_fit = pdf_fit_ext.fitTo(data_toy, RooFit.Strategy(1), RooFit.Minimizer("Minuit2", "migrad"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0), RooFit.Warnings(ROOT.kFALSE), RooFit.Extended(ROOT.kTRUE))
+            res_fit = pdf_fit_ext.fitTo(data_toy, 
+                                        RooFit.Strategy(1), 
+                                        RooFit.Minimizer("Minuit2", "migrad"), 
+                                        RooFit.Minos(1), 
+                                        RooFit.Save(1), 
+                                        RooFit.PrintLevel(-1), 
+                                        RooFit.PrintEvalErrors(0), 
+                                        RooFit.Warnings(ROOT.kFALSE), 
+                                        RooFit.Extended(ROOT.kTRUE))
             if res_fit==None or res_fit.status()>0:
                 continue                
 
@@ -408,15 +421,15 @@ class BiasStudy:
 test_pdfs= [
     #"pol", 
     #"exp", 
-    "pow", 
+    #"pow", 
     #"polyexp", 
     #"dijet",
-    #"polydijet",
+    "polydijet",
     #"expdijet"
     ]
 
-cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800"
-cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "exp"
+cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_900to1300"
+cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "polyexp"
 cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "polydijet"
 cfg_n_bins = int(argv[4]) if len(argv)>=5 else 200
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
@@ -426,12 +439,13 @@ cfg_ntoys = int(argv[8]) if len(argv)>=9 else 0
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 
-               ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
+               ws_name="Xbb_workspace", version="V5", saveDir="./plots/", blind_plot=True)
 
 #bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default" )
 bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc, parameter_set="default")
 
 print FTestCfg
+#print(json.dumps(FTestCfg, indent = 4))
 
 for gc in gcs:
     gc.Print()
