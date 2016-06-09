@@ -19,13 +19,13 @@ gcs = []
 
 class XbbFactory:
 
-    def __init__(self, fname="plot.root", ws_name="Xbb_workspace", version="V4", saveDir="/scratch/bianchi/"):
-        self.file = ROOT.TFile.Open(saveDir+"/"+version+"/"+fname, "READ")
+    def __init__(self, fname="plot.root", ws_name="Xbb_workspace", read_dir="/scratch/bianchi/", save_dir="/scratch/bianchi/", save_ext=['png']):
+        self.file = ROOT.TFile.Open(read_dir+"/"+fname, "READ")
         if self.file==None or self.file.IsZombie():
             return
         self.ws_name = ws_name
-        self.version = version
-        self.saveDir = saveDir+'/'+version+'/'
+        self.save_dir = save_dir+'/'
+        self.save_ext = save_ext
         self.w = ROOT.RooWorkspace( ws_name, "workspace")
         self.bin_size = 1.
 
@@ -47,7 +47,7 @@ class XbbFactory:
             self.x.setRange(k, FitSgnCfg[k]['fit_range'][0], FitSgnCfg[k]['fit_range'][1])
         self.imp(self.x)
     
-    # save plots to png
+    # save plots to .png
     def plot(self, data=None, pdfs=[], res=None, add_pulls=False, legs=[], ran="", n_par=1, title=""):
 
         #return
@@ -59,15 +59,16 @@ class XbbFactory:
             pad1.Draw()      
             pad1.cd()    
 
-        leg = ROOT.TLegend(0.15,0.65,0.45,0.88, "","brNDC")
-        leg.SetHeader( "[%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
+        leg = ROOT.TLegend(0.65,0.65,0.85,0.88, "","brNDC")
+        #leg.SetHeader( "[%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
         leg.SetFillStyle(0)
         leg.SetBorderSize(0)
         leg.SetTextSize(0.04)
         leg.SetFillColor(10)    
 
         #self.x.setRange( FitSgnCfg[ran]['fit_range'][0], FitSgnCfg[ran]['fit_range'][1] )
-        frame = self.x.frame(RooFit.Range(ran))
+        #frame = self.x.frame(RooFit.Range(ran))
+        frame = self.x.frame()
         frame.SetName("frame")
         frame.SetTitle(self.get_save_name()+"_"+title)
         frame.GetYaxis().SetTitleSize(20)
@@ -76,15 +77,32 @@ class XbbFactory:
         frame.GetYaxis().SetLabelFont(43) 
         frame.GetYaxis().SetLabelSize(15)
 
-        data.plotOn(frame, RooFit.Name("data"))
+        if data!=None:
+            data.plotOn(frame, RooFit.Name("data"))
+
         for p,pdf in enumerate(pdfs):
-            opt_color = RooFit.LineColor(ROOT.kRed) if len(pdfs)==1 else RooFit.LineColor(1+p) 
+            opt_color = RooFit.LineColor(ROOT.kRed)
+            opt_style = RooFit.LineStyle(ROOT.kSolid)
+            if len(pdfs)>1:
+                if p==0:
+                    opt_color = RooFit.LineColor(1)
+                    opt_style = RooFit.LineStyle(ROOT.kSolid)
+                else:
+                    opt_color = RooFit.LineColor(2+p/3)
+                    if p%2==0:
+                        opt_style = RooFit.LineStyle(ROOT.kDashed)
+
             if res!=None and res.status()==0:
-                pdf.plotOn(frame, RooFit.VisualizeError(res, 1, ROOT.kFALSE), RooFit.LineColor(ROOT.kGreen), RooFit.LineStyle(ROOT.kSolid), RooFit.FillColor(ROOT.kGreen) )
+                pdf.plotOn(frame, 
+                           RooFit.VisualizeError(res, 1, ROOT.kFALSE), 
+                           RooFit.LineColor(ROOT.kGreen), 
+                           RooFit.LineStyle(ROOT.kSolid), 
+                           RooFit.FillColor(ROOT.kGreen) )
                 pdf.plotOn(frame, RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf.GetName()))
-                data.plotOn(frame, RooFit.Name("data"))
+                if data!=None:
+                    data.plotOn(frame, RooFit.Name("data"))
             else:
-                pdf.plotOn(frame, opt_color, RooFit.LineStyle(ROOT.kSolid if p%2 or len(pdfs)==1 else ROOT.kDashed), RooFit.Name(pdf.GetName()))
+                pdf.plotOn(frame, opt_color, opt_style, RooFit.Name(pdf.GetName()))
 
         if add_pulls:
             pad1.cd()
@@ -104,7 +122,8 @@ class XbbFactory:
             pad2.SetGridy() 
             pad2.Draw()
             pad2.cd()       
-            frame2 = self.x.frame(RooFit.Range(ran))
+            #frame2 = self.x.frame(RooFit.Range(ran))
+            frame2 = self.x.frame()
             frame2.SetName("frame2")
             frame2.SetTitle(self.get_save_name()+"_"+title)        
             hresid = frame.pullHist()
@@ -125,7 +144,8 @@ class XbbFactory:
             frame2.addPlotable(hresid,"P")
             frame2.Draw()
 
-        c1.SaveAs(self.saveDir+self.ws_name+"_"+self.get_save_name()+"_"+title+".png")
+        for ext in self.save_ext:
+            c1.SaveAs(self.save_dir+self.ws_name+"_"+self.get_save_name()+"_"+title+"."+ext)
 
         # clean up memory
         c1.IsA().Destructor( c1 )
@@ -187,14 +207,21 @@ class XbbFactory:
             data_sgn2_fit = ROOT.RooDataHist("data_sgn_"+sgn_name2+"_fit", "", ROOT.RooArgList(self.x), h2, 1.0)
             data_sgn_fit.add(data_sgn2_fit)
 
-        res = buk_pdf_sgn_fit.fitTo(data_sgn_fit, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+        res = buk_pdf_sgn_fit.fitTo(data_sgn_fit, 
+                                    RooFit.Strategy(1), 
+                                    RooFit.Minimizer("Minuit2"), 
+                                    RooFit.Minos(1), 
+                                    RooFit.Save(1), 
+                                    RooFit.PrintLevel(-1), 
+                                    RooFit.PrintEvalErrors(0))
         res.Print()
+
+        # save a snapshot
+        self.plot( data=data_sgn_fit, pdfs=[buk_pdf_sgn_fit], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=sgn_name)
 
         # create a new pdf with correct x range
         self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)       
-
-        self.plot( data=data_sgn, pdfs=[buk_pdf_sgn], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=sgn_name)
 
         if set_param_const:
             mean.setConstant(1)
@@ -259,9 +286,9 @@ class XbbFactory:
             rho2 = ROOT.RooRealVar("rho2_sgn_"+syst+"_"+sgn_name, "", self.w.var("rho2_sgn_"+sgn_name).getVal())
             if "JEC" in syst:
                 mean.setConstant(0)
-                sigma.setConstant(1)
+                sigma.setConstant(1) #1
             if "JER" in syst:
-                mean.setConstant(1)
+                mean.setConstant(1) #1
                 sigma.setConstant(0)
             xi.setConstant(1)
             rho1.setConstant(1)
@@ -270,7 +297,13 @@ class XbbFactory:
             buk_pdf_sgn = ROOT.RooBukinPdf("buk_pdf_sgn_"+syst+"_"+sgn_name,"", self.x, mean, sigma, xi, rho1, rho2)            
             ROOT.SetOwnership(buk_pdf_sgn, False )  
 
-            buk_pdf_sgn.fitTo(data_sgn, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+            buk_pdf_sgn.fitTo(data_sgn, 
+                              RooFit.Strategy(1), 
+                              RooFit.Minimizer("Minuit2"), 
+                              RooFit.Minos(1), 
+                              RooFit.PrintLevel(-1), 
+                              RooFit.PrintEvalErrors(0))
+
             shifts[syst] = [mean.getVal(), sigma.getVal(), norm]
 
             gcs.append(mean)
@@ -311,11 +344,19 @@ class XbbFactory:
         self.w.var("mean_sgn_"+sgn_name).setConstant(0)
         self.w.var("sigma_sgn_"+sgn_name).setConstant(0)
 
-        #pdfs = [ self.w.pdf("buk_pdf_sgn"+syst+"_"+sgn_name) for syst in ["","_JECUp", "_JECDown", "_JERUp", "_JERDown"]]            
-        legs = ["Nominal", "JEC up", "JEC down", "JER up", "JER down"]
-
         # save a snapshot
-        self.plot( data=self.w.data("data_sgn_"+sgn_name), pdfs=pdfs, res=None, add_pulls=False, legs=legs, ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER")
+        for gc in gcs:
+            if gc.GetName()=="mean_sgn_JECUp_"+sgn_name:
+                gc.setVal( self.w.var("mean_sgn_"+sgn_name).getVal()+jec )
+            elif gc.GetName()=="mean_sgn_JECDown_"+sgn_name:
+                gc.setVal( self.w.var("mean_sgn_"+sgn_name).getVal()-jec )
+            elif gc.GetName()=="sigma_sgn_JERUp_"+sgn_name:
+                gc.setVal( self.w.var("sigma_sgn_"+sgn_name).getVal()+jer )
+            elif gc.GetName()=="sigma_sgn_JERDown_"+sgn_name:
+                gc.setVal( self.w.var("sigma_sgn_"+sgn_name).getVal()-jer )
+
+        self.x.setRange( FitSgnCfg[sgn_name]['fit_range'][0], FitSgnCfg[sgn_name]['fit_range'][1] )
+        self.plot(data=None, pdfs=pdfs, res=None, add_pulls=False, legs=["Nominal", "JEC up", "JEC down", "JER up", "JER down"], ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER")
 
     # add background pdf to ws
     def add_bkg_to_ws(self, pdf_names=["dijet"], rebin_factor=1.0, set_param_const=False):
@@ -327,7 +368,6 @@ class XbbFactory:
             h.Rebin(rebin_factor)
         ROOT.SetOwnership(h, False ) 
 
-        #self.x.setRange( FTestCfg[pdf_names[0]]['fit_range'][0], FTestCfg[pdf_names[0]]['fit_range'][1] )
         self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
         data_bkg = ROOT.RooDataHist("data_bkg", "", ROOT.RooArgList(self.x), h, 1.0)
         self.imp(data_bkg)
@@ -353,7 +393,13 @@ class XbbFactory:
             pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
             pdf_bkg_norm.setConstant(0) 
 
-            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(1), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+            res = pdf_bkg.fitTo(data_bkg, 
+                                RooFit.Strategy(1), 
+                                RooFit.Minimizer("Minuit2"), 
+                                RooFit.Minos(1), 
+                                RooFit.Save(1), 
+                                RooFit.PrintLevel(-1), 
+                                RooFit.PrintEvalErrors(0))
             res.Print()
             
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
@@ -419,7 +465,13 @@ class XbbFactory:
             pdf_bkg = pdfs_bkg[0]
             param_bkg = pdfs_bkg[1]
 
-            res = pdf_bkg.fitTo(data_bkg, RooFit.Strategy(2), RooFit.Minimizer("Minuit2"), RooFit.Minos(1), RooFit.Save(1), RooFit.PrintLevel(-1), RooFit.PrintEvalErrors(0))
+            res = pdf_bkg.fitTo(data_bkg, 
+                                RooFit.Strategy(2), 
+                                RooFit.Minimizer("Minuit2"), 
+                                RooFit.Minos(1), 
+                                RooFit.Save(1), 
+                                RooFit.PrintLevel(-1), 
+                                RooFit.PrintEvalErrors(0))
             res.Print()
             
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
@@ -429,21 +481,21 @@ class XbbFactory:
 
     # name for final root and png
     def get_save_name(self):        
-        return  self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)-self.bin_size*0.5))+"to"+("%.0f" % (self.x.getMax(self.x_name)+self.bin_size*0.5))
+        return  self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)))+"to"+("%.0f" % (self.x.getMax(self.x_name)))
 
     # create the ws
     def create_workspace(self, signals=[], pdf_names=["dijet"]):                            
 
         for sgn in signals:
-            self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=50, set_param_const=True, spin_symmetric=False)
-            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=50, spin_symmetric=False)
+            self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=100, set_param_const=True, spin_symmetric=False)
+            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=100, spin_symmetric=False)
         
-        self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
-        self.add_data_to_ws(rebin_factor=-1)
-        self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
+        #self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
+        #self.add_data_to_ws(rebin_factor=-1)
+        #self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
 
-        self.w.Print()
-        self.w.writeToFile(self.saveDir+self.ws_name+"_"+self.get_save_name()+".root")
+        #self.w.Print()
+        #self.w.writeToFile(self.save_dir+self.ws_name+"_"+self.get_save_name()+".root")
 
         self.file.Close()
 
@@ -452,22 +504,18 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 525.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
 cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
-#xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="/scratch/bianchi/")
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", version="V5", saveDir="./plots/")
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V5/", save_dir="./plots/Jun09/", save_ext=['png','pdf'])
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
 xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750","Spin0_M850","Spin0_M1000", "Spin0_M1200",
-                                   "Spin2_M650", "Spin2_M750","Spin2_M850","Spin2_M1000", "Spin2_M1200"
-                                   #"Spin0_M750"
+                                   "Spin2_M650", "Spin2_M750","Spin2_M850","Spin2_M1000", "Spin2_M1200"        
                                    ], 
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
                           pdf_names=["polydijet"] 
                           )
-#xbbfact.create_workspace( signals=["Spin0_M750"], pdf_names=["polydijet"] )
-#xbbfact.create_workspace( signals=[], pdf_names=["pow"] )
 
 for gc in gcs:
     gc.Print()
