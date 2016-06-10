@@ -95,11 +95,11 @@ FitSgnCfg = {
 
 FTestCfg = {
     "pol" : {
-        "FirstOrder" : 6,
-        "LastOrder" : 8,
+        "FirstOrder" : 5,
+        "LastOrder" : 9,
         "Match" : -1,
         "MaxOrder" : 6, #6,
-        "ndof" : 6,
+        "ndof" : 5,
         "fit_range" : [400., 1200.], 
         },
     "exp" : {
@@ -112,14 +112,14 @@ FTestCfg = {
         },
     "pow" : {
         "FirstOrder" : 1,
-        "LastOrder" : 4,
+        "LastOrder" : 5,
         "Match" : -1,
-        "MaxOrder" : 3,
+        "MaxOrder" : 3, #
         "ndof" : 3,
         "fit_range" : [400., 1200.], 
         },
     "polyexp" : {
-        "FirstOrder" : 4,
+        "FirstOrder" : 1,
         "LastOrder" : 4,
         "Match" : -1,
         "MaxOrder" : 3,
@@ -135,8 +135,8 @@ FTestCfg = {
         "fit_range" : [400., 1200.], 
         },
     "polydijet" : {
-        "FirstOrder" : 2,
-        "LastOrder" : 2,
+        "FirstOrder" : 1,
+        "LastOrder" : 3,
         "Match" : -1,
         "MaxOrder" : 2,#2
         "ndof" : 3,#3

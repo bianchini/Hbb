@@ -5,7 +5,7 @@ pisa_lfn = "root://stormgf1.pi.infn.it:1094//store/user/arizzi/VHBBHeppyV21/"
 cern_lfn = "root://188.184.38.46:1094//store/group/phys_higgs/hbb/ntuples/V21/user/arizzi/VHBBHeppyV21/"
 xbb_lfn = "root://188.184.38.46:1094//store/group/phys_higgs/hbb/Xbb/"
 #psi_lfn = "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"
-psi_lfn = "droot://t3dcachedb.psi.ch:1094//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"
+psi_lfn = "root://t3dcachedb.psi.ch:1094//pnfs/psi.ch/cms/trivcat/store/user/bianchi/Hbb_Heppy/"
 
 samples_V21 = {
   "Run2015D" : [cern_lfn+"/BTagCSV//VHBB_HEPPY_V21_BTagCSV__Run2015D-16Dec2015-v1/160317_132347/0000/", -1],

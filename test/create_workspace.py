@@ -19,7 +19,7 @@ gcs = []
 
 class XbbFactory:
 
-    def __init__(self, fname="plot.root", ws_name="Xbb_workspace", read_dir="/scratch/bianchi/", save_dir="/scratch/bianchi/", save_ext=['png']):
+    def __init__(self, fname="plot.root", ws_name="Xbb_workspace", read_dir="/scratch/bianchi/", save_dir="/scratch/bianchi/", save_ext=['png'], blind_plot=False):
         self.file = ROOT.TFile.Open(read_dir+"/"+fname, "READ")
         if self.file==None or self.file.IsZombie():
             return
@@ -28,6 +28,7 @@ class XbbFactory:
         self.save_ext = save_ext
         self.w = ROOT.RooWorkspace( ws_name, "workspace")
         self.bin_size = 1.
+        self.plot_blind = blind_plot
 
     # import into workspace
     def imp(self, obj):
@@ -48,37 +49,43 @@ class XbbFactory:
         self.imp(self.x)
     
     # save plots to .png
-    def plot(self, data=None, pdfs=[], res=None, add_pulls=False, legs=[], ran="", n_par=1, title=""):
+    def plot(self, data=None, pdfs=[], res=None, add_pulls=False, legs=[], ran="", n_par=1, title="", header=""):
 
         #return
         c1 = ROOT.TCanvas("c1_"+self.get_save_name()+"_"+title,"c1",600,600)
-        if add_pulls:
-            pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
-            pad1.SetBottomMargin(0) 
-            pad1.SetGridx()  
-            pad1.Draw()      
-            pad1.cd()    
+        #if add_pulls:
+        pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
+        pad1.SetBottomMargin(0) 
+        #pad1.SetGridx()  
+        pad1.Draw()      
+        pad1.cd()    
 
-        leg = ROOT.TLegend(0.65,0.65,0.85,0.88, "","brNDC")
-        #leg.SetHeader( "[%.0f,%.0f]" % (self.x.getMin(), self.x.getMax()) )  
+        leg = ROOT.TLegend(0.12,0.55,0.45,0.88, "","brNDC")
+        leg.SetHeader(header)  
         leg.SetFillStyle(0)
         leg.SetBorderSize(0)
-        leg.SetTextSize(0.04)
+        leg.SetTextSize(0.06)
         leg.SetFillColor(10)    
 
-        #self.x.setRange( FitSgnCfg[ran]['fit_range'][0], FitSgnCfg[ran]['fit_range'][1] )
-        #frame = self.x.frame(RooFit.Range(ran))
         frame = self.x.frame()
         frame.SetName("frame")
-        frame.SetTitle(self.get_save_name()+"_"+title)
+        frame.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV")
         frame.GetYaxis().SetTitleSize(20)
         frame.GetYaxis().SetTitleFont(43)
         frame.GetYaxis().SetTitleOffset(1.35)
         frame.GetYaxis().SetLabelFont(43) 
         frame.GetYaxis().SetLabelSize(15)
+        frame.GetXaxis().SetTitleSize(20)
+        frame.GetXaxis().SetTitleFont(43)
+        frame.GetXaxis().SetLabelFont(43) 
+        frame.GetXaxis().SetLabelSize(15)            
 
         if data!=None:
             data.plotOn(frame, RooFit.Name("data"))
+            frame.GetYaxis().SetTitle("Events / "+str(frame.GetXaxis().GetBinWidth(1))+" GeV")
+        else:
+            frame.GetYaxis().SetTitle("1/GeV")
+            frame.GetXaxis().SetTitle("mass (GeV)")
 
         for p,pdf in enumerate(pdfs):
             opt_color = RooFit.LineColor(ROOT.kRed)
@@ -110,7 +117,7 @@ class XbbFactory:
         frame.Draw()
         for p,pdf in enumerate(pdfs):
             chi2 = frame.chiSquare(pdf.GetName(), "data", n_par )
-            leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+ ((", #chi^{2}=%.2f" % chi2) if len(pdfs)==1 else ""), "L")
+            leg.AddEntry(frame.getCurve(pdf.GetName()), legs[p]+ (("{#chi^{2}=%.2f}" % chi2) if len(pdfs)==1 else ""), "L")
         leg.Draw()
 
         if add_pulls:
@@ -118,15 +125,14 @@ class XbbFactory:
             pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
             pad2.SetTopMargin(0)
             pad2.SetBottomMargin(0.2)
-            pad2.SetGridx()   
+            #pad2.SetGridx()   
             pad2.SetGridy() 
             pad2.Draw()
             pad2.cd()       
-            #frame2 = self.x.frame(RooFit.Range(ran))
             frame2 = self.x.frame()
             frame2.SetName("frame2")
-            frame2.SetTitle(self.get_save_name()+"_"+title)        
             hresid = frame.pullHist()
+            hresid.GetYaxis().SetRangeUser(-4,4)
             frame2.SetTitle("") 
             frame2.GetYaxis().SetTitle("Pulls")
             frame2.GetYaxis().SetNdivisions(505)
@@ -135,14 +141,15 @@ class XbbFactory:
             frame2.GetYaxis().SetTitleOffset(1.35)
             frame2.GetYaxis().SetLabelFont(43) 
             frame2.GetYaxis().SetLabelSize(15)
-            frame2.GetXaxis().SetTitle(self.x_name)
+            frame2.GetXaxis().SetTitle("mass (GeV)")
             frame2.GetXaxis().SetTitleSize(20)
             frame2.GetXaxis().SetTitleFont(43)
-            frame2.GetXaxis().SetTitleOffset(4.)
+            frame2.GetXaxis().SetTitleOffset(3.0)
             frame2.GetXaxis().SetLabelFont(43) 
             frame2.GetXaxis().SetLabelSize(15)            
             frame2.addPlotable(hresid,"P")
             frame2.Draw()
+            frame2.GetYaxis().SetRangeUser(-4,4)
 
         for ext in self.save_ext:
             c1.SaveAs(self.save_dir+self.ws_name+"_"+self.get_save_name()+"_"+title+"."+ext)
@@ -217,7 +224,7 @@ class XbbFactory:
         res.Print()
 
         # save a snapshot
-        self.plot( data=data_sgn_fit, pdfs=[buk_pdf_sgn_fit], res=res, add_pulls=True, legs=["Bukin"], ran=sgn_name, n_par=5, title=sgn_name)
+        self.plot( data=data_sgn_fit, pdfs=[buk_pdf_sgn_fit], res=res, add_pulls=True, legs=[("#splitline{#mu=%.0f, #sigma=%.0f}" % (mean.getVal(), sigma.getVal()))], ran=sgn_name, n_par=5, title=sgn_name, header=sgn_name)
 
         # create a new pdf with correct x range
         self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
@@ -356,7 +363,7 @@ class XbbFactory:
                 gc.setVal( self.w.var("sigma_sgn_"+sgn_name).getVal()-jer )
 
         self.x.setRange( FitSgnCfg[sgn_name]['fit_range'][0], FitSgnCfg[sgn_name]['fit_range'][1] )
-        self.plot(data=None, pdfs=pdfs, res=None, add_pulls=False, legs=["Nominal", "JEC up", "JEC down", "JER up", "JER down"], ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER")
+        self.plot(data=None, pdfs=pdfs, res=None, add_pulls=False, legs=["Nominal", "JEC up", "JEC down", "JER up", "JER down"], ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER", header=sgn_name)
 
     # add background pdf to ws
     def add_bkg_to_ws(self, pdf_names=["dijet"], rebin_factor=1.0, set_param_const=False):
@@ -405,7 +412,7 @@ class XbbFactory:
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=FTestCfg[pdf_name]['ndof'], title="background_"+pdf_name)
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=["#splitline{"+pdf_name+"}"], ran=pdf_name, n_par=FTestCfg[pdf_name]['ndof'], title="background_"+pdf_name, header="Simulation, L=2.63 fb^{-1}")
 
             # reset parameters to be used in RooWorkspace
             for p in xrange( FTestCfg[pdf_name]['ndof'] ):            
@@ -442,7 +449,8 @@ class XbbFactory:
         self.imp(data_obs)
         self.bin_size = data_obs.binVolume(ROOT.RooArgSet(self.x))
 
-        self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title="data")
+        if not self.plot_blind:
+            self.plot( data=data_obs, pdfs=[], res=None, add_pulls=False, legs=[], ran='dijet', n_par=0, title="data", header="Data, L=2.63 fb^{-1}")
 
     # add data_obs to ws
     def test_datafit(self, pdf_names=['dijet'], rebin_factor=1.0):
@@ -488,14 +496,16 @@ class XbbFactory:
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=100, set_param_const=True, spin_symmetric=False)
-            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=100, spin_symmetric=False)
+            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=10, spin_symmetric=False)
         
-        #self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
-        #self.add_data_to_ws(rebin_factor=-1)
-        #self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
+        self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
+        self.add_data_to_ws(rebin_factor=-1)
 
-        #self.w.Print()
-        #self.w.writeToFile(self.save_dir+self.ws_name+"_"+self.get_save_name()+".root")
+        if not self.plot_blind:
+            self.test_datafit(pdf_names=pdf_names, rebin_factor=-1)
+
+        self.w.Print()
+        self.w.writeToFile(self.save_dir+self.ws_name+"_"+self.get_save_name()+".root")
 
         self.file.Close()
 

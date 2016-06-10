@@ -185,11 +185,11 @@ if is_empty:
   exit(1)
 
 if int(argv[2])<0:
-    f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+".root", "RECREATE")
-  #f = ROOT.TFile("/scratch/bianchi/"+argv[1]+".root", "RECREATE")
+    #f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+".root", "RECREATE")
+    f = ROOT.TFile("/scratch/bianchi/"+argv[1]+".root", "RECREATE")
 else:
-    f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
-  #f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
+    #f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
+    f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
 
 luminosity = 2630.
 lumi_factor = sample_to_process[1]*luminosity/processed if processed>0 else -1
@@ -199,18 +199,18 @@ print "Luminosity: %.0f pb-1 --- xsection: %.0f pb --- Processed: %.0f ==> Lumi 
 
 cuts_Vtype = {  
   "Had" : lambda ev : ev.Vtype in [-1,4],
-  #"Lep" : lambda ev : ev.Vtype in [0,1,2,3],
+  "Lep" : lambda ev : ev.Vtype in [0,1,2,3],
 }
 
 cuts_BTag = {
   #"All" :  lambda ev : True,
-  #"LT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
+  "LT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
   #"LT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
   #"LT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
   #"nMT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-  "MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  "MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  "MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+  #"MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+  #"MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+  #"MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
   #"TT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
   #"TT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
   #"TT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
@@ -220,15 +220,15 @@ cuts_MinPt = {
   #"All" :  lambda ev : True,
   #"MinPt200" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>200. if len(ev.hJCidx)==2 else False,
   #"MinPt175" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>175. if len(ev.hJCidx)==2 else False,
-  "MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
+  #"MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
   "MinPt100" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
-  "MinMaxPt100150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. and  max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
+  #"MinMaxPt100150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. and  max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
 }
 
 cuts_DH = {
   #"All" :  lambda ev : True,
-  #"DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
-  "DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
+  "DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
+  #"DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
   #"DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
 }
 
@@ -275,39 +275,38 @@ for n_cut,cut in enumerate(cuts_map):
   #  continue
 
   histo_map[cut[0]] = {
-    #"njet30" : ROOT.TH1F(cut[0]+"_njet30", argv[1]+": "+cut[0]+"_njet30", 10, 0, 10),
-    #"njet50" : ROOT.TH1F(cut[0]+"_njet50", argv[1]+": "+cut[0]+"_njet50", 10, 0, 10),
-    #"njet70" : ROOT.TH1F(cut[0]+"_njet70", argv[1]+": "+cut[0]+"_njet70", 10, 0, 10),
-    #"njet100" : ROOT.TH1F(cut[0]+"_njet100", argv[1]+": "+cut[0]+"_njet100", 10, 0, 10),
-    #"MET" : ROOT.TH1F(cut[0]+"_MET", argv[1]+": "+cut[0]+"_MET", 15, 0, 300),
-    #"lheHT" : ROOT.TH1F(cut[0]+"_lheHT", argv[1]+": "+cut[0]+"_lheHT", 30, 0, 3000),
-    #"PtBalance" : ROOT.TH1F(cut[0]+"_PtBalance", argv[1]+": "+cut[0]+"_PtBalance", 20, 0, 1),
-    #"MinJetPt" : ROOT.TH1F(cut[0]+"_MinJetPt", argv[1]+": "+cut[0]+"_MinJetPt", 40, 100, 1000),
-    #"MaxJetPt" : ROOT.TH1F(cut[0]+"_MaxJetPt", argv[1]+": "+cut[0]+"_MaxJetPt", 40, 100, 1000),
-    #"MaxJetPtoMass" : ROOT.TH1F(cut[0]+"_MaxJetPtoMass", argv[1]+": "+cut[0]+"_MaxJetPtoMass", 20, 0., 1),
-    #"MinJetPtoMass" : ROOT.TH1F(cut[0]+"_MinJetPtoMass", argv[1]+": "+cut[0]+"_MinJetPtoMass", 20, 0., 1),
-    #"Mass" : ROOT.TH1F(cut[0]+"_Mass", argv[1]+": "+cut[0]+"_Mass", 180, 400, 4000),
+    "njet30" : ROOT.TH1F(cut[0]+"_njet30", argv[1]+": "+cut[0]+"_njet30", 10, 0, 10),
+    "njet50" : ROOT.TH1F(cut[0]+"_njet50", argv[1]+": "+cut[0]+"_njet50", 10, 0, 10),
+    "njet70" : ROOT.TH1F(cut[0]+"_njet70", argv[1]+": "+cut[0]+"_njet70", 10, 0, 10),
+    "njet100" : ROOT.TH1F(cut[0]+"_njet100", argv[1]+": "+cut[0]+"_njet100", 10, 0, 10),
+    "MET" : ROOT.TH1F(cut[0]+"_MET", argv[1]+": "+cut[0]+"_MET", 15, 0, 300),
+    "lheHT" : ROOT.TH1F(cut[0]+"_lheHT", argv[1]+": "+cut[0]+"_lheHT", 30, 0, 3000),
+    "PtBalance" : ROOT.TH1F(cut[0]+"_PtBalance", argv[1]+": "+cut[0]+"_PtBalance", 20, 0, 1),
+    "MinJetPt" : ROOT.TH1F(cut[0]+"_MinJetPt", argv[1]+": "+cut[0]+"_MinJetPt", 40, 100, 1000),
+    "MaxJetPt" : ROOT.TH1F(cut[0]+"_MaxJetPt", argv[1]+": "+cut[0]+"_MaxJetPt", 40, 100, 1000),
+    "MaxJetPtoMass" : ROOT.TH1F(cut[0]+"_MaxJetPtoMass", argv[1]+": "+cut[0]+"_MaxJetPtoMass", 20, 0., 1),
+    "MinJetPtoMass" : ROOT.TH1F(cut[0]+"_MinJetPtoMass", argv[1]+": "+cut[0]+"_MinJetPtoMass", 20, 0., 1),
+    "Mass" : ROOT.TH1F(cut[0]+"_Mass", argv[1]+": "+cut[0]+"_Mass", 180, 400, 4000),
     #"Mass_JECUp" : ROOT.TH1F(cut[0]+"_Mass_JECUp", argv[1]+": "+cut[0]+"_Mass_JECUp", 180, 400, 4000),
     #"Mass_JECDown" : ROOT.TH1F(cut[0]+"_Mass_JECDown", argv[1]+": "+cut[0]+"_Mass_JECDown", 180, 400, 4000),
     #"Mass_JERUp" : ROOT.TH1F(cut[0]+"_Mass_JERUp", argv[1]+": "+cut[0]+"_Mass_JERUp", 180, 400, 4000),
     #"Mass_JERDown" : ROOT.TH1F(cut[0]+"_Mass_JERDown", argv[1]+": "+cut[0]+"_Mass_JERDown", 180, 400, 4000),
-    "MassFSR" : ROOT.TH1F(cut[0]+"_MassFSR", argv[1]+": "+cut[0]+"_MassFSR", 3700, 300, 4000),
-    "MassFSR_JECUp" : ROOT.TH1F(cut[0]+"_MassFSR_JECUp", argv[1]+": "+cut[0]+"_MassFSR_JECUp", 3700, 300, 4000),
-    "MassFSR_JECDown" : ROOT.TH1F(cut[0]+"_MassFSR_JECDown", argv[1]+": "+cut[0]+"_MassFSR_JECDown", 3700, 300, 4000),
-    "MassFSR_JERUp" : ROOT.TH1F(cut[0]+"_MassFSR_JERUp", argv[1]+": "+cut[0]+"_MassFSR_JERUp", 3700, 300, 4000),
-    "MassFSR_JERDown" : ROOT.TH1F(cut[0]+"_MassFSR_JERDown", argv[1]+": "+cut[0]+"_MassFSR_JERDown", 3700, 300, 4000),
-    "MassFSRProjMET" : ROOT.TH1F(cut[0]+"_MassFSRProjMET", argv[1]+": "+cut[0]+"_MassFSRProjMET", 3700, 300, 4000),
-
-    #"MassAK08" : ROOT.TH1F(cut[0]+"_MassAK08", argv[1]+": "+cut[0]+"_MassAK08", 180, 400, 4000),
-    #"njetAK08" : ROOT.TH1F(cut[0]+"_njetAK08", argv[1]+": "+cut[0]+"_njetAK08", 10, 0, 10),
-    #"Pt" : ROOT.TH1F(cut[0]+"_Pt", argv[1]+": "+cut[0]+"_Pt", 20, 0, 500),
-    #"Eta" : ROOT.TH1F(cut[0]+"_Eta", argv[1]+": "+cut[0]+"_Eta", 20, -6, +6),
-    #"MaxEta" : ROOT.TH1F(cut[0]+"_MaxEta", argv[1]+": "+cut[0]+"_MaxEta", 20, 0., 2.4),
-    #"DeltaEta" : ROOT.TH1F(cut[0]+"_DeltaEta", argv[1]+": "+cut[0]+"_DeltaEta", 20, 0, 3),
-    #"DeltaPhi" : ROOT.TH1F(cut[0]+"_DeltaPhi", argv[1]+": "+cut[0]+"_DeltaPhi", 20, 0, 3.2),
-    #"MaxJetCSV" : ROOT.TH1F(cut[0]+"_MaxJetCSV", argv[1]+": "+cut[0]+"_MaxJetCSV", 40, 0, 1.),
-    #"MinJetCSV" : ROOT.TH1F(cut[0]+"_MinJetCSV", argv[1]+": "+cut[0]+"_MinJetCSV", 20, 0, 1.),
-    #"Vtype" : ROOT.TH1F(cut[0]+"_Vtype", argv[1]+": "+cut[0]+"_Vtype", 7, -1, 6),
+    "MassFSR" : ROOT.TH1F(cut[0]+"_MassFSR", argv[1]+": "+cut[0]+"_MassFSR", 180, 300, 4000), #37000 bins
+    "MassFSR_JECUp" : ROOT.TH1F(cut[0]+"_MassFSR_JECUp", argv[1]+": "+cut[0]+"_MassFSR_JECUp", 180, 300, 4000),
+    "MassFSR_JECDown" : ROOT.TH1F(cut[0]+"_MassFSR_JECDown", argv[1]+": "+cut[0]+"_MassFSR_JECDown", 180, 300, 4000),
+    "MassFSR_JERUp" : ROOT.TH1F(cut[0]+"_MassFSR_JERUp", argv[1]+": "+cut[0]+"_MassFSR_JERUp", 180, 300, 4000),
+    "MassFSR_JERDown" : ROOT.TH1F(cut[0]+"_MassFSR_JERDown", argv[1]+": "+cut[0]+"_MassFSR_JERDown", 180, 300, 4000),
+    "MassFSRProjMET" : ROOT.TH1F(cut[0]+"_MassFSRProjMET", argv[1]+": "+cut[0]+"_MassFSRProjMET", 180, 300, 4000),
+    "MassAK08" : ROOT.TH1F(cut[0]+"_MassAK08", argv[1]+": "+cut[0]+"_MassAK08", 180, 400, 4000),
+    "njetAK08" : ROOT.TH1F(cut[0]+"_njetAK08", argv[1]+": "+cut[0]+"_njetAK08", 10, 0, 10),
+    "Pt" : ROOT.TH1F(cut[0]+"_Pt", argv[1]+": "+cut[0]+"_Pt", 20, 0, 500),
+    "Eta" : ROOT.TH1F(cut[0]+"_Eta", argv[1]+": "+cut[0]+"_Eta", 20, -6, +6),
+    "MaxEta" : ROOT.TH1F(cut[0]+"_MaxEta", argv[1]+": "+cut[0]+"_MaxEta", 20, 0., 2.4),
+    "DeltaEta" : ROOT.TH1F(cut[0]+"_DeltaEta", argv[1]+": "+cut[0]+"_DeltaEta", 20, 0, 3),
+    "DeltaPhi" : ROOT.TH1F(cut[0]+"_DeltaPhi", argv[1]+": "+cut[0]+"_DeltaPhi", 20, 0, 3.2),
+    "MaxJetCSV" : ROOT.TH1F(cut[0]+"_MaxJetCSV", argv[1]+": "+cut[0]+"_MaxJetCSV", 40, 0, 1.),
+    "MinJetCSV" : ROOT.TH1F(cut[0]+"_MinJetCSV", argv[1]+": "+cut[0]+"_MinJetCSV", 20, 0, 1.),
+    "Vtype" : ROOT.TH1F(cut[0]+"_Vtype", argv[1]+": "+cut[0]+"_Vtype", 7, -1, 6),
     }
 for h in histo_map.keys():
   for hh in histo_map[h].keys():
@@ -344,22 +343,22 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
       continue
 
     variables = {}
-    #variables["lheHT"] = ev.lheHT if hasattr(ev,"lheHT") else 0.
-    #variables["MET"] = ev.met_pt
-    #for ptcut in [30,50,70,100]:
-    #  variables["njet"+str(ptcut)] = sum( ev.Jet_pt[j]>ptcut and abs(ev.Jet_eta[j])<2.4 for j in range(ev.nJet) )
-    #variables["MinJetPt"] = min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] ) if len(ev.hJCidx)==2 else 0.
-    #variables["MaxJetPt"] = max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] ) if len(ev.hJCidx)==2 else 0. 
-    #variables["MinJetPtoMass"] = min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] )/ev.HCSV_mass if len(ev.hJCidx)==2 else 0. 
-    #variables["MaxJetPtoMass"] = max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] )/ev.HCSV_mass if len(ev.hJCidx)==2 else 0. 
-    #variables["PtBalance"] = abs(ev.Jet_pt[ev.hJCidx[0]]-ev.Jet_pt[ev.hJCidx[1]])/(ev.Jet_pt[ev.hJCidx[0]]+ev.Jet_pt[ev.hJCidx[1]]) if len(ev.hJCidx)==2 else 99. 
-    #variables["MaxJetCSV"] = ev.Jet_btagCSV[ev.hJCidx[0]] if len(ev.hJCidx)==2 else 0.
-    #variables["MinJetCSV"] = ev.Jet_btagCSV[ev.hJCidx[1]] if len(ev.hJCidx)==2 else 0. 
-    #variables["Mass"] = ev.HCSV_mass 
-    #variables["Mass_JECUp"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JECUp[ev.hJCidx[0]]*ev.Jet_corr_JECUp[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2 and ev.Jet_corr_JECUp[ev.hJCidx[0]]>0. and ev.Jet_corr_JECUp[ev.hJCidx[1]]>0. and lumi_factor>0  else ev.HCSV_mass
-    #variables["Mass_JECDown"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JECDown[ev.hJCidx[0]]*ev.Jet_corr_JECDown[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JECDown[ev.hJCidx[0]]>0. and ev.Jet_corr_JECDown[ev.hJCidx[1]]>0. else ev.HCSV_mass
-    #variables["Mass_JERUp"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JERUp[ev.hJCidx[0]]*ev.Jet_corr_JERUp[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HCSV_mass
-    #variables["Mass_JERDown"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JERDown[ev.hJCidx[0]]*ev.Jet_corr_JERDown[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HCSV_mass
+    variables["lheHT"] = ev.lheHT if hasattr(ev,"lheHT") else 0.
+    variables["MET"] = ev.met_pt
+    for ptcut in [30,50,70,100]:
+      variables["njet"+str(ptcut)] = sum( ev.Jet_pt[j]>ptcut and abs(ev.Jet_eta[j])<2.4 for j in range(ev.nJet) )
+    variables["MinJetPt"] = min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] ) if len(ev.hJCidx)==2 else 0.
+    variables["MaxJetPt"] = max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] ) if len(ev.hJCidx)==2 else 0. 
+    variables["MinJetPtoMass"] = min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] )/ev.HCSV_mass if len(ev.hJCidx)==2 else 0. 
+    variables["MaxJetPtoMass"] = max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]] )/ev.HCSV_mass if len(ev.hJCidx)==2 else 0. 
+    variables["PtBalance"] = abs(ev.Jet_pt[ev.hJCidx[0]]-ev.Jet_pt[ev.hJCidx[1]])/(ev.Jet_pt[ev.hJCidx[0]]+ev.Jet_pt[ev.hJCidx[1]]) if len(ev.hJCidx)==2 else 99. 
+    variables["MaxJetCSV"] = ev.Jet_btagCSV[ev.hJCidx[0]] if len(ev.hJCidx)==2 else 0.
+    variables["MinJetCSV"] = ev.Jet_btagCSV[ev.hJCidx[1]] if len(ev.hJCidx)==2 else 0. 
+    variables["Mass"] = ev.HCSV_mass 
+    variables["Mass_JECUp"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JECUp[ev.hJCidx[0]]*ev.Jet_corr_JECUp[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2 and ev.Jet_corr_JECUp[ev.hJCidx[0]]>0. and ev.Jet_corr_JECUp[ev.hJCidx[1]]>0. and lumi_factor>0  else ev.HCSV_mass
+    variables["Mass_JECDown"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JECDown[ev.hJCidx[0]]*ev.Jet_corr_JECDown[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JECDown[ev.hJCidx[0]]>0. and ev.Jet_corr_JECDown[ev.hJCidx[1]]>0. else ev.HCSV_mass
+    variables["Mass_JERUp"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JERUp[ev.hJCidx[0]]*ev.Jet_corr_JERUp[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HCSV_mass
+    variables["Mass_JERDown"] = ev.HCSV_mass * math.sqrt( ev.Jet_corr_JERDown[ev.hJCidx[0]]*ev.Jet_corr_JERDown[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HCSV_mass
     variables["MassFSR"] = ev.HaddJetsdR08_mass 
     variables["MassFSR_JECUp"] = ev.HaddJetsdR08_mass * math.sqrt( ev.Jet_corr_JECUp[ev.hJCidx[0]]*ev.Jet_corr_JECUp[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JECUp[ev.hJCidx[0]]>0. and ev.Jet_corr_JECUp[ev.hJCidx[1]]>0. else ev.HaddJetsdR08_mass
     variables["MassFSR_JECDown"] = ev.HaddJetsdR08_mass * math.sqrt( ev.Jet_corr_JECDown[ev.hJCidx[0]]*ev.Jet_corr_JECDown[ev.hJCidx[1]]/ev.Jet_corr[ev.hJCidx[0]]/ev.Jet_corr[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JECDown[ev.hJCidx[0]]>0. and ev.Jet_corr_JECDown[ev.hJCidx[1]]>0. else ev.HaddJetsdR08_mass
@@ -367,14 +366,14 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
     variables["MassFSR_JERDown"] = ev.HaddJetsdR08_mass * math.sqrt( ev.Jet_corr_JERDown[ev.hJCidx[0]]*ev.Jet_corr_JERDown[ev.hJCidx[1]]/ev.Jet_corr_JER[ev.hJCidx[0]]/ev.Jet_corr_JER[ev.hJCidx[1]]) if len(ev.hJCidx)==2  and lumi_factor>0 and ev.Jet_corr_JER[ev.hJCidx[0]]>0. and ev.Jet_corr_JER[ev.hJCidx[1]]>0. else ev.HaddJetsdR08_mass
     variables["MassFSRProjMET"] =  projMetOntoH(ev, True, True) 
 
-    #variables["MassAK08"] = ak08_mass(ev) 
-    #variables["njetAK08"] = getattr(ev, "nFatjetAK08ungroomed", 2)
-    #variables["Pt"] = ev.HCSV_pt 
-    #variables["Eta"] = ev.HCSV_eta 
-    #variables["MaxEta"] = max(abs(ev.Jet_eta[ev.hJCidx[0]]),abs(ev.Jet_eta[ev.hJCidx[1]])) if len(ev.hJCidx)==2 else 99 
-    #variables["Vtype"] = ev.Vtype 
-    #variables["DeltaEta"] = abs(ev.Jet_eta[ev.hJCidx[0]] - ev.Jet_eta[ev.hJCidx[1]])  if len(ev.hJCidx)==2 else 99 
-    #variables["DeltaPhi"] = math.acos(math.cos(ev.Jet_phi[ev.hJCidx[0]] - ev.Jet_phi[ev.hJCidx[1]]))  if len(ev.hJCidx)==2 else 99 
+    variables["MassAK08"] = ak08_mass(ev) 
+    variables["njetAK08"] = getattr(ev, "nFatjetAK08ungroomed", 2)
+    variables["Pt"] = ev.HCSV_pt 
+    variables["Eta"] = ev.HCSV_eta 
+    variables["MaxEta"] = max(abs(ev.Jet_eta[ev.hJCidx[0]]),abs(ev.Jet_eta[ev.hJCidx[1]])) if len(ev.hJCidx)==2 else 99 
+    variables["Vtype"] = ev.Vtype 
+    variables["DeltaEta"] = abs(ev.Jet_eta[ev.hJCidx[0]] - ev.Jet_eta[ev.hJCidx[1]])  if len(ev.hJCidx)==2 else 99 
+    variables["DeltaPhi"] = math.acos(math.cos(ev.Jet_phi[ev.hJCidx[0]] - ev.Jet_phi[ev.hJCidx[1]]))  if len(ev.hJCidx)==2 else 99 
 
     passall = True
     for cut in cuts_map:

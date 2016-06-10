@@ -78,9 +78,26 @@ def run_combine(datacard='', what='limit', params=[]):
     else:
         return []
 
+
 ############################################################################################
 
-def make_canvas( results=[], out_name="" ):
+def make_postfit(mlfit="mlfit.root", plot="Had_MT_MinPt100_DH1p6_fit_b"):
+
+    c = ROOT.TCanvas("c", "canvas", 500, 500) 
+    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
+    pad1.SetGridx()  
+    pad1.SetGridy()  
+    pad1.Draw()      
+    pad1.cd()    
+    
+    f = ROOT.TFile.Open(mlfit)
+    p = f.Get(plot)
+
+
+
+############################################################################################
+
+def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
 
     c = ROOT.TCanvas("c", "canvas", 500, 500) 
     pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
@@ -90,7 +107,10 @@ def make_canvas( results=[], out_name="" ):
     pad1.cd()    
     
     leg = ROOT.TLegend(0.55,0.65,0.85,0.88, "","brNDC")
-    leg.SetHeader("gg #rightarrow X(0^{+}) #rightarrow b#bar{b}")  
+    if "Spin0" in out_name:
+        leg.SetHeader("gg #rightarrow X(0^{+}) #rightarrow b#bar{b}")  
+    else:
+        leg.SetHeader("gg/q#bar{q} #rightarrow X(2^{+}) #rightarrow b#bar{b}")  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -152,12 +172,13 @@ def make_canvas( results=[], out_name="" ):
 
     raw_input()
 
-    c.SaveAs("limit"+outname+".png")
+    for ext in ["png", "pdf"]:
+        c.SaveAs(save_dir+"/limit_"+out_name+"."+ext)
 
 
 ############################################################################################
 
-def make_limit_plot(out_name=""):
+def make_limit_plot(out_name="", save_dir=""):
 
     tests = []
     results = []
@@ -183,7 +204,7 @@ def make_limit_plot(out_name=""):
         if len(res)>0:
             results.append([test.split('_')[-1],res])
             
-    make_canvas( results=results, out_name=out_name )
+    make_canvas( results=results, out_name=out_name, save_dir=save_dir )
 
 ############################################################################################
 
@@ -210,4 +231,4 @@ def make_fits():
 
 
 #make_fits()
-make_limit_plot()
+make_limit_plot(out_name="Spin0", save_dir="../Jun09/")
