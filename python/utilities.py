@@ -9,10 +9,16 @@ from parameters_cfi import *
 
 sqrts = 1.3e+04
 
-def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[], mass_range="default", parameter_set="default"):
+def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[], mass_range="default", parameter_set="default", is_data=True):
 
     pdf = None
     coeff = ROOT.RooArgList()
+
+    FitBkgCfg = {}
+    if is_data:
+        FitBkgCfg = FitBkgCfg_data
+    else:
+        FitBkgCfg = FitBkgCfg_mc
 
     # P(x;n)
     if pdf_name=="pol":            

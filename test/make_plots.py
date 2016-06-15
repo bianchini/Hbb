@@ -29,15 +29,27 @@ def get_samples():
                "HT1000to1500", 
                "HT1500to2000", 
                "HT2000toInf",
+               "Spin0_M550",
+               "Spin0_M600",
                "Spin0_M650",
+               "Spin0_M700",
                "Spin0_M750",
+               "Spin0_M800",
                "Spin0_M850",
+               "Spin0_M900",
                "Spin0_M1000",
+               "Spin0_M1100",
                "Spin0_M1200",
+               "Spin2_M550",
+               "Spin2_M600",
                "Spin2_M650",
+               "Spin2_M700",
                "Spin2_M750",
+               "Spin2_M800",
                "Spin2_M850",
+               "Spin2_M900",
                "Spin2_M1000",
+               "Spin2_M1100",
                "Spin2_M1200",
                ]
     return samples
@@ -81,7 +93,9 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
             continue
 
         if "Lep" in dir_name and "Mass" in h_name and "toMass" not in h_name:
-            h_sample.Rebin(3)
+            orig_bin_width = h_sample.GetBinWidth(1)
+            new_bin_width = 37
+            h_sample.Rebin(int(new_bin_width/orig_bin_width))
 
         need_to_blind = False
         if "Had" in dir_name and "Mass" in h_name and "toMass" not in h_name and is_blind():
@@ -180,7 +194,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     pad1.cd()    
 
     s.SetMinimum( hsignal[0][0].GetMinimum()*0.5 + 0.01 )
-    s.SetMaximum( max(data.GetMaximum()*2.0, background.GetMaximum()*2.0) )
+    s.SetMaximum( max(data.GetMaximum(), background.GetMaximum())*2.0 )
     s.Draw("HIST")
     if(s.GetHistogram()!=None):
         s.GetHistogram().SetXTitle(h_name.split('_')[-1])
@@ -193,15 +207,23 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         spin = float(signal[1][4])
         if "M750" not in signal[1]:
             continue
+        if "Lep" in dir_name and option_shape=="Shape":
+            continue
         if option_shape=="Shape":
             signal[0].Scale(background.Integral()/signal[0].Integral() if signal[0].Integral()>0. else 1.0)
             leg.AddEntry(signal[0], ('m_{X}(J=%.0f)=%.0f' % (spin,mass))+" norm. to bkg.", "L") 
         else:
-            leg.AddEntry(signal[0], ('m_{X}(J=%.0f)=%.0f' % (spin,mass))+" , #sigma=1.0 pb", "L")
+            leg_entry = leg.AddEntry(signal[0], ('m_{X}(J=%.0f)=%.0f' % (spin,mass))+" , #sigma=1.0 pb", "L")
         signal[0].Draw(option_signal+"SAME")
 
     background.Draw(option_bkg+"E2SAME")
     if need_to_blind:
+        # save
+        if not out.cd(dir_name):
+            out.mkdir(dir_name)
+            out.cd(dir_name)
+        data.Write("", ROOT.TObject.kOverwrite)
+        pad1.cd()
         data.Reset()
         data.Add(background, 1.0)
         leg.AddEntry(data, "data = MC (blinded)", "PE")
@@ -270,13 +292,15 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         background.Write("", ROOT.TObject.kOverwrite)
         top.Write("", ROOT.TObject.kOverwrite)
         qcd.Write("", ROOT.TObject.kOverwrite)
-        data.Write("", ROOT.TObject.kOverwrite)
+        #data.Write("", ROOT.TObject.kOverwrite)
         #s.Write("", ROOT.TObject.kOverwrite);
 
     # save yields in latex table
     if table!=None:
+        table.write('\\begin{table}[htbH]\n')
+        table.write('\\begin{center}\n')
+        table.write('\caption{Expected and observed event yields after preselection.}\n')
         table.write('\\begin{tabular}{| c | c |}\n')
-        table.write('\hline\n')
         table.write('\hline\n')
         qcd_yield = qcd.Integral()/k_factor_QCD()
         qcd_yield_err = ROOT.Double()
@@ -284,13 +308,15 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         top_yield = top.Integral()
         top_yield_err = ROOT.Double()
         top.IntegralAndError(0, top.GetNbinsX()+1, top_yield_err) 
-        table.write(('QCD & $%.2E \\pm %.0E$ \\\\\n' % (qcd_yield, qcd_yield_err)))
+        table.write(('Multi-jet & $%.2E \\pm %.0E$ \\\\\n' % (qcd_yield, qcd_yield_err)))
         table.write(('Top & $%.0f \\pm %.0f$ \\\\\n' % (top_yield,top_yield_err)))
         table.write('\hline\n')
         table.write(('Data & %.0f \\\\\n' % data.Integral()))
         table.write('\hline\n')
         table.write('\hline\n')
-        for h in hsignal:
+        table.write('Signal process & $\epsilon\\times\mathcal{A}$ \\\\\n')
+        table.write('\hline\n')
+        for nh,h in enumerate(hsignal):
             name = h[1]
             mass = float(name[7:])
             spin = float(name[4])
@@ -299,9 +325,9 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
             h[0].IntegralAndError(0, h[0].GetNbinsX()+1, sgn_yield_err) 
             table.write(('$m_{X}(J=%.0f)=%.0f$ GeV & $%.3f \\pm %.3f$ \\\\\n' % (spin, mass, sgn_yield/2630., sgn_yield_err/2630.)))
             table.write('\hline\n') 
-        table.write('\hline\n') 
-        table.write('\\caption{Expected yields in category '+h_name+'}\n')
         table.write('\end{tabular}\n')
+        table.write('\end{center}\n')
+        table.write('\end{table}\n')
         table.close()
 
     # close the file
@@ -321,7 +347,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
 
 ########################################################
 
-def plot_all( version = "Jun09" ):
+def plot_all( version = "V6" ):
 
     files = {}
     for ns,sample in enumerate( get_samples() ):    
@@ -334,29 +360,43 @@ def plot_all( version = "Jun09" ):
     for cat_btag in ["Had_LT", 
                      #"Had_MT", 
                      #"Had_TT",
-                     "Lep_LT"
+                     #"Lep_LT",
+                     "All"
                      ]:
         for cat_kin in [
             #"MinPt150_DH2p0", 
             #"MinPt150_DH1p6", 
             "MinPt100_DH2p0", 
+            "MinPt100_DH1p6", 
             #"MinMaxPt100150_DH1p6"
             #"MinPt150_DH1p1",
             #"MinPt175_DH2p0", "MinPt175_DH1p6", "MinPt175_DH1p1",
             #"MinPt200_DH2p0", "MinPt200_DH1p6", "MinPt200_DH1p1",
+            ""
             ]:            
             for syst in ["", 
-                         #"_CSVSFUp", "_CSVSFDown"
+                         "_CSVSFUp", "_CSVSFDown"
                          ]:
-                if cat_btag=="Lep_LT" and syst!="":
+
+                if cat_btag != "All" and (cat_kin==""):
                     continue
+                if cat_btag == "All" and (cat_kin!="" or syst!=""):
+                    continue
+
+                if cat_btag=="Lep_LT" and (syst!="" or cat_kin!="MinPt100_DH2p0"):
+                    continue
+                if cat_btag=="Had_LT" and (syst!="" or cat_kin!="MinPt100_DH2p0"):
+                    continue
+                if cat_btag=="Had_MT" and cat_kin!="MinPt100_DH1p6":
+                    continue
+
                 for hist in [    
-                    ["MassFSRProjMET", "m_{jj}^{FSR+MET} (GeV)"],
                     ["MassFSR", "m_{jj}^{FSR} (GeV)"],
-                    #["MassFSR_JECUp", "m_{jj}^{FSR} JEC up (GeV)"],
-                    #["MassFSR_JECDown","m_{jj}^{FSR} JEC down (GeV)"],
-                    #["MassFSR_JERUp","m_{jj}^{FSR} JER up" (GeV)],
-                    #["MassFSR_JERDown","m_{jj}^{FSR} JER down (GeV)"],
+                    ["MassFSR_JECUp", "m_{jj}^{FSR} JEC up (GeV)"],
+                    ["MassFSR_JECDown","m_{jj}^{FSR} JEC down (GeV)"],
+                    ["MassFSR_JERUp","m_{jj}^{FSR} JER up GeV)"],
+                    ["MassFSR_JERDown","m_{jj}^{FSR} JER down (GeV)"],
+                    ["MassFSRProjMET", "m_{jj}^{FSR+MET} (GeV)"],
                     ["MinJetPt", "min(p_{T}^{j1}, p_{T}^{j2}) (GeV)"],
                     ["MaxJetPt", "max(p_{T}^{j1}, p_{T}^{j2}) (GeV)"],
                     ["Mass", "m_{jj} (GeV)"],
@@ -378,9 +418,16 @@ def plot_all( version = "Jun09" ):
                     ["MinJetPtoMass","min(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
                     ["MaxEta","max(#eta^{j1}, #eta^{j2})"],
                     ]:
-                    cat = cat_btag+syst+"_"+cat_kin
+
+                    if (("_JEC" in hist[0]) or ("_JER" in hist[0])) and (syst!="" or cat_btag!="Had_MT" or cat_kin!="MinPt100_DH1p6"):
+                        continue
+                    if ("Mass" not in hist[0]) and (syst!=""):
+                        continue
+
+                    cat = cat_btag+syst+"_"+cat_kin if cat_btag!="All" else cat_btag
+                    print cat
                     plot(files=files, dir_name=cat, h_name=cat+"_"+hist[0], var_name=hist[1], postfix="",       option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="",      out_name="plot", version=version)
-                    plot(files=files, dir_name=cat, h_name=cat+"_"+hist[0], var_name=hist[1],postfix="_shape", option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="Shape", out_name="plot", version=version)
+                    plot(files=files, dir_name=cat, h_name=cat+"_"+hist[0], var_name=hist[1], postfix="_shape", option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="Shape", out_name="plot", version=version)
                     #exit(1)
 
     for f in files.keys():

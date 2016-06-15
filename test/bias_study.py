@@ -172,6 +172,17 @@ class BiasStudy:
         self.data = self.w.data(data_name)
         self.data.Print()
 
+        is_data = (data_name=="data_obs") 
+
+        mass_range = self.fname.split("_")[-1]        
+
+        FTestCfg = {}
+        if is_data:
+            FTestCfg = FTestCfg_data
+        else:
+            FTestCfg = FTestCfg_mc  
+            self.plot_blind = False  
+
         for pdf_name in test_pdfs:
             pdfs = []
             npars = []
@@ -183,8 +194,9 @@ class BiasStudy:
             match = False
             for p in range(firstOrder, lastOrder+1):
                 [pdf,coeff] = generate_pdf(self.x, pdf_name=pdf_name, n_param=p, n_iter=0, gcs=gcs, 
-                                           mass_range=self.fname.split("_")[-1], 
-                                           parameter_set=parameter_set)
+                                           mass_range=mass_range, 
+                                           parameter_set=parameter_set,
+                                           is_data=is_data)
                 if pdf==None:
                     print "No pdf"
                     continue
@@ -231,14 +243,25 @@ class BiasStudy:
 
             h_rebinned = self.data.createHistogram("h_"+data_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_rebinned = ROOT.RooDataHist(data_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
-            self.plot(data=data_rebinned, pdfs=pdfs, probs=probs, npars=npars, legs=legs, title=pdf_name, header="F-test: "+pdf_name)
+            self.plot(data=data_rebinned, pdfs=pdfs, probs=probs, npars=npars, legs=legs, title=pdf_name+"_"+data_name, header="F-test: "+pdf_name)
 
         print FTestCfg
         return
 
     def doBiasStudy(self, pdf_alt_name="dijet", pdf_fit_name="dijet", data_name="data_bkg", n_bins=-1, pdf_sgn_name="buk", sgn_name="Spin0_M750", sgn_xsec=0., ntoys=10, nproc=0, randomize_params=False, parameter_set="default"):
 
-        self.out = ROOT.TFile.Open(self.save_dir+"/"+self.get_save_name()+"_bias_"+pdf_alt_name+"_"+pdf_fit_name+"_deg"+str(FTestCfg[pdf_fit_name]['ndof'])+"_"+data_name+"_"+pdf_sgn_name+"_"+sgn_name+"_"+("xsec%.0f" % sgn_xsec)+"_"+str(nproc)+".root", "RECREATE") 
+        is_data = (data_name=="data_obs") 
+
+        mass_range = self.fname.split("_")[-1]
+
+        FTestCfg = {}
+        if is_data:
+            FTestCfg = FTestCfg_data
+        else:
+            FTestCfg = FTestCfg_mc    
+            self.plot_blind = False
+
+        self.out = ROOT.TFile.Open(self.save_dir+"/"+self.get_save_name()+"_bias_"+pdf_alt_name+"_"+pdf_fit_name+"_deg"+str(FTestCfg[pdf_fit_name]['ndof'][mass_range])+"_"+data_name+"_"+pdf_sgn_name+"_"+sgn_name+"_"+("xsec%.0f" % sgn_xsec)+"_"+str(nproc)+".root", "RECREATE") 
         tree = ROOT.TTree("toys","")
 
         # sgn/bkg normalisation from toy fit
@@ -315,7 +338,7 @@ class BiasStudy:
         pdf_sgn_ext = ROOT.RooExtendPdf("pdf_sgn_ext","", pdf_sgn, sgn_norm)
 
         # fit the alternative pdf to data (use it for toy generation)
-        [pdf_bkg_alt, coeff_bkg_alt] = generate_pdf(x=self.x, pdf_name=pdf_alt_name, n_param=FTestCfg[pdf_alt_name]['MaxOrder'], n_iter=0, mass_range=self.fname.split("_")[-1], parameter_set=parameter_set)
+        [pdf_bkg_alt, coeff_bkg_alt] = generate_pdf(x=self.x, pdf_name=pdf_alt_name, n_param=FTestCfg[pdf_alt_name]['MaxOrder'][mass_range], n_iter=0, mass_range=mass_range, parameter_set=parameter_set, is_data=is_data)
         res_bkg_alt = pdf_bkg_alt.fitTo(self.data, 
                                         RooFit.Strategy(1), 
                                         RooFit.Minimizer("Minuit2"), 
@@ -331,7 +354,7 @@ class BiasStudy:
         pdf_bkg_alt_ext = ROOT.RooExtendPdf("pdf_bkg_alt_ext","", pdf_bkg_alt, bkg_norm)
 
         # fit the nominal pdf to data 
-        [pdf_bkg_nom, coeff_bkg_nom] = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=FTestCfg[pdf_fit_name]['MaxOrder'], n_iter=1, mass_range=self.fname.split("_")[-1], parameter_set=parameter_set)
+        [pdf_bkg_nom, coeff_bkg_nom] = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=FTestCfg[pdf_fit_name]['MaxOrder'][mass_range], n_iter=1, mass_range=mass_range, parameter_set=parameter_set, is_data=is_data)
         res_bkg_nom = pdf_bkg_nom.fitTo(self.data, 
                                         RooFit.Strategy(1), 
                                         RooFit.Minimizer("Minuit2"), 
@@ -346,7 +369,7 @@ class BiasStudy:
         # save a snapshot of the initial fits
         h_rebinned = self.data.createHistogram("h_"+data_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
         data_rebinned = ROOT.RooDataHist(data_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
-        self.plot(data=data_rebinned, hdata=h_rebinned, pdfs=[pdf_bkg_nom,pdf_bkg_alt], params=[coeff_bkg_nom,coeff_bkg_alt], res=[res_bkg_nom,res_bkg_alt], probs=[0.,0.], npars=[FTestCfg[pdf_fit_name]['MaxOrder'],FTestCfg[pdf_alt_name]['MaxOrder']], legs=["Nominal: "+pdf_fit_name,"Alternative: "+pdf_alt_name], add_ratio=True, title="bias_"+pdf_fit_name+"_"+pdf_alt_name, header="Data fit (B-only)")
+        self.plot(data=data_rebinned, hdata=h_rebinned, pdfs=[pdf_bkg_nom,pdf_bkg_alt], params=[coeff_bkg_nom,coeff_bkg_alt], res=[res_bkg_nom,res_bkg_alt], probs=[0.,0.], npars=[FTestCfg[pdf_fit_name]['MaxOrder'][mass_range],FTestCfg[pdf_alt_name]['MaxOrder'][mass_range]], legs=["Nominal: "+pdf_fit_name,"Alternative: "+pdf_alt_name], add_ratio=True, title="bias_"+pdf_fit_name+"_"+pdf_alt_name+"_"+data_name, header="Data fit (B-only)")
 
         # Ns and Nb (fit)
         n_s = ROOT.RooRealVar("n_s","", 0.)
@@ -354,11 +377,11 @@ class BiasStudy:
         n_b = ROOT.RooRealVar("n_b","", bkg_norm.getVal()) 
         n_b.setConstant(0)
 
-        [pdf_bkg_fit, coeff_bkg_fit] = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=FTestCfg[pdf_fit_name]['MaxOrder'], n_iter=2, mass_range=self.fname.split("_")[-1], parameter_set=parameter_set)
+        [pdf_bkg_fit, coeff_bkg_fit] = generate_pdf(x=self.x, pdf_name=pdf_fit_name, n_param=FTestCfg[pdf_fit_name]['MaxOrder'][mass_range], n_iter=2, mass_range=mass_range, parameter_set=parameter_set, is_data=is_data)
         coeff_bkg_fit_reset = []
 
-        nparams[0] = FTestCfg[pdf_fit_name]['ndof']
-        for p in xrange(FTestCfg[pdf_fit_name]['ndof']):
+        nparams[0] = FTestCfg[pdf_fit_name]['ndof'][mass_range]
+        for p in xrange(FTestCfg[pdf_fit_name]['ndof'][mass_range]):
             coeff_bkg_fit_reset.append(coeff_bkg_fit[p].getVal())
 
         pdf_fit_ext = ROOT.RooAddPdf("pdf_fit_ext","", ROOT.RooArgList(pdf_sgn,pdf_bkg_fit),  ROOT.RooArgList(n_s,n_b))
@@ -373,7 +396,7 @@ class BiasStudy:
             # randomize parameters using covariance matrix
             if randomize_params:
                 coeff_bkg_alt = res_bkg_alt.randomizePars()
-                for p in xrange(FTestCfg[pdf_alt_name]['ndof']):                
+                for p in xrange(FTestCfg[pdf_alt_name]['ndof'][mass_range]):                
                     print "\tRandomize alternative parameter ", p, " at value ", coeff_bkg_alt[p].getVal()
             
             # generate the toy data set (binned by default)
@@ -390,7 +413,7 @@ class BiasStudy:
             # reset all fit parameters
             n_s.setVal(0.)
             n_b.setVal(bkg_norm.getVal())
-            for p in xrange(FTestCfg[pdf_fit_name]['ndof']):                
+            for p in xrange(FTestCfg[pdf_fit_name]['ndof'][mass_range]):                
                 coeff_bkg_fit[p].setVal(coeff_bkg_fit_reset[p])
                 print "\tReset parameter ", p, " at value ", coeff_bkg_fit[p].getVal()
 
@@ -420,7 +443,7 @@ class BiasStudy:
             nb_asy[0] = bkg_norm.getVal()
             edm[0] = res_fit.edm() 
             minll[0] = res_fit.minNll()
-            for p in xrange(FTestCfg[pdf_fit_name]['ndof']):                
+            for p in xrange(FTestCfg[pdf_fit_name]['ndof'][mass_range]):                
                 params[p] = coeff_bkg_fit[p].getVal()
             tree.Fill()
             ntoy += 1
@@ -434,15 +457,15 @@ class BiasStudy:
 test_pdfs= [
     #"pol", 
     #"exp", 
-    "pow", 
+    #"pow", 
     #"polyexp", 
     #"dijet",
-    #"polydijet",
+    "polydijet",
     #"expdijet"
     ]
 
-cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800"
-cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "pow"
+cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900"
+cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "exp"
 cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "polydijet"
 cfg_n_bins = int(argv[4]) if len(argv)>=5 else 200
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
@@ -453,8 +476,8 @@ cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 
                ws_name="Xbb_workspace", 
-               read_dir="./plots/V5/", 
-               save_dir="./plots/Jun09/", 
+               read_dir="./plots/V6/", 
+               save_dir="./plots/V6/", 
                save_ext=['png', 'pdf'], 
                blind_plot=True
                )
@@ -462,7 +485,7 @@ bs = BiasStudy(fname=cfg_fname,
 #bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default" )
 bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc, parameter_set="default")
 
-print FTestCfg
+print FTestCfg_data
 #print(json.dumps(FTestCfg, indent = 4))
 
 for gc in gcs:

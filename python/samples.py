@@ -58,7 +58,7 @@ samples_pruned = {
  "HT1000to1500" : [psi_lfn+version+"/HT1000to1500/", 1207.],
  "HT1500to2000" : [psi_lfn+version+"/HT1500to2000/",119.9],
  "HT2000toInf" :  [psi_lfn+version+"/HT2000toInf/", 25.24], 
- "M750" : [psi_lfn+version+"/M750/", 1.0],
+ #"M750" : [psi_lfn+version+"/M750/", 1.0],
  "Run2015D" : [psi_lfn+version+"/Run2015D/", -1],
  "Run2015C" : [psi_lfn+version+"/Run2015C/", -1],
  "Spin0_M550" : [psi_lfn+version+"/Spin0_M550/",1.0],

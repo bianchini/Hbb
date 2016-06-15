@@ -82,7 +82,7 @@ class XbbFactory:
 
         if data!=None:
             data.plotOn(frame, RooFit.Name("data"))
-            frame.GetYaxis().SetTitle("Events / "+str(frame.GetXaxis().GetBinWidth(1))+" GeV")
+            frame.GetYaxis().SetTitle("Events / "+str(data.binVolume())+" GeV")
         else:
             frame.GetYaxis().SetTitle("1/GeV")
             frame.GetXaxis().SetTitle("mass (GeV)")
@@ -185,6 +185,7 @@ class XbbFactory:
         h_fit = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_clone_fit")
         if rebin_factor>1. :
             h_fit.Rebin(rebin_factor)
+        ROOT.SetOwnership(h_fit, False ) 
 
         self.x.setRange( FitSgnCfg[sgn_name]['fit_range'][0], FitSgnCfg[sgn_name]['fit_range'][1] )
         data_sgn_fit = ROOT.RooDataHist("data_sgn_"+sgn_name+"_fit", "", ROOT.RooArgList(self.x), h_fit, 1.0)
@@ -250,7 +251,7 @@ class XbbFactory:
 
         self.imp(buk_pdf_sgn_bias)
         self.imp(buk_pdf_sgn_bias_norm)
-        self.imp(bias)
+        #self.imp(bias)
 
     # add signal systematics to ws
     def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, spin_symmetric=False):
@@ -365,7 +366,9 @@ class XbbFactory:
         self.x.setRange( FitSgnCfg[sgn_name]['fit_range'][0], FitSgnCfg[sgn_name]['fit_range'][1] )
         self.plot(data=None, pdfs=pdfs, res=None, add_pulls=False, legs=["Nominal", "JEC up", "JEC down", "JER up", "JER down"], ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER", header=sgn_name)
 
-    # add background pdf to ws
+    # Add background pdf to ws.
+    # A preliminary fit is done. 
+    # N.B.: the 'data' parameters are used for the fit
     def add_bkg_to_ws(self, pdf_names=["dijet"], rebin_factor=1.0, set_param_const=False):
 
         hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
@@ -388,13 +391,14 @@ class XbbFactory:
         self.imp(hist_pdf_bkg_norm)
         
         for pdf_name in pdf_names:
-            pdf_order = ('deg%d' % FTestCfg[pdf_name]['MaxOrder'])
             pdf_range = ('%.0fto%.0f' % (self.x.getMin(),self.x.getMax()))
-            if pdf_range not in FitBkgCfg[pdf_name][pdf_order].keys():
-                pdf_range = "default"
-            fit_range = "combine" if "combine" in FitBkgCfg[pdf_name][pdf_order][pdf_range].keys() else "default"
+            pdf_order = ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder'][pdf_range])
 
-            [pdf_bkg, param_bkg] = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg[pdf_name]['MaxOrder'], n_iter=0, gcs=gcs, mass_range=pdf_range, parameter_set="default")
+            if pdf_range not in FitBkgCfg_data[pdf_name][pdf_order].keys():
+                pdf_range = "default"
+            fit_range = "combine" if "combine" in FitBkgCfg_data[pdf_name][pdf_order][pdf_range].keys() else "default"
+
+            [pdf_bkg, param_bkg] = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg_data[pdf_name]['MaxOrder'][pdf_range], n_iter=0, gcs=gcs, mass_range=pdf_range, parameter_set="default", is_data=True)
             pdf_bkg.SetName(pdf_name+"_pdf_bkg")
 
             pdf_bkg_norm = ROOT.RooRealVar(pdf_name+"_pdf_bkg_norm","", norm)
@@ -412,11 +416,11 @@ class XbbFactory:
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=["#splitline{"+pdf_name+"}"], ran=pdf_name, n_par=FTestCfg[pdf_name]['ndof'], title="background_"+pdf_name, header="Simulation, L=2.63 fb^{-1}")
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=["#splitline{"+pdf_name+"}"], ran=pdf_name, n_par=FTestCfg_data[pdf_name]['ndof'][pdf_range], title="background_"+pdf_name, header="Simulation, L=2.63 fb^{-1}")
 
             # reset parameters to be used in RooWorkspace
-            for p in xrange( FTestCfg[pdf_name]['ndof'] ):            
-                [p_low, p_high] = FitBkgCfg[pdf_name][pdf_order][pdf_range][fit_range][("a%d" % p)]
+            for p in xrange( FTestCfg_data[pdf_name]['ndof'][pdf_range] ):            
+                [p_low, p_high] = FitBkgCfg_data[pdf_name][pdf_order][pdf_range][fit_range][("a%d" % p)]
                 if fit_range=="combine":
                     param_bkg[p].setRange(p_low, p_high)
                 param_bkg[p].setVal( (p_high+p_low)*0.5 )
@@ -466,10 +470,10 @@ class XbbFactory:
         data_bkg = ROOT.RooDataHist("data", "", ROOT.RooArgList(self.x), h, 1.0)
 
         for pdf_name in pdf_names:
-            pdf_order = ('deg%d' % FTestCfg[pdf_name]['MaxOrder'])
             pdf_range = ('%.0fto%.0f' % (self.x.getMin(),self.x.getMax()))
+            pdf_order = ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder'][pdf_range])
 
-            pdfs_bkg = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg[pdf_name]['MaxOrder'], n_iter=1, gcs=gcs, mass_range=pdf_range, parameter_set="default")
+            pdfs_bkg = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg_data[pdf_name]['MaxOrder'][pdf_range], n_iter=1, gcs=gcs, mass_range=pdf_range, parameter_set="default", is_data=True)
             pdf_bkg = pdfs_bkg[0]
             param_bkg = pdfs_bkg[1]
 
@@ -485,19 +489,23 @@ class XbbFactory:
             h_rebinned = data_bkg.createHistogram(hname+"_"+pdf_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_bkg_rebinned = ROOT.RooDataHist("data_"+pdf_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
 
-            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=FTestCfg[pdf_name]['ndof'], title="datafit_"+pdf_name)
+            self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=[pdf_name], ran=pdf_name, n_par=FTestCfg_data[pdf_name]['ndof'][pdf_range], title="datafit_"+pdf_name)
 
     # name for final root and png
     def get_save_name(self):        
         return  self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)))+"to"+("%.0f" % (self.x.getMax(self.x_name)))
 
     # create the ws
-    def create_workspace(self, signals=[], pdf_names=["dijet"]):                            
+    def create_workspace(self, signals=[], pdf_names=["dijet"], debug_sgn=False):
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=100, set_param_const=True, spin_symmetric=False)
             self.add_syst_to_ws(sgn_name=sgn, rebin_factor=10, spin_symmetric=False)
         
+        if debug_sgn:            
+            self.file.Close()
+            return
+
         self.add_bkg_to_ws(pdf_names=pdf_names, rebin_factor=-1, set_param_const=False)
         self.add_data_to_ws(rebin_factor=-1)
 
@@ -514,17 +522,25 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 700.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 1400.
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V5/", save_dir="./plots/Jun09/", save_ext=['png','pdf'])
+signals = []
+for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
+#for mass in [800]:
+    for spin in [0,2]:
+        sample = ("Spin%d_M%d" % (spin, mass))
+        "Adding signal sample....", sample
+        signals.append(sample)
+
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V6/", save_dir="./plots/V6/", save_ext=['png','pdf'], blind_plot=False)
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
-xbbfact.create_workspace( signals=["Spin0_M650", "Spin0_M750","Spin0_M850","Spin0_M1000", "Spin0_M1200",
-                                   "Spin2_M650", "Spin2_M750","Spin2_M850","Spin2_M1000", "Spin2_M1200"        
-                                   ], 
+xbbfact.create_workspace( signals=signals,
+                          #signals=["Spin0_M750"],    
+                          pdf_names=["polydijet"],
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
-                          pdf_names=["polydijet"] 
+                          debug_sgn=False
                           )
 
 for gc in gcs:

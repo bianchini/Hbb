@@ -208,9 +208,9 @@ cuts_BTag = {
   #"LT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
   #"LT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
   #"nMT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-  #"MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  #"MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  #"MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+  "MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+  "MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+  "MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
   #"TT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
   #"TT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
   #"TT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
@@ -228,7 +228,7 @@ cuts_MinPt = {
 cuts_DH = {
   #"All" :  lambda ev : True,
   "DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
-  #"DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
+  "DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
   #"DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
 }
 
@@ -243,15 +243,35 @@ cuts_map = [ ["All", lambda ev : True] ]
 #cuts_map.append( ["BTag_nMT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False])
 #cuts_map.append( ["BTag_MT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False])
 #cuts_map.append( ["BTag_TT", lambda ev : (ev.Vtype in [-1,4] and ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False])
+
 ##cuts_map.append( ["Mass", lambda ev : ev.HaddJetsdR08_mass>600 and ev.HaddJetsdR08_mass<800] )
 
 for cut_Vtype in cuts_Vtype.keys():
-  for cut_BTag in cuts_BTag.keys():
-    for cut_MinPt in cuts_MinPt.keys():
-      for cut_DH in cuts_DH.keys():
-        cut_name = cut_Vtype+"_"+cut_BTag+"_"+cut_MinPt+"_"+cut_DH
-        cut = lambda ev,cuts_Vtype=cuts_Vtype,cuts_BTag=cuts_BTag,cuts_MinPt=cuts_MinPt,cuts_DH=cuts_DH,cut_Vtype=cut_Vtype, cut_BTag=cut_BTag, cut_MinPt=cut_MinPt,cut_DH=cut_DH : (cuts_Vtype[cut_Vtype](ev) and cuts_BTag[cut_BTag](ev) and cuts_MinPt[cut_MinPt](ev) and cuts_DH[cut_DH](ev))
-        cuts_map.append( [cut_name,cut] )
+    for cut_BTag in cuts_BTag.keys():
+        for cut_MinPt in cuts_MinPt.keys():
+            for cut_DH in cuts_DH.keys():          
+
+                cut_name = cut_Vtype+"_"+cut_BTag+"_"+cut_MinPt+"_"+cut_DH
+                # do not run all combinations...
+                if "Lep" in cut_Vtype:
+                    if ("LT" not in cut_BTag) or cut_DH!="DH2p0":
+                        print "Reject", cut_name
+                        continue
+                elif "Had" in cut_Vtype:
+                    if "CSV" in cut_BTag and cut_DH=="DH2p0":
+                        print "Reject", cut_name
+                        continue
+                    if "MT" in cut_BTag and cut_DH=="DH2p0":
+                        print "Reject", cut_name
+                        continue                    
+                    if "LT" in cut_BTag and cut_DH=="DH1p6":
+                        print "Reject", cut_name
+                        continue                    
+                print "Add", cut_name
+
+                cut = lambda ev,cuts_Vtype=cuts_Vtype,cuts_BTag=cuts_BTag,cuts_MinPt=cuts_MinPt,cuts_DH=cuts_DH,cut_Vtype=cut_Vtype, cut_BTag=cut_BTag, cut_MinPt=cut_MinPt,cut_DH=cut_DH : (cuts_Vtype[cut_Vtype](ev) and cuts_BTag[cut_BTag](ev) and cuts_MinPt[cut_MinPt](ev) and cuts_DH[cut_DH](ev))
+                cuts_map.append( [cut_name,cut] )
+
 
 f.cd()
 eff_map = {}
@@ -291,11 +311,11 @@ for n_cut,cut in enumerate(cuts_map):
     #"Mass_JECDown" : ROOT.TH1F(cut[0]+"_Mass_JECDown", argv[1]+": "+cut[0]+"_Mass_JECDown", 180, 400, 4000),
     #"Mass_JERUp" : ROOT.TH1F(cut[0]+"_Mass_JERUp", argv[1]+": "+cut[0]+"_Mass_JERUp", 180, 400, 4000),
     #"Mass_JERDown" : ROOT.TH1F(cut[0]+"_Mass_JERDown", argv[1]+": "+cut[0]+"_Mass_JERDown", 180, 400, 4000),
-    "MassFSR" : ROOT.TH1F(cut[0]+"_MassFSR", argv[1]+": "+cut[0]+"_MassFSR", 180, 300, 4000), #37000 bins
-    "MassFSR_JECUp" : ROOT.TH1F(cut[0]+"_MassFSR_JECUp", argv[1]+": "+cut[0]+"_MassFSR_JECUp", 180, 300, 4000),
-    "MassFSR_JECDown" : ROOT.TH1F(cut[0]+"_MassFSR_JECDown", argv[1]+": "+cut[0]+"_MassFSR_JECDown", 180, 300, 4000),
-    "MassFSR_JERUp" : ROOT.TH1F(cut[0]+"_MassFSR_JERUp", argv[1]+": "+cut[0]+"_MassFSR_JERUp", 180, 300, 4000),
-    "MassFSR_JERDown" : ROOT.TH1F(cut[0]+"_MassFSR_JERDown", argv[1]+": "+cut[0]+"_MassFSR_JERDown", 180, 300, 4000),
+    "MassFSR" : ROOT.TH1F(cut[0]+"_MassFSR", argv[1]+": "+cut[0]+"_MassFSR", 37000, 300, 4000), #37000 bins
+    "MassFSR_JECUp" : ROOT.TH1F(cut[0]+"_MassFSR_JECUp", argv[1]+": "+cut[0]+"_MassFSR_JECUp", 3700, 300, 4000),
+    "MassFSR_JECDown" : ROOT.TH1F(cut[0]+"_MassFSR_JECDown", argv[1]+": "+cut[0]+"_MassFSR_JECDown", 3700, 300, 4000),
+    "MassFSR_JERUp" : ROOT.TH1F(cut[0]+"_MassFSR_JERUp", argv[1]+": "+cut[0]+"_MassFSR_JERUp", 3700, 300, 4000),
+    "MassFSR_JERDown" : ROOT.TH1F(cut[0]+"_MassFSR_JERDown", argv[1]+": "+cut[0]+"_MassFSR_JERDown", 3700, 300, 4000),
     "MassFSRProjMET" : ROOT.TH1F(cut[0]+"_MassFSRProjMET", argv[1]+": "+cut[0]+"_MassFSRProjMET", 180, 300, 4000),
     "MassAK08" : ROOT.TH1F(cut[0]+"_MassAK08", argv[1]+": "+cut[0]+"_MassAK08", 180, 400, 4000),
     "njetAK08" : ROOT.TH1F(cut[0]+"_njetAK08", argv[1]+": "+cut[0]+"_njetAK08", 10, 0, 10),
