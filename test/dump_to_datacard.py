@@ -58,7 +58,7 @@ def make_datacard( ws_name='Xbb_workspace',
     f.write('\n')
 
     for p in xrange(FTestCfg[pdf_bkg]['ndof']):        
-        param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,FTestCfg[pdf_bkg]['MaxOrder']))
+        param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,FTestCfg[pdf_bkg]['MaxOrder'][x_range]))
         val =  ws.var(param).getVal()
         print "\tsetting parameter... ", param, " as flatParam with initial value ", val
         f.write(param+'  flatParam \n')

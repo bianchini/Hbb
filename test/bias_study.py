@@ -465,13 +465,13 @@ test_pdfs= [
     ]
 
 cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900"
-cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "exp"
+cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "polyexp"
 cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "polydijet"
 cfg_n_bins = int(argv[4]) if len(argv)>=5 else 200
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
-cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M750"
+cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M800"
 cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 0.
-cfg_ntoys = int(argv[8]) if len(argv)>=9 else 0
+cfg_ntoys = int(argv[8]) if len(argv)>=9 else 1
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 

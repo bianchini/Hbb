@@ -522,8 +522,8 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 700.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 1400.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
 signals = []
 for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
@@ -540,7 +540,7 @@ xbbfact.create_workspace( signals=signals,
                           #signals=["Spin0_M750"],    
                           pdf_names=["polydijet"],
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
-                          debug_sgn=False
+                          debug_sgn=True
                           )
 
 for gc in gcs:

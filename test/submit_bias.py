@@ -63,8 +63,8 @@ for fname in [
     #'Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_550to1200',
 
     ##['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1200', ["Spin0_M750"] ],
-    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800',  ["Spin0_M550", "Spin0_M600","Spin0_M650"] ],
-    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',  ["Spin0_M700", "Spin0_M750"] ],
+    #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800',  ["Spin0_M550", "Spin0_M600","Spin0_M650"] ],
+    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',  ["Spin0_M700", "Spin0_M750", "Spin0_M800"] ],
     ##['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to1200',  ["Spin0_M750"] ],
     ##['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_525to1200',  ["Spin0_M850"] ],
     ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_600to1000', ["Spin0_M850", "Spin0_M900"] ],
