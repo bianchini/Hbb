@@ -230,16 +230,16 @@ FTestCfg_data = {
         "MaxOrder" : {
             "default" : 3,
             "400to800" : 4,
-            "500to900" : 3,
+            "500to900" : 4,
             "600to1000" : 2,
-            "700to1400" : 2,
+            "700to1400" : 4,
             },
         "ndof" : {
             "default" : 3,
             "400to800" : 4,
-            "500to900" : 3,
+            "500to900" : 4,
             "600to1000" : 2,
-            "700to1400" : 2,            
+            "700to1400" : 4,            
             },
         "fit_range" : [400., 1200.], 
         },
@@ -310,16 +310,16 @@ FTestCfg_data = {
         "MaxOrder" : {
             "default" : 2,
             "400to800" : 2,
-            "500to900" : 1,
-            "600to1000" : 1,
-            "700to1400" : 1,
+            "500to900" : 2,  #1,
+            "600to1000" : 2, #1,
+            "700to1400" : 2, #1,
             },
         "ndof" : {
             "default" : 3,
             "400to800" : 3,
-            "500to900" : 2,
-            "600to1000" : 2,
-            "700to1400" : 2,            
+            "500to900" : 3,  #2,
+            "600to1000" : 3, #2,
+            "700to1400" : 3, #2,            
             },
         "fit_range" : [400., 1200.], 
         },
@@ -333,6 +333,10 @@ FitBkgCfg_data = {
 
         # degree
         "deg1": {
+
+            # bias formula
+            "bias_formula" : "0.353*TMath::Power((x-500)/1200, -0.669)",
+
             # mass ranges
             "default" : {                
                 # parameter sets
@@ -373,6 +377,10 @@ FitBkgCfg_data = {
 
         # degree
         "deg2": {
+
+            # bias formula
+            "bias_formula" : "0.246*TMath::Power((x-500)/1200, -0.789)",
+
             # mass ranges
             "default" : {                
                 # parameter sets
@@ -384,12 +392,12 @@ FitBkgCfg_data = {
                 },        
             "400to800" : {                
                 # parameter sets
+                #"backup": {
+                #    "a0" : [8.0, 11.0],
+                #    "a1" : [+0.02, +0.08],
+                #    "a2" : [+35., +100.],
+                #    },
                 "default": {
-                    "a0" : [8.0, 11.0],
-                    "a1" : [+0.02, +0.08],
-                    "a2" : [+35., +100.],
-                    },
-                "backup": {
                     "a0" : [6.0, 10.0],
                     "a1" : [+0.02, +0.08],
                     "a2" : [+35., +100.],
@@ -552,6 +560,10 @@ FitBkgCfg_data = {
 
         # degree
         "deg3": {
+
+            # bias formula
+            "bias_formula" : "1.0",
+
             # mass ranges
             "default" : {                
                 # parameter sets
@@ -569,9 +581,12 @@ FitBkgCfg_data = {
 
     # DIJET    
     "dijet": {
-
         # degree
         "any": {
+
+            # bias formula
+            "bias_formula" : "0.353*TMath::Power((x-500)/1200, -0.669)",
+
             # mass ranges
             "default" : {                
                 # parameter sets
@@ -582,10 +597,50 @@ FitBkgCfg_data = {
                     "a3" : [200.,450.],
                     "a4" : [100., 300.],
                     },
+                },
+            "400to800" : {                
+                # parameter sets
+                "default": {
+                    "a0" : [5.0, 20.0],
+                    "a1" : [-0.2, +0.5],
+                    "a2" : [0.0, 1.0e-04],
+                    "a3" : [200.,450.],
+                    "a4" : [100., 300.],
+                    },
                 },        
+            "500to900" : {                
+                # parameter sets
+                "default": {
+                    "a0" : [5.0, 20.0],
+                    "a1" : [-0.2, +0.5],
+                    "a2" : [0.0, 1.0e-04],
+                    "a3" : [200.,450.],
+                    "a4" : [100., 300.],
+                    },
+                },        
+            "600to1000" : {                
+                # parameter sets
+                "default": {
+                    "a0" : [5.0, 20.0],
+                    "a1" : [-0.2, +0.5],
+                    "a2" : [0.0, 1.0e-04],
+                    "a3" : [200.,450.],
+                    "a4" : [100., 300.],
+                    },
+                },        
+            "700to1400" : {                
+                # parameter sets
+                "default": {
+                    "a0" : [5.0, 20.0],
+                    "a1" : [-0.2, +0.5],
+                    "a2" : [0.0, 1.0e-04],
+                    "a3" : [200.,450.],
+                    "a4" : [100., 300.],
+                    },
+                },       
             },
         }, # END DIJET
-
+    
 
     # POL
     "pol": {

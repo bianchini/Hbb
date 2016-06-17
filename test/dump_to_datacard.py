@@ -14,10 +14,17 @@ sys.path.append('./')
 sys.path.append('../python/')
 
 from parameters_cfi import *
+from utilities import get_bias
 
 def make_datacard( ws_name='Xbb_workspace', 
                    cat='Had_LT_MinPt150_DH1p6', mass='MassFSR', x_range='550to1200', sgn='Spin0_M650',
-                   pdf_sgn='buk', pdf_bkg='dijet', data_obs='data_obs', save_dir='./plots/V4/' ):
+                   pdf_sgn='buk', pdf_bkg='dijet', data_obs='data_obs', save_dir='./plots/V4/', is_data=True ):
+
+    FTestCfg = {}
+    if is_data:
+        FTestCfg = FTestCfg_data
+    else:
+        FTestCfg = FTestCfg_mc  
 
     outname = ws_name+'_'+cat+'_'+mass+'_'+x_range
     postfix = '_'+pdf_sgn+'_'+pdf_bkg+'_'+sgn
@@ -29,6 +36,7 @@ def make_datacard( ws_name='Xbb_workspace',
     ws = ws_file.Get(ws_name)
     obs = ws.data(data_obs).sumEntries()
     #bias = ws.var('bias_sgn_'+sgn).getVal()
+    bias = ("%.2f" % get_bias(mass=sgn[7:], pdf_name=pdf_bkg, deg=FTestCfg[pdf_bkg]['MaxOrder'][x_range], is_data=is_data) )
 
     f = open( save_dir+'/'+outname+postfix+'.txt','w')
     f.write('imax 1 number of bins\n')
@@ -49,7 +57,6 @@ def make_datacard( ws_name='Xbb_workspace',
     f.write('rate              1.0                       1.0                              1.0\n')
     f.write('--------------------------------------------------------------\n')
     f.write('CMS_Xbb_trigger    lnN    1.10                       1.10                        -\n')
-    #f.write('signal_bias        lnN     -                         '+('%.2f' % (1.+bias))+'                        -\n')
     f.write('lumi_13TeV         lnN    1.027                      1.027                       -\n')
 
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
@@ -57,13 +64,14 @@ def make_datacard( ws_name='Xbb_workspace',
         f.write('CMS_btag           lnN    '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                       '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                      -\n')      
     f.write('\n')
 
-    for p in xrange(FTestCfg[pdf_bkg]['ndof']):        
+    for p in xrange(FTestCfg[pdf_bkg]['ndof'][x_range]):        
         param = ("a%d_%s_deg%d_0" % (p,pdf_bkg,FTestCfg[pdf_bkg]['MaxOrder'][x_range]))
         val =  ws.var(param).getVal()
         print "\tsetting parameter... ", param, " as flatParam with initial value ", val
         f.write(param+'  flatParam \n')
     
-    f.write('bias_sgn_'+sgn+'   param  0.0 '+str(FitSgnCfg[sgn]['bias'])+'\n')
+    #f.write('bias_sgn_'+sgn+'   param  0.0 '+str(FitSgnCfg[sgn]['bias'])+'\n')
+    f.write('bias_sgn_'+sgn+'   param  0.0 '+bias+'\n')
     f.write('\n')
 
     mean = ws.var('mean_sgn_'+sgn).getVal()
@@ -84,19 +92,27 @@ def make_datacard( ws_name='Xbb_workspace',
 ########################################
 
 signal_to_range = {
+    'Spin0_M550' : '400to800',
+    'Spin0_M600' : '400to800',
     'Spin0_M650' : '400to800',
-    #'Spin0_M750' : '525to900',
-    #'Spin0_M850' : '600to1000',
-    'Spin0_M750' : '525to1200',
-    'Spin0_M850' : '525to1200',
+    'Spin0_M700' : '500to900',
+    'Spin0_M750' : '500to900',
+    'Spin0_M800' : '500to900',
+    'Spin0_M850' : '600to1000',
+    'Spin0_M900' : '600to1000',
     'Spin0_M1000' : '700to1400',
+    'Spin0_M1100' : '700to1400',
     'Spin0_M1200' : '700to1400',
+    'Spin2_M550' : '400to800',
+    'Spin2_M600' : '400to800',
     'Spin2_M650' : '400to800',
-    #'Spin2_M750' : '525to900',
-    #'Spin2_M850' : '600to1000',
-    'Spin2_M750' : '525to1200',
-    'Spin2_M850' : '525to1200',
+    'Spin2_M700' : '500to900',
+    'Spin2_M750' : '500to900',
+    'Spin2_M800' : '500to900',
+    'Spin2_M850' : '600to1000',
+    'Spin2_M900' : '600to1000',
     'Spin2_M1000' : '700to1400',
+    'Spin2_M1100' : '700to1400',
     'Spin2_M1200' : '700to1400',
 }
 
@@ -112,7 +128,7 @@ for cat_btag in [
         'MinPt100_DH1p6'
         ]:        
         for pdf in [
-            #'dijet',
+            'dijet',
             'polydijet',
             #'pow',
             #'exp',
@@ -120,15 +136,27 @@ for cat_btag in [
             #'pol'
             ]:
             for sgn in [
+                'Spin0_M550',
+                'Spin0_M600',
                 'Spin0_M650',
+                'Spin0_M700',
                 'Spin0_M750',
+                'Spin0_M800',
                 'Spin0_M850',
+                'Spin0_M900',
                 'Spin0_M1000',
+                'Spin0_M1100',
                 'Spin0_M1200',
+                'Spin2_M550',
+                'Spin2_M600',
                 'Spin2_M650',
+                'Spin2_M700',
                 'Spin2_M750',
+                'Spin2_M800',
                 'Spin2_M850',
+                'Spin2_M900',
                 'Spin2_M1000',
+                'Spin2_M1100',
                 'Spin2_M1200',
                 ]:
                 for x_range in [
@@ -139,5 +167,11 @@ for cat_btag in [
                     for mass in [
                         'MassFSR', 
                         ]:
-                        make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, x_range, sgn, 'buk', pdf, 'data_obs', './plots/V5/')
+                        make_datacard('Xbb_workspace', 
+                                      cat_btag+"_"+cat_kin, 
+                                      mass, x_range, sgn, 
+                                      'buk', pdf, 
+                                      'data_obs', 
+                                      './plots/V6/', 
+                                      is_data=True)
                         

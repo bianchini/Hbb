@@ -391,12 +391,16 @@ class XbbFactory:
         self.imp(hist_pdf_bkg_norm)
         
         for pdf_name in pdf_names:
+            print pdf_name
             pdf_range = ('%.0fto%.0f' % (self.x.getMin(),self.x.getMax()))
-            pdf_order = ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder'][pdf_range])
-
+            print "\tRange: "+pdf_range
+            pdf_order = ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder'][pdf_range]) if pdf_range in FTestCfg_data[pdf_name]['MaxOrder'].keys() else ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder']["default"])
+            if pdf_order not in FitBkgCfg_data[pdf_name].keys():
+                pdf_order = "any"
+            print "\tOrder matching 'range': "+pdf_order
             if pdf_range not in FitBkgCfg_data[pdf_name][pdf_order].keys():
                 pdf_range = "default"
-            fit_range = "combine" if "combine" in FitBkgCfg_data[pdf_name][pdf_order][pdf_range].keys() else "default"
+            print "\tRange matching 'order': "+pdf_range
 
             [pdf_bkg, param_bkg] = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg_data[pdf_name]['MaxOrder'][pdf_range], n_iter=0, gcs=gcs, mass_range=pdf_range, parameter_set="default", is_data=True)
             pdf_bkg.SetName(pdf_name+"_pdf_bkg")
@@ -419,10 +423,10 @@ class XbbFactory:
             self.plot( data=data_bkg_rebinned, pdfs=[pdf_bkg], res=None, add_pulls=True, legs=["#splitline{"+pdf_name+"}"], ran=pdf_name, n_par=FTestCfg_data[pdf_name]['ndof'][pdf_range], title="background_"+pdf_name, header="Simulation, L=2.63 fb^{-1}")
 
             # reset parameters to be used in RooWorkspace
+            parameter_set = "combine" if "combine" in FitBkgCfg_data[pdf_name][pdf_order][pdf_range].keys() else "default"
             for p in xrange( FTestCfg_data[pdf_name]['ndof'][pdf_range] ):            
-                [p_low, p_high] = FitBkgCfg_data[pdf_name][pdf_order][pdf_range][fit_range][("a%d" % p)]
-                if fit_range=="combine":
-                    param_bkg[p].setRange(p_low, p_high)
+                [p_low, p_high] = FitBkgCfg_data[pdf_name][pdf_order][pdf_range][parameter_set][("a%d" % p)]
+                param_bkg[p].setRange(p_low, p_high)
                 param_bkg[p].setVal( (p_high+p_low)*0.5 )
                 if set_param_const:
                     param_bkg[p].setConstant(1)
@@ -470,12 +474,18 @@ class XbbFactory:
         data_bkg = ROOT.RooDataHist("data", "", ROOT.RooArgList(self.x), h, 1.0)
 
         for pdf_name in pdf_names:
+            print pdf_name
             pdf_range = ('%.0fto%.0f' % (self.x.getMin(),self.x.getMax()))
-            pdf_order = ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder'][pdf_range])
+            print "\tRange: "+pdf_range
+            pdf_order = ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder'][pdf_range]) if pdf_range in FTestCfg_data[pdf_name]['MaxOrder'].keys() else ('deg%d' % FTestCfg_data[pdf_name]['MaxOrder']["default"])
+            if pdf_order not in FitBkgCfg_data[pdf_name].keys():
+                pdf_order = "any"
+            print "\tOrder matching 'range': "+pdf_order
+            if pdf_range not in FitBkgCfg_data[pdf_name][pdf_order].keys():
+                pdf_range = "default"
+            print "\tRange matching 'order': "+pdf_range
 
-            pdfs_bkg = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg_data[pdf_name]['MaxOrder'][pdf_range], n_iter=1, gcs=gcs, mass_range=pdf_range, parameter_set="default", is_data=True)
-            pdf_bkg = pdfs_bkg[0]
-            param_bkg = pdfs_bkg[1]
+            [pdf_bkg, param_bkg] = generate_pdf(self.x, pdf_name=pdf_name, n_param=FTestCfg_data[pdf_name]['MaxOrder'][pdf_range], n_iter=1, gcs=gcs, mass_range=pdf_range, parameter_set="default", is_data=True)
 
             res = pdf_bkg.fitTo(data_bkg, 
                                 RooFit.Strategy(2), 
@@ -523,7 +533,7 @@ cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
 cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 800.
 
 signals = []
 for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
@@ -533,14 +543,14 @@ for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
         "Adding signal sample....", sample
         signals.append(sample)
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V6/", save_dir="./plots/V6/", save_ext=['png','pdf'], blind_plot=False)
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V6/", save_dir="./plots/V6/", save_ext=['png','pdf'], blind_plot=True)
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
 xbbfact.create_workspace( signals=signals,
                           #signals=["Spin0_M750"],    
-                          pdf_names=["polydijet"],
+                          pdf_names=["polydijet", "dijet"],
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
-                          debug_sgn=True
+                          debug_sgn=False
                           )
 
 for gc in gcs:

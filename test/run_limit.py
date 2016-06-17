@@ -11,30 +11,52 @@ import os.path
 import ROOT
 
 signal_to_range = {
+    'Spin0_M550' : '400to800',
+    'Spin0_M600' : '400to800',
     'Spin0_M650' : '400to800',
-    'Spin0_M750' : '525to900',
+    'Spin0_M700' : '500to900',
+    'Spin0_M750' : '500to900',
+    'Spin0_M800' : '500to900',
     'Spin0_M850' : '600to1000',
-    #'Spin0_M750' : '525to1200',
-    #'Spin0_M850' : '525to1200',
+    'Spin0_M900' : '600to1000',
     'Spin0_M1000' : '700to1400',
+    'Spin0_M1100' : '700to1400',
     'Spin0_M1200' : '700to1400',
+    'Spin2_M550' : '400to800',
+    'Spin2_M600' : '400to800',
     'Spin2_M650' : '400to800',
-    'Spin2_M750' : '525to900',
+    'Spin2_M700' : '500to900',
+    'Spin2_M750' : '500to900',
+    'Spin2_M800' : '500to900',
     'Spin2_M850' : '600to1000',
+    'Spin2_M900' : '600to1000',
     'Spin2_M1000' : '700to1400',
+    'Spin2_M1100' : '700to1400',
     'Spin2_M1200' : '700to1400',
 }
 
 signal_to_parameters = {
+    'Spin0_M550' : [],
+    'Spin0_M600' : [],
     'Spin0_M650' : [],
+    'Spin0_M700' : [],
     'Spin0_M750' : [],
+    'Spin0_M800' : [],
     'Spin0_M850' : [[6.0, 18.0],  [-0.01,10.0], [22.0, 300.0]],
+    'Spin0_M900' : [],
     'Spin0_M1000' : [],
+    'Spin0_M1100' : [],
     'Spin0_M1200' : [],
-    'Spin2_M650' :  [],
-    'Spin2_M750' :  [],
-    'Spin2_M850' :  [],
+    'Spin2_M550' : [],
+    'Spin2_M600' : [],
+    'Spin2_M650' : [],
+    'Spin2_M700' : [],
+    'Spin2_M750' : [],
+    'Spin2_M800' : [],
+    'Spin2_M850' : [],
+    'Spin2_M900' : [],
     'Spin2_M1000' : [],
+    'Spin2_M1100' : [],
     'Spin2_M1200' : [],
 }
 
@@ -159,7 +181,7 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     mg.Add(expected)
 
     mg.SetMinimum(0.)
-    mg.SetMaximum(10.)
+    mg.SetMaximum(20.)
 
     mg.Draw("ALP3")
     mg.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV, L=2.63 fb^{-1}")
@@ -188,9 +210,8 @@ def make_limit_plot(out_name="", save_dir=""):
                 for pdf_b in ['polydijet']:
                     for mass in ['MassFSR']:
                         for sgn in [
-                            'Spin0_M650', 'Spin0_M750', 'Spin0_M850', 'Spin0_M1000', 'Spin0_M1200'
-                            #'Spin0_M750', 'Spin0_M850',
-                            #'Spin2_M650', 'Spin2_M750', 'Spin2_M850', 'Spin2_M1000', 'Spin2_M1200'
+                            'Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200',
+                            #'Spin2_M550', 'Spin2_M600', 'Spin2_M650', 'Spin2_M700', 'Spin2_M750', 'Spin2_M800', 'Spin2_M850', 'Spin2_M900', 'Spin2_M1000', 'Spin2_M1100', 'Spin2_M1200'
                             ]:
                             for x_range in [
                                 #'550to1200'
@@ -231,4 +252,4 @@ def make_fits():
 
 
 #make_fits()
-make_limit_plot(out_name="Spin0", save_dir="../Jun09/")
+make_limit_plot(out_name="Spin0_polydijet", save_dir="../V6/")

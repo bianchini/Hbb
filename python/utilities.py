@@ -177,3 +177,31 @@ def generate_pdf(x=ROOT.RooRealVar(), pdf_name="pol", n_param=4, n_iter=0, gcs=[
     return [pdf, coeff]
 
 
+def get_bias(mass="750", pdf_name="polydijet", deg=2, is_data=True):
+
+    bias = 0.0
+
+    FitBkgCfg = {}
+    if is_data:
+        FitBkgCfg = FitBkgCfg_data
+    else:
+        FitBkgCfg = FitBkgCfg_mc
+
+    if pdf_name not in FitBkgCfg.keys():
+        print "No pdf_name: Return 0.0"
+        return bias
+
+    pdf_order = ("deg%d" % deg)
+    if pdf_order not in FitBkgCfg[pdf_name].keys():
+        pdf_order = "any"
+
+    if "bias_formula" not in FitBkgCfg[pdf_name][pdf_order].keys():
+        print "No bias_formula: Return 0.0"
+        return bias
+
+    formula = ROOT.TFormula("formula", FitBkgCfg[pdf_name][pdf_order]["bias_formula"])
+    bias = formula.Eval( float(mass) )
+    print ("Bias for %s_%s at m=%.0f = %.2f" % (pdf_name, pdf_order, float(mass), bias))
+
+    return bias
+
