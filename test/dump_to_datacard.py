@@ -56,8 +56,10 @@ def make_datacard( ws_name='Xbb_workspace',
     f.write('process             0                       1                                2  \n')
     f.write('rate              1.0                       1.0                              1.0\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('CMS_Xbb_trigger    lnN    1.10                       1.10                        -\n')
-    f.write('lumi_13TeV         lnN    1.027                      1.027                       -\n')
+    f.write('CMS_Xbb_trigger_btag    lnN    1.10                       1.10                        -\n')
+    f.write('CMS_Xbb_trigger_kin     lnN    1.05                       1.05                        -\n')
+    f.write('lumi_13TeV              lnN    1.027                      1.027                       -\n')
+    f.write('pdf_gg_13TeV            lnN    1.06                       1.06                        -\n')
 
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
     if ws.var('CSV_shift_'+sgn) != None:
@@ -70,7 +72,6 @@ def make_datacard( ws_name='Xbb_workspace',
         print "\tsetting parameter... ", param, " as flatParam with initial value ", val
         f.write(param+'  flatParam \n')
     
-    #f.write('bias_sgn_'+sgn+'   param  0.0 '+str(FitSgnCfg[sgn]['bias'])+'\n')
     f.write('bias_sgn_'+sgn+'   param  0.0 '+bias+'\n')
     f.write('\n')
 

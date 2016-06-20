@@ -156,9 +156,6 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     twosigma.SetFillStyle(1001)
 
     for ires,res in enumerate(results):
-    #if len(res[1])>=3:
-    #    h.SetBinContent(ires+1, res[1][2])
-    #    h.GetXaxis().SetBinLabel(ires+1, res[0][4:21])
         mass_name = res[0]
         mass_results = res[1]
         imass = float(mass_name.split('_')[-1][1:]) 
@@ -190,6 +187,92 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     mg.GetYaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitle("Mass (GeV)")
     mg.GetYaxis().SetTitle("#sigma #times BR(X#rightarrow b#bar{b}) (pb) at 95% CL")
+    leg.Draw()
+
+    raw_input()
+
+    for ext in ["png", "pdf"]:
+        c.SaveAs(save_dir+"/limit_"+out_name+"."+ext)
+
+############################################################################################
+
+def make_canvas_split( results=[], out_name="", save_dir="./plots/Jun09/" ):
+
+    c = ROOT.TCanvas("c", "canvas", 500, 500) 
+    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
+    pad1.SetGridx()  
+    pad1.SetGridy()  
+    pad1.Draw()      
+    pad1.cd()    
+    
+    leg = ROOT.TLegend(0.55,0.65,0.85,0.88, "","brNDC")
+    if "Spin0" in out_name:
+        leg.SetHeader("gg #rightarrow X(0^{+}) #rightarrow b#bar{b}")  
+    else:
+        leg.SetHeader("gg/q#bar{q} #rightarrow X(2^{+}) #rightarrow b#bar{b}")  
+    leg.SetFillStyle(0)
+    leg.SetBorderSize(0)
+    leg.SetTextSize(0.04)
+    leg.SetFillColor(10)    
+
+    mg = ROOT.TMultiGraph()
+    expected =[]
+    onesigma = []
+    twosigma = []
+    for ig,g in enumerate(results):
+        ex = ROOT.TGraphAsymmErrors()
+        ex.SetName(("expected_%d" % ig))
+        ex.SetLineColor(ROOT.kBlack)
+        ex.SetLineStyle(ROOT.kSolid)
+        ex.SetLineWidth(2)
+        expected.append( ex )
+        on = ROOT.TGraphAsymmErrors()
+        on.SetName(("onesigma_%d" % ig))
+        on.SetLineWidth(0)
+        on.SetFillColor(ROOT.kGreen)
+        on.SetFillStyle(1001)
+        onesigma.append( on )
+        tw = ROOT.TGraphAsymmErrors()
+        tw.SetName(("twosigma_%d" % ig))
+        tw.SetLineWidth(0)
+        tw.SetFillColor(ROOT.kYellow)
+        tw.SetFillStyle(1001)
+        twosigma.append( tw )
+
+
+    for ires1,res1 in enumerate(results):
+        for ires2,res2 in enumerate(res1):
+            mass_name = res2[0]
+            mass_results = res2[1]
+            imass = float(mass_name.split('_')[-1][1:]) 
+            expected[ires1].SetPoint(ires2, imass, mass_results[2])
+            onesigma[ires1].SetPoint(ires2, imass, mass_results[2])
+            onesigma[ires1].SetPointError(ires2, 0.0, 0.0, mass_results[2]-mass_results[1], mass_results[3]-mass_results[2])
+            twosigma[ires1].SetPoint(ires2, imass, mass_results[2])
+            twosigma[ires1].SetPointError(ires2, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
+        expected[ires1].Print()
+        onesigma[ires1].Print()
+        twosigma[ires1].Print()
+        mg.Add(twosigma[ires1])
+        mg.Add(onesigma[ires1])
+        mg.Add(expected[ires1])
+
+    leg.AddEntry(expected[0], "Expected", "L")
+    leg.AddEntry(onesigma[0], "68%", "F")
+    leg.AddEntry(twosigma[0], "95%", "F")
+    
+    mg.SetMinimum(0.)
+    mg.SetMaximum(20.)
+
+    mg.Draw("ALP3")
+    mg.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV, L=2.63 fb^{-1}")
+    mg.GetXaxis().SetTitleSize(0.05)
+    mg.GetYaxis().SetTitleSize(0.05)
+    mg.GetYaxis().SetTitleOffset(0.85)
+    mg.GetXaxis().SetTitle("Mass (GeV)")
+    mg.GetYaxis().SetTitle("#sigma #times BR(X#rightarrow b#bar{b}) (pb) at 95% CL")
+    mg.GetXaxis().SetLimits(500, 1250)
+
     leg.Draw()
 
     raw_input()
@@ -229,6 +312,39 @@ def make_limit_plot(out_name="", save_dir=""):
 
 ############################################################################################
 
+def make_limit_plot_split(out_name="", save_dir=""):
+
+    tests = []
+    results = []
+    for cat_btag in ['Had_MT']:
+        for cat_kin in ['MinPt100_DH1p6']:        
+            for pdf_s in ['buk']:
+                for pdf_b in ['polydijet']:
+                    for mass in ['MassFSR']:
+                        for sgn in [
+                            'Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200',
+                            #'Spin2_M550', 'Spin2_M600', 'Spin2_M650', 'Spin2_M700', 'Spin2_M750', 'Spin2_M800', 'Spin2_M850', 'Spin2_M900', 'Spin2_M1000', 'Spin2_M1100', 'Spin2_M1200'
+                            ]:
+                            for x_range in [
+                                #'550to1200'
+                                signal_to_range[sgn]
+                                ]:
+                                tests.append(cat_btag+'_'+cat_kin+'_'+mass+'_'+x_range+'_'+pdf_s+'_'+pdf_b+'_'+sgn)
+
+    print tests
+    for itest,test in enumerate(tests):
+        res = run_combine("Xbb_workspace_"+test, what='limit')
+        if len(res)>0:
+            results.append([test.split('_')[-1],res])
+            
+    results_merged = [ [results[0], results[1], results[2]], [results[3], results[4], results[5]], [results[6], results[7]], [results[8], results[9], results[10]] ]
+    #results_merged = [ [results[0], results[1], results[2]]  ]
+
+    make_canvas_split( results=results_merged, out_name=out_name, save_dir=save_dir )
+
+
+############################################################################################
+
 def make_fits():
 
     tests = []
@@ -253,3 +369,4 @@ def make_fits():
 
 #make_fits()
 make_limit_plot(out_name="Spin0_polydijet", save_dir="../V6/")
+#make_limit_plot_split(out_name="Spin0_split_polydijet", save_dir="../V6/")
