@@ -335,18 +335,37 @@ class XbbFactory:
                 norm = data.sumEntries()
             shifts[syst] = [norm]
 
+        # jec scale systematics
+        for syst in ["JECUp", "JECDown"]:
+            hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+syst+"_"+sgn_name
+            h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname)
+            ROOT.SetOwnership(h, False ) 
+            norm = self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()
+            if h!=None:
+                self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
+                data = ROOT.RooDataHist("data_sgn_"+syst+"_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
+                ROOT.SetOwnership(data, False )
+                norm = data.sumEntries()
+            shifts[syst][2] = norm
+
         csv = max( abs(shifts["CSVSFUp"][0]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()), 
                    abs(shifts["CSVSFDown"][0]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()))
         jec = max( abs(shifts["JECUp"][0]-self.w.var("mean_sgn_"+sgn_name).getVal()), 
                    abs(shifts["JECDown"][0]-self.w.var("mean_sgn_"+sgn_name).getVal()))
         jer = max( abs(shifts["JERUp"][1]-self.w.var("sigma_sgn_"+sgn_name).getVal()), 
                    abs(shifts["JERDown"][1]-self.w.var("sigma_sgn_"+sgn_name).getVal()) ) 
+        jec_norm = max( abs(shifts["JECUp"][2]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()), 
+                        abs(shifts["JECDown"][2]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()))
+
         csv_shift = ROOT.RooRealVar("CSV_shift_"+sgn_name, "", csv )
         mean_shift = ROOT.RooRealVar("mean_shift_"+sgn_name, "", jec )
         sigma_shift = ROOT.RooRealVar("sigma_shift_"+sgn_name, "", jer )
+        jec_norm_shift = ROOT.RooRealVar("jec_norm_shift_"+sgn_name, "", jec_norm )
+
         self.imp(csv_shift)
         self.imp(mean_shift)
         self.imp(sigma_shift)
+        self.imp(jec_norm_shift)
 
         # set mean and sigma as floating
         self.w.var("mean_sgn_"+sgn_name).setConstant(0)
@@ -532,12 +551,12 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 800.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 500.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 900.
 
 signals = []
 for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
-#for mass in [800]:
+#for mass in [750]:
     for spin in [0,2]:
         sample = ("Spin%d_M%d" % (spin, mass))
         "Adding signal sample....", sample

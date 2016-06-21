@@ -11,6 +11,52 @@ sys.path.append('../python/')
 from samples import *
 
 
+class Xbb_trigger_corrector:
+
+    def __init__(self, fname="../data/X750_trigger_efficiency.root", switch=165.):
+        self.file = ROOT.TFile.Open(fname, "READ")
+        self.switch = switch
+        if self.file!=None:
+            print ("[Xbb_trigger_corrector]: Correction file properly loaded. Switch between triggers at %.0f GeV" % self.switch)
+
+    def get_switch(self):
+        return self.switch
+ 
+    def eval(self, pt=100, eta=0.0, hlt="low", syst=""):
+        val = 1.0
+        eta_bin = ""
+        if abs(eta)<0.6:
+            eta_bin = "0-0.6"
+        elif abs(eta)<1.7:
+            eta_bin = "0.6-1.7"
+        elif abs(eta)<2.5:
+            eta_bin = "1.7-2.2"
+        else:
+            return val
+
+        if pt<self.switch and hlt=="high":
+            return val
+        elif pt>self.switch and hlt=="low":
+            return val
+        elif pt<100 and hlt=="low":
+            return val
+
+        ana = "" if "Kin" not in syst else "err_"
+        sign = +1 if "Up" in syst else -1
+
+        g = self.file.Get("Fcorr_"+ana+hlt+"M_"+eta_bin)
+        if g!=None:            
+            val = g.Eval(pt)
+            if ana!="":
+                n = self.file.Get("Fcorr_"+hlt+"M_"+eta_bin)
+                val = n.Eval(pt) + sign*g.Eval(pt)
+            if abs(1-val)>0.3:
+                print ("Large weight: Pt=%.0f, eta=%.1f, hlt=%s, syst=%s ==> %.3f" % (pt,eta,hlt,syst,val))
+        else:
+            print "histo ","Fcorr_"+ana+hlt+"M_"+eta_bin," not found"
+        return val
+            
+
 def deltaPhi(phi1, phi2):
     result = phi1 - phi2
     while (result > math.pi): result -= 2*math.pi
@@ -149,6 +195,10 @@ def ak08_mass(ev):
   fatmass = (fatjets[0]+fatjets[1]).M() if len(fatjets)==2 else 0.
   return fatmass
 
+
+# utilities
+corrector = Xbb_trigger_corrector(fname="../data/X750_trigger_efficiency.root", switch=165.)
+
 # specify here which samples
 samples = samples_pruned
 
@@ -198,38 +248,41 @@ print "Luminosity: %.0f pb-1 --- xsection: %.0f pb --- Processed: %.0f ==> Lumi 
 # True if one cut implies all those before
 
 cuts_Vtype = {  
-  "Had" : lambda ev : ev.Vtype in [-1,4],
-  "Lep" : lambda ev : ev.Vtype in [0,1,2,3],
+    "Had" : lambda ev : ev.Vtype in [-1,4],
+    "Lep" : lambda ev : ev.Vtype in [0,1,2,3],
 }
 
 cuts_BTag = {
-  #"All" :  lambda ev : True,
-  "LT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-  #"LT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-  #"LT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-  #"nMT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-  "MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  "MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  "MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-  #"TT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
-  #"TT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
-  #"TT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
+    ##"All" :  lambda ev : True,
+    "LT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
+    ##"LT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
+    ##"LT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
+    ##"nMT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
+    "MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+    "MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+    "MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+    ##"TT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
+    ##"TT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
+    ##"TT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
 }
 
 cuts_MinPt = {
-  #"All" :  lambda ev : True,
-  #"MinPt200" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>200. if len(ev.hJCidx)==2 else False,
-  #"MinPt175" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>175. if len(ev.hJCidx)==2 else False,
-  #"MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
-  "MinPt100" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
-  #"MinMaxPt100150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. and  max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
+    ##"All" :  lambda ev : True,
+    ##"MinPt200" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>200. if len(ev.hJCidx)==2 else False,
+    ##"MinPt175" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>175. if len(ev.hJCidx)==2 else False,
+    ##"MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
+    "MinPt100" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
+    #"MinPt100_HLT" : lambda ev :  (min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False) and (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v | ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v),
+    "MinPt100_HLTKinUp" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
+    "MinPt100_HLTKinDown" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
+    ##"MinMaxPt100150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. and  max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
 }
 
 cuts_DH = {
-  #"All" :  lambda ev : True,
-  "DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
-  "DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
-  #"DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
+    ##"All" :  lambda ev : True,
+    "DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
+    "DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
+    #"DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
 }
 
 cuts_in_chain = False
@@ -257,7 +310,13 @@ for cut_Vtype in cuts_Vtype.keys():
                     if ("LT" not in cut_BTag) or cut_DH!="DH2p0":
                         print "Reject", cut_name
                         continue
+                    if "HLTKin" in cut_MinPt:
+                        print "Reject", cut_name
+                        continue
                 elif "Had" in cut_Vtype:
+                    if "HLTKin" in cut_MinPt and (cut_DH!="DH1p6" or cut_BTag!="MT" or "CSV" in cut_BTag):
+                        print "Reject", cut_name
+                        continue
                     if "CSV" in cut_BTag and cut_DH=="DH2p0":
                         print "Reject", cut_name
                         continue
@@ -327,6 +386,12 @@ for n_cut,cut in enumerate(cuts_map):
     "MaxJetCSV" : ROOT.TH1F(cut[0]+"_MaxJetCSV", argv[1]+": "+cut[0]+"_MaxJetCSV", 40, 0, 1.),
     "MinJetCSV" : ROOT.TH1F(cut[0]+"_MinJetCSV", argv[1]+": "+cut[0]+"_MinJetCSV", 20, 0, 1.),
     "Vtype" : ROOT.TH1F(cut[0]+"_Vtype", argv[1]+": "+cut[0]+"_Vtype", 7, -1, 6),
+    "Eff_HLTLow_vsMassFSR" : ROOT.TH1F(cut[0]+"_Eff_HLTLow_vsMassFSR", argv[1]+": "+cut[0]+"_Eff_HLTLow_vsMassFSR",  100, 0, 2000),
+    "Eff_HLTHigh_vsMassFSR" : ROOT.TH1F(cut[0]+"_Eff_HLTHigh_vsMassFSR", argv[1]+": "+cut[0]+"_Eff_HLTHigh_vsMassFSR",  100, 0, 2000),
+    "Eff_HLTLow_vsMaxJetPt" : ROOT.TH1F(cut[0]+"_Eff_HLTLow_vsMaxJetPt", argv[1]+": "+cut[0]+"_Eff_HLTLow_vsMaxJetPt",  70, 90, 790),
+    "Eff_HLTLow_vsMinJetPt" : ROOT.TH1F(cut[0]+"_Eff_HLTLow_vsMinJetPt", argv[1]+": "+cut[0]+"_Eff_HLTLow_vsMinJetPt",  70, 90, 790),
+    "Eff_HLTHigh_vsMaxJetPt" : ROOT.TH1F(cut[0]+"_Eff_HLTHigh_vsMaxJetPt", argv[1]+": "+cut[0]+"_Eff_HLTHigh_vsMaxJetPt",  70, 90, 790),
+    "Eff_HLTHigh_vsMinJetPt" : ROOT.TH1F(cut[0]+"_Eff_HLTHigh_vsMinJetPt", argv[1]+": "+cut[0]+"_Eff_HLTHigh_vsMinJetPt",  70, 90, 790),
     }
 for h in histo_map.keys():
   for hh in histo_map[h].keys():
@@ -348,6 +413,8 @@ chain.SetBranchStatus("*HaddJetsdR08*", True)
 chain.SetBranchStatus("json*", True)
 chain.SetBranchStatus("FatjetAK08ungroomed_*", True)
 chain.SetBranchStatus("nFatjetAK08ungroomed", True)
+chain.SetBranchStatus("HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v", True)
+chain.SetBranchStatus("HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v", True)
 
 print eff_map
 
@@ -392,6 +459,14 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
     variables["Eta"] = ev.HCSV_eta 
     variables["MaxEta"] = max(abs(ev.Jet_eta[ev.hJCidx[0]]),abs(ev.Jet_eta[ev.hJCidx[1]])) if len(ev.hJCidx)==2 else 99 
     variables["Vtype"] = ev.Vtype 
+    variables["Eff_HLTLow_vsMassFSR"] = variables["MassFSR"] if (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v and not ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v ) else 0.0
+    variables["Eff_HLTHigh_vsMassFSR"] = variables["MassFSR"] if (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v and not ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v ) else 0.0
+
+    variables["Eff_HLTLow_vsMaxJetPt"] = variables["MaxJetPt"] if (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v and not ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v ) else 90
+    variables["Eff_HLTHigh_vsMaxJetPt"] = variables["MaxJetPt"] if (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v and not ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v ) else 90
+    variables["Eff_HLTLow_vsMinJetPt"] = variables["MinJetPt"] if (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v and not ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v ) else 90
+    variables["Eff_HLTHigh_vsMinJetPt"] = variables["MinJetPt"] if (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v and not ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v ) else 90
+
     variables["DeltaEta"] = abs(ev.Jet_eta[ev.hJCidx[0]] - ev.Jet_eta[ev.hJCidx[1]])  if len(ev.hJCidx)==2 else 99 
     variables["DeltaPhi"] = math.acos(math.cos(ev.Jet_phi[ev.hJCidx[0]] - ev.Jet_phi[ev.hJCidx[1]]))  if len(ev.hJCidx)==2 else 99 
 
@@ -400,10 +475,17 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
         if cut[1](ev) and passall:
           #print cut[0], ": pass" 
           weight_btag = weight_bTag(ev, cut[0]) if lumi_factor>0 else 1.0
+
+          weight_kin = 1.0
+          if lumi_factor>0:
+              hlt = "high" if (ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() and ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() ) else "low"
+              for ind in [0,1]:
+                  weight_kin *= corrector.eval( ev.Jet_pt[ev.hJCidx[ind]], ev.Jet_eta[ev.hJCidx[ind]], hlt, cut[0] )          
+
           if cut[0]!="All" :
-            eff_map[cut[0]] += weight(ev, lumi_factor)*weight_btag
+            eff_map[cut[0]] += weight(ev, lumi_factor)*weight_btag*weight_kin
           for var in histo_map[cut[0]].keys():
-            histo_map[cut[0]][var].Fill(variables[var], weight(ev,lumi_factor)*weight_btag)
+            histo_map[cut[0]][var].Fill(variables[var], weight(ev,lumi_factor)*weight_btag*weight_kin)
         else:
           #print cut[0], ": fail" 
           passall = (False or not cuts_in_chain)

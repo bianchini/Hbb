@@ -14,6 +14,9 @@ def is_blind():
 def k_factor_QCD():
     return 1.45
 
+def get_extra_SF():
+    return 0.89
+
 def get_samples():
     samples = ["Run2015",
                "TT_ext3",
@@ -113,7 +116,11 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
             print "Processed sample n.%.0f %s: %.1f" % (ns,sample, h_sample.Integral()) 
             continue
 
+        # needed because of automatic nornalisation
         h_sample.Scale(1./count)
+        
+        # any extra scale factors that applies to all simulations
+        h_sample.Scale(get_extra_SF())
         
         if "Spin" in sample:
             signal = h_sample.Clone("signal_"+h_name+"_"+sample+option_shape)
@@ -358,9 +365,9 @@ def plot_all( version = "V6" ):
         files[sample] = f
 
     for cat_btag in ["Had_LT", 
-                     #"Had_MT", 
+                     "Had_MT", 
                      #"Had_TT",
-                     #"Lep_LT",
+                     "Lep_LT",
                      "All"
                      ]:
         for cat_kin in [
@@ -368,6 +375,8 @@ def plot_all( version = "V6" ):
             #"MinPt150_DH1p6", 
             "MinPt100_DH2p0", 
             "MinPt100_DH1p6", 
+            "MinPt100_HLTKinUp_DH1p6", 
+            "MinPt100_HLTKinDown_DH1p6", 
             #"MinMaxPt100150_DH1p6"
             #"MinPt150_DH1p1",
             #"MinPt175_DH2p0", "MinPt175_DH1p6", "MinPt175_DH1p1",
@@ -381,6 +390,9 @@ def plot_all( version = "V6" ):
                 if cat_btag != "All" and (cat_kin==""):
                     continue
                 if cat_btag == "All" and (cat_kin!="" or syst!=""):
+                    continue
+
+                if "Kin" in cat_kin and not (cat_btag=="Had_MT"):
                     continue
 
                 if cat_btag=="Lep_LT" and (syst!="" or cat_kin!="MinPt100_DH2p0"):

@@ -63,7 +63,11 @@ def make_datacard( ws_name='Xbb_workspace',
 
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
     if ws.var('CSV_shift_'+sgn) != None:
-        f.write('CMS_btag           lnN    '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                       '+("%.2f" % (1+ws.var('CSV_shift_'+sgn).getVal()/sgn_norm))+'                      -\n')      
+        shift = 1 + ws.var('CSV_shift_'+sgn).getVal()/sgn_norm
+        f.write('CMS_btag                lnN    '+("%.2f" % shift)+'                       '+("%.2f" % shift)+'                      -\n')      
+    if ws.var('jec_norm_shift_'+sgn) != None:
+        shift = max(1 + ws.var('jec_norm_shift_'+sgn).getVal()/sgn_norm, 1.01)
+        f.write('CMS_JEC                 lnN    '+("%.3f" % shift)+'                  '+("%.3f" % shift)+'                      -\n')      
     f.write('\n')
 
     for p in xrange(FTestCfg[pdf_bkg]['ndof'][x_range]):        
