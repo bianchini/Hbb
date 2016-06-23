@@ -15,9 +15,50 @@ class Xbb_trigger_corrector:
 
     def __init__(self, fname="../data/X750_trigger_efficiency.root", switch=165.):
         self.file = ROOT.TFile.Open(fname, "READ")
+        self.corrs = {}
+        for ana in ["err_", ""]:
+            for hlt in ["low", "high"]:
+                for eta_bin in ["0-0.6", "0.6-1.7", "1.7-2.2"]:
+                    self.corrs["Fcorr_"+ana+hlt+"M_"+eta_bin] = self.file.Get("Fcorr_"+ana+hlt+"M_"+eta_bin)
         self.switch = switch
         if self.file!=None:
             print ("[Xbb_trigger_corrector]: Correction file properly loaded. Switch between triggers at %.0f GeV" % self.switch)
+
+    def eval_OR(self, pt1=100, eta1=0.0, pt2=100, eta2=0.0, pass_low=True, pass_high=True, syst=""):
+
+        val = 1.0
+        if not (pass_low or pass_high):
+            print "None of the triggers fire!"
+            return val
+
+        eta_bin1 = ""
+        if abs(eta1)<0.6:
+            eta_bin1 = "0-0.6"
+        elif abs(eta1)<1.7:
+            eta_bin1 = "0.6-1.7"
+        elif abs(eta1)<2.5:
+            eta_bin1 = "1.7-2.2"
+        eta_bin2 = ""
+        if abs(eta2)<0.6:
+            eta_bin2 = "0-0.6"
+        elif abs(eta2)<1.7:
+            eta_bin2 = "0.6-1.7"
+        elif abs(eta2)<2.5:
+            eta_bin2 = "1.7-2.2"
+
+        is_shifted = ("Kin" in syst)
+        shift_sign = +1 if "Up" in syst else -1
+    
+        hlt = "low" if pass_low else "high"
+        if is_shifted:
+            val = self.corrs["Fcorr_"+hlt+"M_"+eta_bin1].Eval(pt1)*self.corrs["Fcorr_"+hlt+"M_"+eta_bin2].Eval(pt2)
+        else:
+            val = (self.corrs["Fcorr_"+hlt+"M_"+eta_bin1].Eval(pt1) + shift_sign*self.corrs["Fcorr_err_"+hlt+"M_"+eta_bin1].Eval(pt1))*(self.corrs["Fcorr_"+hlt+"M_"+eta_bin2].Eval(pt2) + shift_sign*self.corrs["Fcorr_err_"+hlt+"M_"+eta_bin2].Eval(pt2))            
+                
+        if abs(1-val)>0.3:
+            print ("Large weight: pt=%.0f,%.0f, eta=%.1f,%.1f, hlt=%s, syst=%s ==> %.3f" % (pt1,pt2,eta1,eta2,hlt,syst,val))
+        return val
+
 
     def get_switch(self):
         return self.switch
@@ -44,17 +85,16 @@ class Xbb_trigger_corrector:
         ana = "" if "Kin" not in syst else "err_"
         sign = +1 if "Up" in syst else -1
 
-        g = self.file.Get("Fcorr_"+ana+hlt+"M_"+eta_bin)
-        if g!=None:            
-            val = g.Eval(pt)
-            if ana!="":
-                n = self.file.Get("Fcorr_"+hlt+"M_"+eta_bin)
-                val = n.Eval(pt) + sign*g.Eval(pt)
+        g = self.corrs["Fcorr_"+ana+hlt+"M_"+eta_bin]
+        val = g.Eval(pt)
+        if ana!="":
+            n = self.corrs["Fcorr_"+hlt+"M_"+eta_bin]
+            ROOT.SetOwnership(n, False ) 
+            val = n.Eval(pt) + sign*g.Eval(pt)
             if abs(1-val)>0.3:
                 print ("Large weight: Pt=%.0f, eta=%.1f, hlt=%s, syst=%s ==> %.3f" % (pt,eta,hlt,syst,val))
-        else:
-            print "histo ","Fcorr_"+ana+hlt+"M_"+eta_bin," not found"
         return val
+
             
 
 def deltaPhi(phi1, phi2):
@@ -152,6 +192,9 @@ def weight_bTag_SF(ev, wp1, wp2, ana):
     sf = getattr(ev, "Jet_btagCSV"+wp1+"SF_"+ana)[ev.hJCidx[0]]*getattr(ev, "Jet_btagCSV"+wp2+"SF_"+ana)[ev.hJCidx[1]]
   #print "SF ", wp1, wp2, ana, ": " , sf
   return sf
+
+def weight_bTag_online():
+    return 0.89
 
 def weight_bTag(ev, cut):
   ana = "nominal"
@@ -478,14 +521,20 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
 
           weight_kin = 1.0
           if lumi_factor>0:
-              hlt = "high" if (ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() and ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() ) else "low"
-              for ind in [0,1]:
-                  weight_kin *= corrector.eval( ev.Jet_pt[ev.hJCidx[ind]], ev.Jet_eta[ev.hJCidx[ind]], hlt, cut[0] )          
+              #hlt = "high" if (ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() and ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() ) else "low"
+              #for ind in [0,1]:
+              #    weight_kin *= corrector.eval( ev.Jet_pt[ev.hJCidx[ind]], ev.Jet_eta[ev.hJCidx[ind]], hlt, cut[0] )          
+              weight_kin *= corrector.eval_OR( pt1=ev.Jet_pt[ev.hJCidx[0]], eta1=ev.Jet_eta[ev.hJCidx[0]], pt2=ev.Jet_pt[ev.hJCidx[1]], eta2=ev.Jet_eta[ev.hJCidx[1]],
+                                               pass_low=ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v,
+                                               pass_high=ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v,
+                                               syst=cut[0] )
+
+          weight_btag_online = weight_bTag_online() if lumi_factor>0 else 1.0
 
           if cut[0]!="All" :
-            eff_map[cut[0]] += weight(ev, lumi_factor)*weight_btag*weight_kin
+            eff_map[cut[0]] += weight(ev, lumi_factor)*weight_btag*weight_kin*weight_btag_online
           for var in histo_map[cut[0]].keys():
-            histo_map[cut[0]][var].Fill(variables[var], weight(ev,lumi_factor)*weight_btag*weight_kin)
+            histo_map[cut[0]][var].Fill(variables[var], weight(ev,lumi_factor)*weight_btag*weight_kin*weight_btag_online)
         else:
           #print cut[0], ": fail" 
           passall = (False or not cuts_in_chain)

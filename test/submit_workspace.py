@@ -13,6 +13,9 @@ import FWCore.ParameterSet.Config as cms
 
 import sys
 sys.path.append('./')
+sys.path.append('../python/')
+
+from utilities import get_sliding_edges
 
 ################################################################################
 
@@ -42,21 +45,15 @@ def submit(cfg_cat_btag='Had_LT', cfg_cat_kin='MinPt150_DH1p6', cfg_name='MassFS
 ##########################################
 
 
+use_fixed_ranges = False
+use_sliding_edges = True
+
 x_ranges = {
     400 : [800.],
-    #425 : [800., 900.],
-    #450 : [800., 900., 1000.],
-    #475 : [900., 1000.],
-    #500 : [900., 1000., 1100., 1200., 1300.],
     500 : [900.],
-    #525 : [900.],
-    #550 : [900., 1000., 1100., 1200., 1300.],
-    #600 : [1000., 1100.],
     600 : [1000.],
     700 : [1400.],
-    #800 : [1200., 1300., 1400.],
 }
-
 
 for cfg_cat_btag in [
     #'Had_LT', 
@@ -74,18 +71,16 @@ for cfg_cat_btag in [
         for cfg_name in [
             'MassFSR',
             ]:
-            for xmin in [
-                400., 
-                #425., 
-                #450., 
-                #475., 
-                500., 
-                #525., 
-                #550., 
-                600., 
-                700., 
-                #800.,
-                ]:
-                for xmax in x_ranges[xmin]:  #[900., 1000., 1200., 1300., 1400.]:
-                    submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax)
+
+            if use_fixed_ranges:
+                for xmin in x_ranges.keys():
+                    for xmax in x_ranges[xmin]:  
+                        submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax)
+                        #exit(1)
+            elif use_sliding_edges:
+                for mass in [550,600,650,700,750,800,850,900,1000,1100,1200]:
+                    [xmin,xmax] = get_sliding_edges(mass=mass)
+                    submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax) 
                     #exit(1)
+            else:
+                exit(1)

@@ -10,6 +10,10 @@ import os.path
 
 import ROOT
 
+import sys
+sys.path.append('../../../python/')
+from utilities import get_sliding_edges
+
 signal_to_range = {
     'Spin0_M550' : '400to800',
     'Spin0_M600' : '400to800',
@@ -59,6 +63,9 @@ signal_to_parameters = {
     'Spin2_M1100' : [],
     'Spin2_M1200' : [],
 }
+
+use_fixed_ranges = False
+use_sliding_edges = True
 
 ############################################################################################
 
@@ -121,12 +128,13 @@ def make_postfit(mlfit="mlfit.root", plot="Had_MT_MinPt100_DH1p6_fit_b"):
 
 def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
 
-    c = ROOT.TCanvas("c", "canvas", 500, 500) 
-    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
-    pad1.SetGridx()  
-    pad1.SetGridy()  
-    pad1.Draw()      
-    pad1.cd()    
+    c = ROOT.TCanvas("c", "canvas", 600, 600) 
+    #pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
+    #pad1.SetGridx()  
+    #pad1.SetGridy()  
+    #pad1.Draw()
+    #pad1.cd() 
+    c.SetLogy()
     
     leg = ROOT.TLegend(0.55,0.65,0.85,0.88, "","brNDC")
     if "Spin0" in out_name:
@@ -177,16 +185,35 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     mg.Add(onesigma)
     mg.Add(expected)
 
-    mg.SetMinimum(0.)
-    mg.SetMaximum(20.)
+    mg.SetMinimum(1.)
+    mg.SetMaximum(25.)
 
     mg.Draw("ALP3")
-    mg.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV, L=2.63 fb^{-1}")
+    #mg.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV, L=2.63 fb^{-1}")
     mg.GetXaxis().SetTitleSize(0.05)
     mg.GetYaxis().SetTitleSize(0.05)
     mg.GetYaxis().SetTitleOffset(0.85)
-    mg.GetXaxis().SetTitle("Mass (GeV)")
-    mg.GetYaxis().SetTitle("#sigma #times BR(X#rightarrow b#bar{b}) (pb) at 95% CL")
+    mg.GetXaxis().SetTitleOffset(0.85)
+    mg.GetXaxis().SetTitle("m_{X} (GeV)")
+    mg.GetYaxis().SetTitle("95% CL limit on #sigma #times BR(X#rightarrow b#bar{b}) (pb)")
+
+    c.Update()
+    pave_lumi = ROOT.TPaveText(0.46,0.90,0.90,0.96, "NDC")
+    pave_lumi.SetFillStyle(0);
+    pave_lumi.SetBorderSize(0);
+    pave_lumi.SetTextAlign(32)
+    pave_lumi.SetTextSize(0.035)
+    pave_lumi.AddText("2.56 fb^{-1} (2015)")
+    pave_lumi.Draw()
+    pave_cms = ROOT.TPaveText(0.09,0.90,0.40,0.96, "NDC")
+    pave_cms.SetFillStyle(0);
+    pave_cms.SetBorderSize(0);
+    pave_cms.SetTextAlign(12)
+    pave_cms.SetTextSize(0.035)
+    pave_cms.AddText("CMS preliminary")
+    pave_cms.Draw()
+    c.Modified()
+
     leg.Draw()
 
     raw_input()
@@ -283,24 +310,33 @@ def make_canvas_split( results=[], out_name="", save_dir="./plots/Jun09/" ):
 
 ############################################################################################
 
-def make_limit_plot(out_name="", save_dir=""):
+def make_limit_plot(pdf='dijet', spin=0, save_dir=""):
 
+    sgns = []
+    if spin == 0:
+        sgns = ['Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200']
+    else:
+        sgns = ['Spin2_M550', 'Spin2_M600', 'Spin2_M650', 'Spin2_M700', 'Spin2_M750', 'Spin2_M800', 'Spin2_M850', 'Spin2_M900', 'Spin2_M1000', 'Spin2_M1100', 'Spin2_M1200']
+        
     tests = []
     results = []
     for cat_btag in ['Had_MT']:
         for cat_kin in ['MinPt100_DH1p6']:        
             for pdf_s in ['buk']:
-                for pdf_b in ['polydijet']:
+                for pdf_b in [pdf]:
                     for mass in ['MassFSR']:
-                        for sgn in [
-                            'Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200',
-                            #'Spin2_M550', 'Spin2_M600', 'Spin2_M650', 'Spin2_M700', 'Spin2_M750', 'Spin2_M800', 'Spin2_M850', 'Spin2_M900', 'Spin2_M1000', 'Spin2_M1100', 'Spin2_M1200'
-                            ]:
-                            for x_range in [
-                                #'550to1200'
-                                signal_to_range[sgn]
-                                ]:
-                                tests.append(cat_btag+'_'+cat_kin+'_'+mass+'_'+x_range+'_'+pdf_s+'_'+pdf_b+'_'+sgn)
+                        for sgn in sgns:        
+                            if use_fixed_ranges:
+                                range_name = signal_to_range[sgn]
+                            elif use_sliding_edges:
+                                mX = float(sgn.split('_')[-1][1:])
+                                edges = get_sliding_edges(mass=mX)
+                                range_name = ("%.0fto%.0f" % (edges[0],edges[1]))            
+                            if "M550" in sgn:
+                                pdf_b = "polydijet"
+                            else:
+                                pdf_b = pdf
+                            tests.append(cat_btag+'_'+cat_kin+'_'+mass+'_'+range_name+'_'+pdf_s+'_'+pdf_b+'_'+sgn)
 
     print tests
     for itest,test in enumerate(tests):
@@ -308,7 +344,7 @@ def make_limit_plot(out_name="", save_dir=""):
         if len(res)>0:
             results.append([test.split('_')[-1],res])
             
-    make_canvas( results=results, out_name=out_name, save_dir=save_dir )
+    make_canvas( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir )
 
 ############################################################################################
 
@@ -368,5 +404,5 @@ def make_fits():
 
 
 #make_fits()
-make_limit_plot(out_name="Spin0_polydijet", save_dir="../V6/")
+make_limit_plot(pdf="dijet", spin=2, save_dir="../V7/")
 #make_limit_plot_split(out_name="Spin0_split_polydijet", save_dir="../V6/")

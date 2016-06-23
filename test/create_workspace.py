@@ -335,6 +335,19 @@ class XbbFactory:
                 norm = data.sumEntries()
             shifts[syst] = [norm]
 
+        # HLT systematics
+        for syst in ["HLTKinUp", "HLTKinDown"]:
+            hname = "signal_"+self.cat_btag+"_"+(self.cat_kin).split('_')[0]+"_"+syst+"_"+(self.cat_kin).split('_')[1]+"_"+self.x_name+"_"+sgn_name
+            h = self.file.Get(self.cat_btag+"_"+(self.cat_kin).split('_')[0]+"_"+syst+"_"+(self.cat_kin).split('_')[1]+"/"+hname)
+            ROOT.SetOwnership(h, False ) 
+            norm = self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()
+            if h!=None:
+                self.x.setRange(self.x.getMin(self.x_name), self.x.getMax(self.x_name))
+                data = ROOT.RooDataHist("data_sgn_"+syst+"_"+sgn_name, "", ROOT.RooArgList(self.x), h, 1.0)
+                ROOT.SetOwnership(data, False )
+                norm = data.sumEntries()
+            shifts[syst] = [norm]
+
         # jec scale systematics
         for syst in ["JECUp", "JECDown"]:
             hname = "signal_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+syst+"_"+sgn_name
@@ -350,6 +363,9 @@ class XbbFactory:
 
         csv = max( abs(shifts["CSVSFUp"][0]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()), 
                    abs(shifts["CSVSFDown"][0]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()))
+        hlt_norm = max( abs(shifts["HLTKinUp"][0]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()), 
+                        abs(shifts["HLTKinDown"][0]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()))
+
         jec = max( abs(shifts["JECUp"][0]-self.w.var("mean_sgn_"+sgn_name).getVal()), 
                    abs(shifts["JECDown"][0]-self.w.var("mean_sgn_"+sgn_name).getVal()))
         jer = max( abs(shifts["JERUp"][1]-self.w.var("sigma_sgn_"+sgn_name).getVal()), 
@@ -358,11 +374,13 @@ class XbbFactory:
                         abs(shifts["JECDown"][2]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()))
 
         csv_shift = ROOT.RooRealVar("CSV_shift_"+sgn_name, "", csv )
+        hlt_shift =  ROOT.RooRealVar("HLTKin_shift_"+sgn_name, "", hlt_norm )
         mean_shift = ROOT.RooRealVar("mean_shift_"+sgn_name, "", jec )
         sigma_shift = ROOT.RooRealVar("sigma_shift_"+sgn_name, "", jer )
         jec_norm_shift = ROOT.RooRealVar("jec_norm_shift_"+sgn_name, "", jec_norm )
 
         self.imp(csv_shift)
+        self.imp(hlt_shift)
         self.imp(mean_shift)
         self.imp(sigma_shift)
         self.imp(jec_norm_shift)
@@ -525,7 +543,7 @@ class XbbFactory:
         return  self.cat_btag+"_"+self.cat_kin+"_"+self.x_name+"_"+("%.0f" % (self.x.getMin(self.x_name)))+"to"+("%.0f" % (self.x.getMax(self.x_name)))
 
     # create the ws
-    def create_workspace(self, signals=[], pdf_names=["dijet"], debug_sgn=False):
+    def create_workspace(self, signals=[], pdf_names=["dijet"], debug_sgn=True):
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=100, set_param_const=True, spin_symmetric=False)
@@ -551,23 +569,24 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 500.
-cfg_xmax = float(argv[5]) if len(argv)>=6 else 900.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 430.
+cfg_xmax = float(argv[5]) if len(argv)>=6 else 800.
 
 signals = []
 for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
-#for mass in [750]:
+#for mass in [600]:
     for spin in [0,2]:
         sample = ("Spin%d_M%d" % (spin, mass))
         "Adding signal sample....", sample
         signals.append(sample)
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V6/", save_dir="./plots/V6/", save_ext=['png','pdf'], blind_plot=True)
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V7/", save_dir="./plots/V7/", save_ext=['png','pdf'], blind_plot=True)
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
 xbbfact.create_workspace( signals=signals,
                           #signals=["Spin0_M750"],    
-                          pdf_names=["polydijet", "dijet"],
+                          #pdf_names=["polydijet", "dijet"],
+                          pdf_names=["dijet", "polydijet"],
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
                           debug_sgn=False
                           )

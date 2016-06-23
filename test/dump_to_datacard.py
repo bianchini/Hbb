@@ -14,7 +14,7 @@ sys.path.append('./')
 sys.path.append('../python/')
 
 from parameters_cfi import *
-from utilities import get_bias
+from utilities import get_bias, get_sliding_edges
 
 def make_datacard( ws_name='Xbb_workspace', 
                    cat='Had_LT_MinPt150_DH1p6', mass='MassFSR', x_range='550to1200', sgn='Spin0_M650',
@@ -56,18 +56,28 @@ def make_datacard( ws_name='Xbb_workspace',
     f.write('process             0                       1                                2  \n')
     f.write('rate              1.0                       1.0                              1.0\n')
     f.write('--------------------------------------------------------------\n')
-    f.write('CMS_Xbb_trigger_btag    lnN    1.10                       1.10                        -\n')
-    f.write('CMS_Xbb_trigger_kin     lnN    1.05                       1.05                        -\n')
+    #f.write('CMS_Xbb_trigger_kin     lnN    1.01                       1.01                        -\n')
+    f.write('CMS_Xbb_trigger_btag    lnN    1.05                       1.05                        -\n')
     f.write('lumi_13TeV              lnN    1.027                      1.027                       -\n')
     f.write('pdf_gg_13TeV            lnN    1.06                       1.06                        -\n')
 
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
+
     if ws.var('CSV_shift_'+sgn) != None:
         shift = 1 + ws.var('CSV_shift_'+sgn).getVal()/sgn_norm
-        f.write('CMS_btag                lnN    '+("%.2f" % shift)+'                       '+("%.2f" % shift)+'                      -\n')      
+        print "\tadding CMS_btag....lnN", shift
+        if (shift-1)>=0.01:
+            f.write('CMS_btag                lnN    '+("%.2f" % shift)+'                       '+("%.2f" % shift)+'                      -\n')      
+    if ws.var('HLTKin_shift_'+sgn) != None:
+        shift = 1 + ws.var('HLTKin_shift_'+sgn).getVal()/sgn_norm
+        print "\tadding CMS_Xbb_trigger_kin....lnN", shift
+        if (shift-1)>=0.01:
+            f.write('CMS_Xbb_trigger_kin     lnN    '+("%.2f" % shift)+'                       '+("%.2f" % shift)+'                      -\n')      
     if ws.var('jec_norm_shift_'+sgn) != None:
-        shift = max(1 + ws.var('jec_norm_shift_'+sgn).getVal()/sgn_norm, 1.01)
-        f.write('CMS_JEC                 lnN    '+("%.3f" % shift)+'                  '+("%.3f" % shift)+'                      -\n')      
+        shift = 1 + ws.var('jec_norm_shift_'+sgn).getVal()/sgn_norm
+        print "\tadding CMS_scale_j....lnN", shift
+        if (shift-1)>=0.01:
+            f.write('CMS_scale_j                 lnN    '+("%.3f" % shift)+'                  '+("%.3f" % shift)+'                      -\n')      
     f.write('\n')
 
     for p in xrange(FTestCfg[pdf_bkg]['ndof'][x_range]):        
@@ -96,6 +106,9 @@ def make_datacard( ws_name='Xbb_workspace',
 
 ########################################
 
+use_fixed_ranges = False
+use_sliding_edges = True
+
 signal_to_range = {
     'Spin0_M550' : '400to800',
     'Spin0_M600' : '400to800',
@@ -123,8 +136,8 @@ signal_to_range = {
 
 for cat_btag in [
     #'Had_LT', 
-    'Had_MT', 
     #'Had_TT',
+    'Had_MT', 
     ]:
     for cat_kin in [
         #'MinPt150_DH1p6', 'MinPt150_DH2p0', 'MinPt150_DH1p1', 
@@ -133,12 +146,12 @@ for cat_btag in [
         'MinPt100_DH1p6'
         ]:        
         for pdf in [
-            'dijet',
-            'polydijet',
             #'pow',
             #'exp',
             #'polyexp',
             #'pol'
+            'dijet',
+            'polydijet',
             ]:
             for sgn in [
                 'Spin0_M550',
@@ -164,19 +177,15 @@ for cat_btag in [
                 'Spin2_M1100',
                 'Spin2_M1200',
                 ]:
-                for x_range in [
-                    #'525to900'
-                    #'400to1200'
-                    signal_to_range[sgn]
-                    ]:
-                    for mass in [
-                        'MassFSR', 
-                        ]:
-                        make_datacard('Xbb_workspace', 
-                                      cat_btag+"_"+cat_kin, 
-                                      mass, x_range, sgn, 
-                                      'buk', pdf, 
-                                      'data_obs', 
-                                      './plots/V6/', 
-                                      is_data=True)
+                for mass in ['MassFSR']:
+                    range_name = ""
+                    if use_fixed_ranges:
+                        range_name = signal_to_range[sgn]
+                    elif use_sliding_edges:
+                        mX = float(sgn.split('_')[-1][1:])
+                        edges = get_sliding_edges(mass=mX)
+                        range_name = ("%.0fto%.0f" % (edges[0],edges[1]))
+                    make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, range_name, sgn, 'buk', pdf, 'data_obs', './plots/V7/', is_data=True)
+                        
+                    
                         

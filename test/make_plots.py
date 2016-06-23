@@ -9,13 +9,13 @@ import sys
 sys.path.append('./')
 
 def is_blind():
-    return True
+    return False
 
 def k_factor_QCD():
-    return 1.45
+    return 1.56
 
 def get_extra_SF():
-    return 0.89
+    return 1.0
 
 def get_samples():
     samples = ["Run2015",
@@ -70,11 +70,11 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         table = open( "/scratch/bianchi/"+version+"/yield_"+dir_name+".txt", 'w')
 
     s = ROOT.THStack("stack_background_"+h_name,"")
-    s.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV")
+    #s.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV")
+    s.SetTitle("")
 
     leg = ROOT.TLegend(0.42,0.52,0.80,0.88, "","brNDC");
-    #leg.SetHeader("#splitline{CMS Preliminary 2016, L=2.63 fb^{-1}}{Selection: "+dir_name+"}");
-    leg.SetHeader("L=2.63 fb^{-1}")
+    #leg.SetHeader("L=2.63 fb^{-1}")
     leg.SetFillStyle(0);
     leg.SetBorderSize(0);
     leg.SetTextSize(0.05);
@@ -86,6 +86,26 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     htop = []
     hbackground = []
 
+    do_rebin = False
+    new_ranges = [0,1]
+    new_bin_width = 1
+    if "Lep" in dir_name and "Mass" in h_name and ("toMass" not in h_name and "vsMass" not in h_name):
+        do_rebin = True
+        new_ranges = [400,2000]
+        new_bin_width = 37
+    if "Had_LT" in dir_name and "Mass" in h_name and ("toMass" not in h_name and "vsMass" not in h_name):
+        do_rebin = True
+        new_ranges = [400,4000]
+        new_bin_width = 37*2
+    if "Had_MT" in dir_name and "Mass" in h_name and ("toMass" not in h_name and "vsMass" not in h_name) and is_blind():
+        do_rebin = True
+        new_ranges = [400,4000]
+        new_bin_width = 37
+    if "vsMass" in h_name:
+        do_rebin = True
+        new_ranges = [0,2000]
+        new_bin_width = 80
+
     for ns,sample in enumerate( get_samples() ):
         
         f = files[sample]
@@ -95,10 +115,9 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         if h_sample==None:
             continue
 
-        if "Lep" in dir_name and "Mass" in h_name and "toMass" not in h_name:
+        if do_rebin:
             orig_bin_width = h_sample.GetBinWidth(1)
-            new_bin_width = 37
-            h_sample.Rebin(int(new_bin_width/orig_bin_width))
+            h_sample.Rebin(int(new_bin_width/orig_bin_width))    
 
         need_to_blind = False
         if "Had" in dir_name and "Mass" in h_name and "toMass" not in h_name and is_blind():
@@ -165,7 +184,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     qcd.SetLineWidth(1)
     qcd.SetFillColor(33);
     qcd.SetFillStyle(1001);
-    leg.AddEntry(qcd, "QCD (K=%.2f)" % k_factor_QCD(), "F");
+    leg.AddEntry(qcd, "QCD (#times%.2f)" % k_factor_QCD(), "F");
     qcd.Reset();
     for h in hqcd:
         qcd.Add(h,1.0)
@@ -186,19 +205,36 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     background.SetMarkerSize(0.)
     background.SetFillColor(ROOT.kBlue)
     background.SetFillStyle(3004);
-    leg.AddEntry(background, "bkg uncertainty (stat.)", "F");
+    leg.AddEntry(background, "MC stat. unc.", "F");
     background.Reset();
     for h in hbackground:
         background.Add(h,1.0)
 
     c = ROOT.TCanvas("c_"+dir_name+"_"+h_name, "canvas", 600, 600) 
-    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)     
+
+    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)    
+    pave_cms = ROOT.TPaveText(0.09,0.93,0.40,0.96)
+    pave_cms.SetFillStyle(0);
+    pave_cms.SetBorderSize(0);
+    pave_cms.SetTextAlign(12)
+    pave_cms.SetTextSize(0.035)
+    pave_cms.AddText("CMS preliminary")
+    pave_lumi = ROOT.TPaveText(0.46,0.93,0.90,0.96)
+    pave_lumi.SetFillStyle(0);
+    pave_lumi.SetBorderSize(0);
+    pave_lumi.SetTextAlign(32)
+    pave_lumi.SetTextSize(0.035)
+    pave_lumi.AddText("2.56 fb^{-1} (2015)")
+
     if option_shape!="Shape":
         pad1.SetLogy(1)
     pad1.SetBottomMargin(0) 
-    #pad1.SetGridx()  
+
     pad1.Draw()      
+    pave_cms.Draw("same")
+    pave_lumi.Draw("same")
     pad1.cd()    
+
 
     s.SetMinimum( hsignal[0][0].GetMinimum()*0.5 + 0.01 )
     s.SetMaximum( max(data.GetMaximum(), background.GetMaximum())*2.0 )
@@ -208,6 +244,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         s.GetHistogram().SetYTitle("Events/bin")
         s.GetHistogram().SetTitleOffset(1.25)
         s.GetHistogram().SetTitle(dir_name)
+        if do_rebin:
+            s.GetHistogram().GetXaxis().SetLimits(new_ranges[0],new_ranges[1])
 
     for signal in hsignal:
         mass = float(signal[1][7:])
@@ -225,19 +263,12 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
 
     background.Draw(option_bkg+"E2SAME")
     if need_to_blind:
-        # save
-        if not out.cd(dir_name):
-            out.mkdir(dir_name)
-            out.cd(dir_name)
-        data.Write("", ROOT.TObject.kOverwrite)
-        pad1.cd()
         data.Reset()
         data.Add(background, 1.0)
         leg.AddEntry(data, "data = MC (blinded)", "PE")
-        data.Draw(option_data+"SAME");  
     else:
-        data.Draw(option_data+"SAME")
-        leg.AddEntry(data, "data", "PE"); 
+        leg.AddEntry(data, "data", "PE")
+    data.Draw(option_data+"SAME")
 
     if s.GetHistogram()!=None :
         s.GetHistogram().GetYaxis().SetTitleSize(20)
@@ -262,6 +293,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     hratio.SetStats(0) 
     hratio.Divide(background)
     hratio.SetMarkerStyle(21)
+    if do_rebin:
+        hratio.GetXaxis().SetRangeUser(new_ranges[0],new_ranges[1])
     hratio.Draw("ep") 
     hratio.SetTitle("") 
     hratio.GetYaxis().SetTitle("Data/MC")
@@ -274,7 +307,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     hratio.GetXaxis().SetTitle(var_name)
     hratio.GetXaxis().SetTitleSize(20)
     hratio.GetXaxis().SetTitleFont(43)
-    hratio.GetXaxis().SetTitleOffset(4.)
+    hratio.GetXaxis().SetTitleOffset(2.6)
     hratio.GetXaxis().SetLabelFont(43) 
     hratio.GetXaxis().SetLabelSize(15)
     hratioErr = background.Clone("hratioErr")
@@ -283,6 +316,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         err = hratioErr.GetBinError(b+1)
         hratioErr.SetBinContent(b+1,1.0)
         hratioErr.SetBinError(b+1, err/val if val>0. else 0.)
+    if do_rebin:
+        hratioErr.GetXaxis().SetRangeUser(new_ranges[0],new_ranges[1])
     hratioErr.Draw(option_bkg+"E2SAME")
 
     for ext in ["png", "pdf"]:
@@ -299,7 +334,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         background.Write("", ROOT.TObject.kOverwrite)
         top.Write("", ROOT.TObject.kOverwrite)
         qcd.Write("", ROOT.TObject.kOverwrite)
-        #data.Write("", ROOT.TObject.kOverwrite)
+        data.Write("", ROOT.TObject.kOverwrite)
         #s.Write("", ROOT.TObject.kOverwrite);
 
     # save yields in latex table
@@ -354,7 +389,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
 
 ########################################################
 
-def plot_all( version = "V6" ):
+def plot_all( version = "V7" ):
 
     files = {}
     for ns,sample in enumerate( get_samples() ):    
@@ -367,13 +402,13 @@ def plot_all( version = "V6" ):
     for cat_btag in ["Had_LT", 
                      "Had_MT", 
                      #"Had_TT",
-                     "Lep_LT",
+                     #"Lep_LT",
                      "All"
                      ]:
         for cat_kin in [
             #"MinPt150_DH2p0", 
             #"MinPt150_DH1p6", 
-            "MinPt100_DH2p0", 
+            #"MinPt100_DH2p0", 
             "MinPt100_DH1p6", 
             "MinPt100_HLTKinUp_DH1p6", 
             "MinPt100_HLTKinDown_DH1p6", 
@@ -399,36 +434,37 @@ def plot_all( version = "V6" ):
                     continue
                 if cat_btag=="Had_LT" and (syst!="" or cat_kin!="MinPt100_DH2p0"):
                     continue
-                if cat_btag=="Had_MT" and cat_kin!="MinPt100_DH1p6":
+                if cat_btag=="Had_MT" and cat_kin not in ["MinPt100_HLTKinUp_DH1p6","MinPt100_HLTKinDown_DH1p6","MinPt100_DH1p6"]:
                     continue
 
                 for hist in [    
-                    ["MassFSR", "m_{jj}^{FSR} (GeV)"],
-                    ["MassFSR_JECUp", "m_{jj}^{FSR} JEC up (GeV)"],
-                    ["MassFSR_JECDown","m_{jj}^{FSR} JEC down (GeV)"],
-                    ["MassFSR_JERUp","m_{jj}^{FSR} JER up GeV)"],
-                    ["MassFSR_JERDown","m_{jj}^{FSR} JER down (GeV)"],
-                    ["MassFSRProjMET", "m_{jj}^{FSR+MET} (GeV)"],
-                    ["MinJetPt", "min(p_{T}^{j1}, p_{T}^{j2}) (GeV)"],
-                    ["MaxJetPt", "max(p_{T}^{j1}, p_{T}^{j2}) (GeV)"],
-                    ["Mass", "m_{jj} (GeV)"],
-                    ["MassAK08", "m_{jj}^{ak08} (GeV)"],
-                    ["Pt", "p_{T}^{X} (GeV)"],
-                    ["Eta","#eta^{X}"],
-                    ["DeltaEta","|#Delta#eta_{jj}|"],
-                    ["DeltaPhi","#Delta#phi_{jj}"],
-                    ["MaxJetCSV","max(CSV_{j1},CSV_{j2})"],
-                    ["MinJetCSV","min(CSV_{j1},CSV_{j2})"],
-                    ["Vtype","event type"],
-                    ["njet30","multiplicity of jets with p_{T}>30 GeV"],
-                    ["njet50","multiplicity of jets with p_{T}>50 GeV"],
-                    ["njet70","multiplicity of jets with p_{T}>70 GeV"],
-                    ["njet100","multiplicity of jets with p_{T}>100 GeV"],
-                    ["MET","E_{T}^{miss} (GeV)"],
-                    ["PtBalance","(p_{T}^{j1}-p_{T}^{j2})/(p_{T}^{j1}+p_{T}^{j2})"],
-                    ["MaxJetPtoMass", "max(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
-                    ["MinJetPtoMass","min(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
-                    ["MaxEta","max(#eta^{j1}, #eta^{j2})"],
+                    #["Eff_HLTHigh_vsMassFSR", "dijet mass (HLT-high & !HLT-low) [GeV]"],
+                    ["MassFSR", "dijet mass [GeV]"],
+                    ["MassFSR_JECUp", "dijet mass JEC up [GeV]"],
+                    ["MassFSR_JECDown","dijetmass JEC down [GeV]"],
+                    ["MassFSR_JERUp","dijet JER up GeV)"],
+                    ["MassFSR_JERDown","dijet JER down [GeV]"],
+                    #["MassFSRProjMET", "dijet mass (FSR + MET) [GeV]"],
+                    #["MinJetPt", "min(p_{T}^{j1}, p_{T}^{j2}) [GeV]"],
+                    #["MaxJetPt", "max(p_{T}^{j1}, p_{T}^{j2}) [GeV]"],
+                    #["Mass", "dijet mass (R=0.4) [GeV]"],
+                    #["MassAK08", "dijet mass (R=0.8) [GeV]"],
+                    #["Pt", "dijet p_{T} [GeV]"],
+                    #["Eta","dijet #eta"],
+                    #["DeltaPhi","#Delta#phi_{jj}"],
+                    #["MaxJetCSV","max(CSV_{j1},CSV_{j2})"],
+                    #["MinJetCSV","min(CSV_{j1},CSV_{j2})"],
+                    #["Vtype","event type"],
+                    #["njet30","multiplicity of jets with p_{T}>30 GeV"],
+                    #["njet50","multiplicity of jets with p_{T}>50 GeV"],
+                    #["njet70","multiplicity of jets with p_{T}>70 GeV"],
+                    #["njet100","multiplicity of jets with p_{T}>100 GeV"],
+                    #["MET","E_{T}^{miss} [GeV]"],
+                    #["PtBalance","(p_{T}^{j1}-p_{T}^{j2})/(p_{T}^{j1}+p_{T}^{j2})"],
+                    #["MaxJetPtoMass", "max(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
+                    #["MinJetPtoMass","min(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
+                    #["MaxEta","max(#eta^{j1}, #eta^{j2})"],
+                    #["DeltaEta","|#Delta#eta_{jj}|"],
                     ]:
 
                     if (("_JEC" in hist[0]) or ("_JER" in hist[0])) and (syst!="" or cat_btag!="Had_MT" or cat_kin!="MinPt100_DH1p6"):

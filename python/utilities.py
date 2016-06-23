@@ -201,7 +201,14 @@ def get_bias(mass="750", pdf_name="polydijet", deg=2, is_data=True):
 
     formula = ROOT.TFormula("formula", FitBkgCfg[pdf_name][pdf_order]["bias_formula"])
     bias = formula.Eval( float(mass) )
-    print ("Bias for %s_%s at m=%.0f = %.2f" % (pdf_name, pdf_order, float(mass), bias))
+    print ("\tbias for %s_%s at m=%.0f = %.2f" % (pdf_name, pdf_order, float(mass), bias))
 
     return bias
+
+
+def get_sliding_edges(mass=700):
+    #ranges = [0.5*mass + 125, mass + 200]
+    ranges = [0.50*mass + 125 + (5 if mass==600 else 0), mass + 200]
+    #ranges =  [0.5*mass + 125, m + 150]
+    return ranges
 
