@@ -167,10 +167,23 @@ class BiasStudy:
         return
 
 
-    def doFTest(self, data_name="data_bkg", test_pdfs=[], parameter_set="default"):
+    def doFTest(self, data_name="data_bkg", test_pdfs=[], parameter_set="default", add_fake_sgn=0., fake_sgn="Spin0_M750"):
 
         self.data = self.w.data(data_name)
         self.data.Print()
+
+        if add_fake_sgn>0.:
+            pdf_sgn = self.w.pdf("buk_pdf_sgn_"+fake_sgn)
+            sgn_norm = self.w.var("buk_pdf_sgn_"+fake_sgn+"_norm")
+            sgn_norm_val = sgn_norm.getVal()
+            sgn_norm.setVal( sgn_norm_val*add_fake_sgn )
+            pdf_sgn_ext = ROOT.RooExtendPdf("pdf_sgn_ext","", pdf_sgn, sgn_norm)
+            self.x.setRange(self.x.getMin(),self.x.getMax())
+            self.x.setBins(int((self.x.getMax()-self.x.getMin())/0.1))
+            data_sgn = pdf_sgn_ext.generate(ROOT.RooArgSet(self.x), RooFit.Extended()) 
+            data_sgn_binned = ROOT.RooDataHist("data_hist", "", ROOT.RooArgSet(self.x), data_sgn, 1.0)
+            self.data.add(data_sgn_binned)
+            print ("@@@@@@ Adding a fake signal with %.1f times the %s sample" % (add_fake_sgn, fake_sgn))
 
         is_data = (data_name=="data_obs") 
 
@@ -243,7 +256,7 @@ class BiasStudy:
 
             h_rebinned = self.data.createHistogram("h_"+data_name+"_rebinned", self.x, RooFit.Binning( int((self.x.getMax()-self.x.getMin())/5.0) , self.x.getMin(), self.x.getMax()) )
             data_rebinned = ROOT.RooDataHist(data_name+"_rebinned","", ROOT.RooArgList(self.x), h_rebinned, 1.0)
-            self.plot(data=data_rebinned, pdfs=pdfs, probs=probs, npars=npars, legs=legs, title=pdf_name+"_"+data_name, header="F-test: "+pdf_name)
+            self.plot(data=data_rebinned, pdfs=pdfs, probs=probs, npars=npars, legs=legs, title=pdf_name+"_"+data_name+("_sgnInjected" if add_fake_sgn>0. else ""), header="F-test: "+pdf_name+(", signal injected" if add_fake_sgn>0. else ""))
 
         print FTestCfg
         return
@@ -464,13 +477,13 @@ test_pdfs= [
     #"expdijet"
     ]
 
-cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_430to800"
+cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800"
 cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "polydijet"
 cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "polydijet"
 cfg_n_bins = int(argv[4]) if len(argv)>=5 else 200
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
-cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M750"
-cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 0.
+cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M600"
+cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 15.
 cfg_ntoys = int(argv[8]) if len(argv)>=9 else 0
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
@@ -482,7 +495,7 @@ bs = BiasStudy(fname=cfg_fname,
                blind_plot=True
                )
 
-bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default" )
+bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default", add_fake_sgn=cfg_sgn_xsec, fake_sgn=cfg_sgn_name)
 #bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc, parameter_set="default")
 
 print FTestCfg_data

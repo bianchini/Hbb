@@ -207,8 +207,18 @@ def get_bias(mass="750", pdf_name="polydijet", deg=2, is_data=True):
 
 
 def get_sliding_edges(mass=700):
-    #ranges = [0.5*mass + 125, mass + 200]
-    ranges = [0.50*mass + 125 + (5 if mass==600 else 0), mass + 200]
+    ranges = [0.5*mass + 125, mass + 200]
+    #ranges = [0.50*mass + 125 + (5 if mass==600 else 0), mass + 200]
     #ranges =  [0.5*mass + 125, m + 150]
     return ranges
+
+def get_sgn_injected(mass=750):
+    if mass <= 600:
+        return 15
+    elif mass <= 750:
+        return 5
+    elif mass <= 900:
+        return 4
+    else:
+        return 3
 

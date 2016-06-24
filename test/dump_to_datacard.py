@@ -35,7 +35,7 @@ def make_datacard( ws_name='Xbb_workspace',
 
     ws = ws_file.Get(ws_name)
     obs = ws.data(data_obs).sumEntries()
-    #bias = ws.var('bias_sgn_'+sgn).getVal()
+    #bias = ws.var('bias_sgn_'+sgn).getVal()    
     bias = ("%.2f" % get_bias(mass=sgn[7:], pdf_name=pdf_bkg, deg=FTestCfg[pdf_bkg]['MaxOrder'][x_range], is_data=is_data) )
 
     f = open( save_dir+'/'+outname+postfix+'.txt','w')
@@ -114,7 +114,8 @@ signal_to_range = {
     'Spin0_M600' : '400to800',
     'Spin0_M650' : '400to800',
     'Spin0_M700' : '500to900',
-    'Spin0_M750' : '500to900',
+    #'Spin0_M750' : '500to900',
+    'Spin0_M750' : '550to1200',
     'Spin0_M800' : '500to900',
     'Spin0_M850' : '600to1000',
     'Spin0_M900' : '600to1000',

@@ -67,16 +67,31 @@ signal_to_parameters = {
 use_fixed_ranges = False
 use_sliding_edges = True
 
+wait_for_plot = True
+
 ############################################################################################
 
-def run_combine(datacard='', what='limit', params=[]):
+def get_eff(datacard="", sgn=""):
+    f = ROOT.TFile.Open(datacard+".root", "READ")
+    w = f.Get("Xbb_workspace")
+    n = w.var("buk_pdf_sgn_"+sgn+"_norm").getVal()
+    n /= 2630.
+    f.Close()
+    return n
+
+############################################################################################
+
+def run_combine(datacard='', what='limit', params=[], is_blind=True):
 
     print "Running on datacard:", datacard
 
     if what=='limit':
         res = []
         if not os.path.exists("higgsCombine"+datacard+".Asymptotic.mH120.root"):
-            os.system('combine -M Asymptotic --run expected '+datacard+'.txt'+' -n '+datacard)
+            if is_blind:
+                os.system('combine -M Asymptotic --run expected '+datacard+'.txt'+' -n '+datacard)
+            else:
+                os.system('combine -M Asymptotic '+datacard+'.txt'+' -n '+datacard)
         f = ROOT.TFile.Open("higgsCombine"+datacard+".Asymptotic.mH120.root")
         if f==None or f.IsZombie():
             return res
@@ -110,30 +125,9 @@ def run_combine(datacard='', what='limit', params=[]):
 
 ############################################################################################
 
-def make_postfit(mlfit="mlfit.root", plot="Had_MT_MinPt100_DH1p6_fit_b"):
-
-    c = ROOT.TCanvas("c", "canvas", 500, 500) 
-    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
-    pad1.SetGridx()  
-    pad1.SetGridy()  
-    pad1.Draw()      
-    pad1.cd()    
-    
-    f = ROOT.TFile.Open(mlfit)
-    p = f.Get(plot)
-
-
-
-############################################################################################
-
-def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
+def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False):
 
     c = ROOT.TCanvas("c", "canvas", 600, 600) 
-    #pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
-    #pad1.SetGridx()  
-    #pad1.SetGridy()  
-    #pad1.Draw()
-    #pad1.cd() 
     c.SetLogy()
     
     leg = ROOT.TLegend(0.55,0.65,0.85,0.88, "","brNDC")
@@ -150,7 +144,8 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     expected = ROOT.TGraphAsymmErrors()
     onesigma = ROOT.TGraphAsymmErrors()
     twosigma = ROOT.TGraphAsymmErrors()
-    
+    observed = ROOT.TGraphAsymmErrors()
+
     expected.SetLineColor(ROOT.kBlack)
     expected.SetLineStyle(ROOT.kSolid)
     expected.SetLineWidth(2)
@@ -163,39 +158,65 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     twosigma.SetFillColor(ROOT.kYellow)
     twosigma.SetFillStyle(1001)
 
+    observed.SetLineColor(ROOT.kBlack)
+    observed.SetLineStyle(ROOT.kSolid)
+    observed.SetLineWidth(2)
+    observed.SetMarkerStyle(ROOT.kFullCircle)
+    observed.SetMarkerColor(ROOT.kBlack)
+
     for ires,res in enumerate(results):
         mass_name = res[0]
         mass_results = res[1]
+        accept = res[2]
+        if do_acceptance:
+            for ir,r in enumerate(mass_results):
+                #print ("%.3f --> %.3f" % (r, r*accept))
+                r *= accept
+                mass_results[ir] = r
+
         imass = float(mass_name.split('_')[-1][1:]) 
         expected.SetPoint(ires, imass, mass_results[2])
         onesigma.SetPoint(ires, imass, mass_results[2])
         onesigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[1], mass_results[3]-mass_results[2])
         twosigma.SetPoint(ires, imass, mass_results[2])
         twosigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
+        if not is_blind:
+            observed.SetPoint(ires, imass, mass_results[5])
 
     expected.Print("")
     onesigma.Print("")
     twosigma.Print("")
 
+    if not is_blind:
+        leg.AddEntry(observed, "Observed", "LP")
     leg.AddEntry(expected, "Expected", "L")
-    leg.AddEntry(onesigma, "68%", "F")
-    leg.AddEntry(twosigma, "95%", "F")
-    
+    leg.AddEntry(onesigma, "Expected (68%)", "F")
+    leg.AddEntry(twosigma, "Expected (95%)", "F")
+
     mg.Add(twosigma)
     mg.Add(onesigma)
     mg.Add(expected)
+    if not is_blind:
+        mg.Add(observed)
 
-    mg.SetMinimum(1.)
-    mg.SetMaximum(25.)
+    if do_acceptance: 
+        mg.SetMinimum(0.01)
+        mg.SetMaximum(10.)
+    else:
+        mg.SetMinimum(1.)
+        mg.SetMaximum(25.)
 
     mg.Draw("ALP3")
-    #mg.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV, L=2.63 fb^{-1}")
+
     mg.GetXaxis().SetTitleSize(0.05)
     mg.GetYaxis().SetTitleSize(0.05)
     mg.GetYaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitle("m_{X} (GeV)")
-    mg.GetYaxis().SetTitle("95% CL limit on #sigma #times BR(X#rightarrow b#bar{b}) (pb)")
+    if do_acceptance:
+        mg.GetYaxis().SetTitle("95% CL limit on #sigma #times A #times #epsilon (pb)")
+    else:
+        mg.GetYaxis().SetTitle("95% CL limit on #sigma #times BR(X#rightarrow b#bar{b}) (pb)")
 
     c.Update()
     pave_lumi = ROOT.TPaveText(0.46,0.90,0.90,0.96, "NDC")
@@ -212,105 +233,24 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/" ):
     pave_cms.SetTextSize(0.035)
     pave_cms.AddText("CMS preliminary")
     pave_cms.Draw()
+    leg.Draw()
     c.Modified()
 
-    leg.Draw()
+    if wait_for_plot:
+        raw_input()
 
-    raw_input()
+    save_name = "limit_"+out_name
+    if is_blind:
+        save_name += "_blind"
+    if do_acceptance:
+        save_name += "_acc"
 
     for ext in ["png", "pdf"]:
-        c.SaveAs(save_dir+"/limit_"+out_name+"."+ext)
+            c.SaveAs(save_dir+"/"+save_name+"."+ext)
 
 ############################################################################################
 
-def make_canvas_split( results=[], out_name="", save_dir="./plots/Jun09/" ):
-
-    c = ROOT.TCanvas("c", "canvas", 500, 500) 
-    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
-    pad1.SetGridx()  
-    pad1.SetGridy()  
-    pad1.Draw()      
-    pad1.cd()    
-    
-    leg = ROOT.TLegend(0.55,0.65,0.85,0.88, "","brNDC")
-    if "Spin0" in out_name:
-        leg.SetHeader("gg #rightarrow X(0^{+}) #rightarrow b#bar{b}")  
-    else:
-        leg.SetHeader("gg/q#bar{q} #rightarrow X(2^{+}) #rightarrow b#bar{b}")  
-    leg.SetFillStyle(0)
-    leg.SetBorderSize(0)
-    leg.SetTextSize(0.04)
-    leg.SetFillColor(10)    
-
-    mg = ROOT.TMultiGraph()
-    expected =[]
-    onesigma = []
-    twosigma = []
-    for ig,g in enumerate(results):
-        ex = ROOT.TGraphAsymmErrors()
-        ex.SetName(("expected_%d" % ig))
-        ex.SetLineColor(ROOT.kBlack)
-        ex.SetLineStyle(ROOT.kSolid)
-        ex.SetLineWidth(2)
-        expected.append( ex )
-        on = ROOT.TGraphAsymmErrors()
-        on.SetName(("onesigma_%d" % ig))
-        on.SetLineWidth(0)
-        on.SetFillColor(ROOT.kGreen)
-        on.SetFillStyle(1001)
-        onesigma.append( on )
-        tw = ROOT.TGraphAsymmErrors()
-        tw.SetName(("twosigma_%d" % ig))
-        tw.SetLineWidth(0)
-        tw.SetFillColor(ROOT.kYellow)
-        tw.SetFillStyle(1001)
-        twosigma.append( tw )
-
-
-    for ires1,res1 in enumerate(results):
-        for ires2,res2 in enumerate(res1):
-            mass_name = res2[0]
-            mass_results = res2[1]
-            imass = float(mass_name.split('_')[-1][1:]) 
-            expected[ires1].SetPoint(ires2, imass, mass_results[2])
-            onesigma[ires1].SetPoint(ires2, imass, mass_results[2])
-            onesigma[ires1].SetPointError(ires2, 0.0, 0.0, mass_results[2]-mass_results[1], mass_results[3]-mass_results[2])
-            twosigma[ires1].SetPoint(ires2, imass, mass_results[2])
-            twosigma[ires1].SetPointError(ires2, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
-        expected[ires1].Print()
-        onesigma[ires1].Print()
-        twosigma[ires1].Print()
-        mg.Add(twosigma[ires1])
-        mg.Add(onesigma[ires1])
-        mg.Add(expected[ires1])
-
-    leg.AddEntry(expected[0], "Expected", "L")
-    leg.AddEntry(onesigma[0], "68%", "F")
-    leg.AddEntry(twosigma[0], "95%", "F")
-    
-    mg.SetMinimum(0.)
-    mg.SetMaximum(20.)
-
-    mg.Draw("ALP3")
-    mg.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV, L=2.63 fb^{-1}")
-    mg.GetXaxis().SetTitleSize(0.05)
-    mg.GetYaxis().SetTitleSize(0.05)
-    mg.GetYaxis().SetTitleOffset(0.85)
-    mg.GetXaxis().SetTitle("Mass (GeV)")
-    mg.GetYaxis().SetTitle("#sigma #times BR(X#rightarrow b#bar{b}) (pb) at 95% CL")
-    mg.GetXaxis().SetLimits(500, 1250)
-
-    leg.Draw()
-
-    raw_input()
-
-    for ext in ["png", "pdf"]:
-        c.SaveAs(save_dir+"/limit_"+out_name+"."+ext)
-
-
-############################################################################################
-
-def make_limit_plot(pdf='dijet', spin=0, save_dir=""):
+def make_limit_plot(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False):
 
     sgns = []
     if spin == 0:
@@ -340,44 +280,19 @@ def make_limit_plot(pdf='dijet', spin=0, save_dir=""):
 
     print tests
     for itest,test in enumerate(tests):
-        res = run_combine("Xbb_workspace_"+test, what='limit')
+        res = run_combine("Xbb_workspace_"+test, what='limit', is_blind=is_blind)
+
+        test_split = test.split("_")
+        dc_name = "Xbb_workspace_"+test_split[0]
+        for t in test_split[1:6]:
+            dc_name += ("_"+t)
+        eff = get_eff(dc_name, test_split[-2]+"_"+(test_split[-1]).split(".")[0])
+        print ("%s ==> %.3f" % (test_split[-2]+"_"+(test_split[-1]).split(".")[0], eff))
+
         if len(res)>0:
-            results.append([test.split('_')[-1],res])
+            results.append([test.split('_')[-1],res, eff])
             
-    make_canvas( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir )
-
-############################################################################################
-
-def make_limit_plot_split(out_name="", save_dir=""):
-
-    tests = []
-    results = []
-    for cat_btag in ['Had_MT']:
-        for cat_kin in ['MinPt100_DH1p6']:        
-            for pdf_s in ['buk']:
-                for pdf_b in ['polydijet']:
-                    for mass in ['MassFSR']:
-                        for sgn in [
-                            'Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200',
-                            #'Spin2_M550', 'Spin2_M600', 'Spin2_M650', 'Spin2_M700', 'Spin2_M750', 'Spin2_M800', 'Spin2_M850', 'Spin2_M900', 'Spin2_M1000', 'Spin2_M1100', 'Spin2_M1200'
-                            ]:
-                            for x_range in [
-                                #'550to1200'
-                                signal_to_range[sgn]
-                                ]:
-                                tests.append(cat_btag+'_'+cat_kin+'_'+mass+'_'+x_range+'_'+pdf_s+'_'+pdf_b+'_'+sgn)
-
-    print tests
-    for itest,test in enumerate(tests):
-        res = run_combine("Xbb_workspace_"+test, what='limit')
-        if len(res)>0:
-            results.append([test.split('_')[-1],res])
-            
-    results_merged = [ [results[0], results[1], results[2]], [results[3], results[4], results[5]], [results[6], results[7]], [results[8], results[9], results[10]] ]
-    #results_merged = [ [results[0], results[1], results[2]]  ]
-
-    make_canvas_split( results=results_merged, out_name=out_name, save_dir=save_dir )
-
+    make_canvas( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance)
 
 ############################################################################################
 
@@ -404,5 +319,13 @@ def make_fits():
 
 
 #make_fits()
-make_limit_plot(pdf="dijet", spin=2, save_dir="../V7/")
-#make_limit_plot_split(out_name="Spin0_split_polydijet", save_dir="../V6/")
+
+#make_limit_plot(pdf="dijet", spin=0, save_dir="../V7/", is_blind=True, do_acceptance=False)
+#make_limit_plot(pdf="dijet", spin=2, save_dir="../V7/", is_blind=True, do_acceptance=False)
+#make_limit_plot(pdf="dijet", spin=0, save_dir="../V7/", is_blind=False, do_acceptance=False)
+#make_limit_plot(pdf="dijet", spin=2, save_dir="../V7/", is_blind=False, do_acceptance=False)
+
+make_limit_plot(pdf="dijet", spin=0, save_dir="../V7/", is_blind=True, do_acceptance=True)
+#make_limit_plot(pdf="dijet", spin=2, save_dir="../V7/", is_blind=True, do_acceptance=True)
+#make_limit_plot(pdf="dijet", spin=0, save_dir="../V7/", is_blind=False, do_acceptance=True)
+#make_limit_plot(pdf="dijet", spin=2, save_dir="../V7/", is_blind=False, do_acceptance=True)
