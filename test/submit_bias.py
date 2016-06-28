@@ -49,23 +49,37 @@ fnames =  [
     #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',  ["Spin0_M700", "Spin0_M750", "Spin0_M800"] ],
     #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_600to1000', ["Spin0_M850", "Spin0_M900"] ],
     #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_700to1400', ["Spin0_M1000", "Spin0_M1100", "Spin0_M1200"] ],
-    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800',  ["Spin0_M600"] ],
-    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',  ["Spin0_M750"] ],
-    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_600to1000', ["Spin0_M900"] ],
-    ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_700to1400', ["Spin0_M1100"] ],
+    #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800',  ["Spin0_M600"] ],
+    #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_500to900',  ["Spin0_M750"] ],
+    #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_600to1000', ["Spin0_M900"] ],
+    #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_700to1400', ["Spin0_M1100"] ],
 ]
 
-sgns = ['Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200']
+sgns = [#'Spin0_M550', 
+        #'Spin0_M600', 
+        #'Spin0_M650', 
+        #'Spin0_M700', 
+        'Spin0_M750', 
+        #'Spin0_M800', 
+        #'Spin0_M850', 
+        #'Spin0_M900', 
+        'Spin0_M1000', 
+        #'Spin0_M1100', 
+        #'Spin0_M1200'
+        ]
 for sgn in sgns:        
     mX = float(sgn.split('_')[-1][1:])
     edges = get_sliding_edges(mass=mX)
     range_name = ("%.0fto%.0f" % (edges[0],edges[1]))            
-    #fnames.append( ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_'+range_name, [sgn]] )
+    fnames.append( ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_'+range_name, [sgn]] )
+
+#fnames.append( ['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to800', ['Spin0_M650']] )
 
 
 for fname in fnames:
     for pdf_alt_name in [
-        'polydijet',
+        'dijet',
+        #'polydijet',
         #'pow',
         #'exp',
         #'polyexp',
@@ -73,16 +87,17 @@ for fname in fnames:
         ]:
         for pdf_fit_name in [
             #'polyexp', 
-            'polydijet', 
-            #'dijet'
+            #'polydijet', 
+            'dijet'
             ]:
             for sgn_name in fname[1]:
-                for nproc in xrange(1):
-                    submit(cfg_fname=fname[0], cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
-                           cfg_n_bins=-1, 
-                           cfg_pdf_sgn_name="buk", cfg_sgn_name=sgn_name, 
-                           cfg_sgn_xsec=0.,
-                           #cfg_sgn_xsec=get_sgn_injected( float(sgn_name.split('_')[-1][1:])),
-                           cfg_ntoys=0, 
-                           cfg_nproc=nproc)
-                    #exit(1)
+                for sgn_xsec in [1.0, 2.0, 3.0, 4.0, 5.0]:
+                    for nproc in xrange(20):
+                        submit(cfg_fname=fname[0], cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
+                               cfg_n_bins=-1, 
+                               cfg_pdf_sgn_name="buk", cfg_sgn_name=sgn_name, 
+                               cfg_sgn_xsec=sgn_xsec,
+                               #cfg_sgn_xsec=get_sgn_injected( float(sgn_name.split('_')[-1][1:])),
+                               cfg_ntoys=50, 
+                               cfg_nproc=nproc)
+                        #exit(1)

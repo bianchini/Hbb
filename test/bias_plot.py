@@ -15,119 +15,63 @@ save = True
 
 signal_to_range = {
     'Spin0_M550' : {
-        'file' : '400to800_bias_polydijet_deg3_Spin0_M550',
+        'file' : '400to750_bias_dijet_deg2_Spin0_M550',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M600' : {
-        'file' : '400to800_bias_polydijet_deg3_Spin0_M600',
+        'file' : '425to800_bias_dijet_deg2_Spin0_M600',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M650' : {
-        'file' : '400to800_bias_polydijet_deg3_Spin0_M650',
+        'file' : '450to850_bias_dijet_deg2_Spin0_M650',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M700' : {
-        #'file' : '500to900_bias_polydijet_deg3_Spin0_M700',
-        'file' : '500to900_bias_polydijet_deg2_Spin0_M700',
+        'file' : '475to900_bias_dijet_deg2_Spin0_M700',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M750' : {
-        #'file' : '500to900_bias_polydijet_deg3_Spin0_M750',
-        'file' : '500to900_bias_polydijet_deg2_Spin0_M750',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-525to1200' : {
-        'file' : '525to1200_bias_polydijet_deg3_data_obs_buk_Spin0_M750_xsec0',
+        'file' : '500to950_bias_dijet_deg2_Spin0_M750',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M800' : {
-        #'file' : '500to900_bias_polydijet_deg3_Spin0_M800',
-        'file' : '500to900_bias_polydijet_deg2_Spin0_M800',
+        'file' : '525to1000_bias_dijet_deg2_Spin0_M800',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M850' : {
-        #'file' : '600to1000_bias_polydijet_deg3_Spin0_M850',
-        'file' : '600to1000_bias_polydijet_deg2_Spin0_M850',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M850-525to1200' : {
-        'file' : '525to1200_bias_polydijet_deg3_data_obs_buk_Spin0_M850_xsec0',
+        'file' : '550to1050_bias_dijet_deg2_Spin0_M850',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M900' : {
-        #'file' : '600to1000_bias_polydijet_deg3_Spin0_M900',
-        'file' : '600to1000_bias_polydijet_deg2_Spin0_M900',
+        'file' : '575to1100_bias_dijet_deg2_Spin0_M900',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M1000' : {
-        #'file' : '700to1400_bias_polydijet_deg3_data_obs_buk_Spin0_M1000_xsec0',
-        #'file' : '700to1400_bias_polydijet_deg3_Spin0_M1000',
-        'file' : '700to1400_bias_polydijet_deg2_Spin0_M1000',
+        'file' : '625to1200_bias_dijet_deg2_Spin0_M1000',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M1100' : {
-        #'file' : '700to1400_bias_polydijet_deg3_data_obs_buk_Spin0_M1000_xsec0',
-        #'file' : '700to1400_bias_polydijet_deg3_Spin0_M1100',
-        'file' : '700to1400_bias_polydijet_deg2_Spin0_M1100',
+        'file' : '675to1300_bias_dijet_deg2_Spin0_M1100',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
     'Spin0_M1200' : {
-        #'file' : '700to1400_bias_polydijet_deg3_data_obs_buk_Spin0_M1200_xsec0',
-        #'file' : '700to1400_bias_polydijet_deg3_Spin0_M1200',
-        'file' : '700to1400_bias_polydijet_deg2_Spin0_M1200',
+        'file' : '725to1400_bias_dijet_deg2_Spin0_M1200',
         'max_bias' : 0.0,
         'max_bias_over_sgn' : 0.0,
         },
-
-    'Spin0_M750-400to900' : {
-        'file' : '400to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-425to900' : {
-        'file' : '425to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-450to900' : {
-        'file' : '450to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-475to900' : {
-        'file' : '475to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-500to900' : {
-        'file' : '500to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-525to900' : {
-        'file' : '525to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-    'Spin0_M750-550to900' : {
-        'file' : '550to900_bias_polydijet_deg3',
-        'max_bias' : 0.0,
-        'max_bias_over_sgn' : 0.0,
-        },
-
     }
+
+
 
 def make_canvas_vs_pdf( dir_name="./plots/V6/",
                         save_dir="./plots/V6/",
@@ -135,7 +79,7 @@ def make_canvas_vs_pdf( dir_name="./plots/V6/",
                         signals=[] ):
 
     leg = ROOT.TLegend(0.10,0.70,0.80,0.89, "","brNDC")
-    leg.SetHeader("Fit: P(x)*dijet")  
+    leg.SetHeader("Fit: dijet")  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -163,12 +107,12 @@ def make_canvas_vs_pdf( dir_name="./plots/V6/",
         max_bias = 0.0
         max_bias_over_sgn = 0.0
         for bin in xrange(0, h.GetNbinsX()):
-            b = bin if bin<2 else bin+1
+            b = bin if bin<4 else bin+1
             proj_bias = h_bias.ProjectionY("_py", b+1, b+1)
             proj_err = h_err.ProjectionY("_py", b+1, b+1)
             bias = proj_bias.GetMean()
             err = proj_err.GetMean()
-            if abs(bias)>max_bias and bin!=2:
+            if abs(bias)>max_bias and bin!=3:
                 max_bias = abs(bias)
                 max_bias_over_sgn = max_bias*err
             h.SetBinContent( bin+1  , bias)
@@ -202,8 +146,9 @@ def make_canvas_vs_pdf( dir_name="./plots/V6/",
             h.GetXaxis().SetLabelSize(0.05)
             h.GetXaxis().SetBinLabel(1, "x^P(x)")
             h.GetXaxis().SetBinLabel(2, "P(x)*exp(x)")
-            h.GetXaxis().SetBinLabel(3, "P(x)")
-            h.GetXaxis().SetBinLabel(4, "P(x)*dijet")
+            h.GetXaxis().SetBinLabel(3, "dijet")
+            h.GetXaxis().SetBinLabel(4, "P(x)")
+            #h.GetXaxis().SetBinLabel(4, "P(x)*dijet")
             h.GetXaxis().SetBinLabel(5, "exp^P(x)")
             h.GetYaxis().SetTitle("Mean of #frac{#hat{#mu}-#mu}{#sigma_{#mu}}")
             h.Draw("PE")      
@@ -338,19 +283,77 @@ def make_canvas_vs_mass_biasOmass( save_dir="./plots/V6/",
 
 ######################################################################################
 
-make_canvas_vs_pdf( dir_name="./plots/V6/ftests_v3/",  
-                    save_dir="./plots/V6/",
-                    signals=['Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800','Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200'], 
-                    save_name="bias_vs_pdf_deg2_sliding_windows")
+def make_canvas_vs_xsec( dir_name="./plots/V6/",
+                         save_dir="./plots/V6/",
+                         save_name="bias_vs_xsec",
+                         sgn="Spin0_M750",
+                         do_fit=False):
 
-make_canvas_vs_mass(save_dir="./plots/V6/", 
-                    signals=['Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800','Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200'], 
-                    save_name="bias_vs_mass_deg2_sliding_windows",
-                    do_fit=True)
+    leg = ROOT.TLegend(0.10,0.70,0.80,0.89, "","brNDC")
+    leg.SetHeader("Fit: dijet")  
+    leg.SetFillStyle(0)
+    leg.SetBorderSize(0)
+    leg.SetTextSize(0.04)
+    leg.SetFillColor(10)    
 
-make_canvas_vs_mass_biasOmass(save_dir="./plots/V6/", 
-                              signals=['Spin0_M550', 'Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800','Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200'], 
-                              save_name="biasOmass_vs_mass_deg2_sliding_windows",
-                              do_fit=True)
+    #c = ROOT.TCanvas("c", "canvas", 800, 600) 
+    #pad1 = ROOT.TPad("pad1", "pad1", 0, 0.1, 1, 1.0)     
+    #pad1.SetGridx()  
+    #pad1.SetGridy()  
+    #pad1.Draw()      
+    #pad1.cd()    
+
+    f = ROOT.TFile.Open(dir_name+"/ftest_Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_"+signal_to_range[sgn]['file']+".root")
+    if f==None:
+        return
+    print "Opened file", f.GetName()
+
+    #h_bias = ROOT.TH2F("h_bias", "",  10,0, 10,100,-4,4)
+    #h_bias.SetLineColor(ROOT.kBlue)
+    #h_bias.GetXaxis().SetTitle("#mu")
+    #h_bias.GetXaxis().SetTitle("Mean of #frac{#hat{#mu}-#mu}{#sigma_{#mu}}")
+
+    toys = f.Get("toys")        
+    toys.Draw("(ns_fit-ns_gen)/ns_err:ns_asy>>h_bias","alt==fit", "prof")    
+    ROOT.gDirectory.Get("h_bias").GetYaxis().SetTitle("Mean of #frac{#hat{#mu}-#mu}{#sigma_{#mu}}")
+    ROOT.gDirectory.Get("h_bias").GetXaxis().SetTitle("#mu")
+    ROOT.gDirectory.Get("h_bias").GetYaxis().SetRangeUser(-0.50, 0.50)
+    ROOT.gDirectory.Get("h_bias").GetXaxis().SetLimits(200,1500)
+    ROOT.gDirectory.Get("h_bias").SetTitle(sgn)
+    ROOT.gStyle.SetOptStat(0)
+
+    if do_fit:
+        func = ROOT.TF1("func", "[0]+[1]*x", 200., 1500)
+        ROOT.gDirectory.Get("h_bias").Fit(func, "R")
+ 
+    raw_input()
+
+    for ext in ["png", "pdf"]:
+        if save:
+            ROOT.gPad.SaveAs(save_dir+"/"+save_name+"."+ext)
+
+
+######################################################################################
+
+signals=[
+    'Spin0_M550', 
+    #'Spin0_M600', 
+    'Spin0_M650', 
+    'Spin0_M700', 
+    'Spin0_M750', 
+    'Spin0_M800',
+    'Spin0_M850', 
+    'Spin0_M900', 
+    'Spin0_M1000', 
+    #'Spin0_M1100', 
+    'Spin0_M1200'
+    ]
+
+make_canvas_vs_xsec( dir_name="./plots/PostPreApproval//", save_dir="./plots/PostPreApproval//", sgn="Spin0_M750", save_name="bias_vs_xsec_M750")
+make_canvas_vs_xsec( dir_name="./plots/PostPreApproval//", save_dir="./plots/PostPreApproval//", sgn="Spin0_M1000", save_name="bias_vs_xsec_M1000")
+
+#make_canvas_vs_pdf( dir_name="./plots/PostPreApproval/ftest/", save_dir="./plots/PostPreApproval/ftest/", signals=signals, save_name="bias_vs_pdf_deg2_sliding_windows")
+#make_canvas_vs_mass(save_dir="./plots/PostPreApproval/", signals=signals, save_name="bias_vs_mass_deg2_sliding_windows", do_fit=False)
+#make_canvas_vs_mass_biasOmass(save_dir="./plots/PostPreApproval/", signals=signals, save_name="biasOmass_vs_mass_deg2_sliding_windows", do_fit=False)
 
 
