@@ -44,7 +44,9 @@ signal_to_range = {
 }
 
 signal_to_parameters = {
-    'Spin0_M550' : [],
+    #'Spin0_M550' : [[-10,10], [4.0, 20.0], [+0.01, +0.10], [35., 100.]],
+    'Spin0_M550' : [[-10,10], [4.0, 20.0], [+0.00, +0.10], [35., 100.]],
+    #'Spin0_M600' : [[-13,13], [7.0, 10.0], [+0.01, +0.10], [35., 100.]],
     'Spin0_M600' : [],
     'Spin0_M650' : [],
     'Spin0_M700' : [],
@@ -55,7 +57,8 @@ signal_to_parameters = {
     'Spin0_M1000' : [],
     'Spin0_M1100' : [],
     'Spin0_M1200' : [],
-    'Spin2_M550' :  [[-10,10], [4.0, 20.0], [+0.01, +0.10], [35., 100.]],
+    #'Spin2_M550' :  [[-10,10], [4.0, 20.0], [+0.01, +0.10], [35., 100.]],
+    'Spin2_M550' :  [[-10,10], [4.0, 20.0], [+0.00, +0.10], [35., 100.]],
     'Spin2_M600' : [[-13,13]],
     'Spin2_M650' : [],
     'Spin2_M700' : [],
@@ -71,7 +74,7 @@ signal_to_parameters = {
 use_fixed_ranges = False
 use_sliding_edges = True
 
-wait_for_plot = False
+wait_for_plot = True
 
 ############################################################################################
 
@@ -114,14 +117,15 @@ def run_combine(datacard='', what='limit', params=[], is_blind=True):
         [rMin,rMax] = [-20,20] if len(params)==0 else params[0]
 
         # do the S+B fits and B-only fits w/ bias
-        command = ('combine -M MaxLikelihoodFit %s.txt --saveWorkspace --rMin %.0f --rMax %.0f' % (datacard, rMin, rMax) )
+        command = ('combine -M MaxLikelihoodFit %s.txt --saveWorkspace --rMin %.0f --rMax %.0f ' % (datacard, rMin, rMax) )
+        #  --minimizerStrategy 0
         if len(params)>1:
             command += ' --setPhysicsModelParameterRanges '
         (pdf,deg) = ('polydijet' if 'polydijet' in datacard else 'dijet', 2 if 'polydijet' in datacard else 2)
         for ip,p in enumerate(params):
             if ip==0:
                 continue
-            command += ('a%d_%s_deg%d_0=%.2f,%.2f' % (ip, pdf, deg, p[0], p[1]))
+            command += ('a%d_%s_deg%d_0=%.2f,%.2f' % (ip-1, pdf, deg, p[0], p[1]))
             if ip<len(params)-1:
                 command += ':'
         print command
@@ -131,6 +135,17 @@ def run_combine(datacard='', what='limit', params=[], is_blind=True):
         os.system(post_combine)
 
         # do the S+B fits and B-only fits w/ bias
+        command = ('combine -M MaxLikelihoodFit %s.txt --saveWorkspace --rMin %.3f --rMax %.3f ' % (datacard, -0.001, 0.001) )
+        #  --minimizerStrategy 0
+        if len(params)>1:
+            command += ' --setPhysicsModelParameterRanges '
+        (pdf,deg) = ('polydijet' if 'polydijet' in datacard else 'dijet', 2 if 'polydijet' in datacard else 2)
+        for ip,p in enumerate(params):
+            if ip==0:
+                continue
+            command += ('a%d_%s_deg%d_0=%.2f,%.2f' % (ip-1, pdf, deg, p[0], p[1]))
+            if ip<len(params)-1:
+                command += ':'
         command += (' --freezeNuisanceGroups signal')
         print command
         os.system(command+(' -n _%s_nobias' % datacard))
@@ -146,16 +161,21 @@ def run_combine(datacard='', what='limit', params=[], is_blind=True):
 
 ############################################################################################
 
-def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False):
+def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False, overlay_obs=False):
 
     c = ROOT.TCanvas("c", "canvas", 600, 600) 
+    c.SetLeftMargin(0.13)
     c.SetLogy()
     
-    leg = ROOT.TLegend(0.55,0.65,0.85,0.88, "","brNDC")
-    if "Spin0" in out_name:
-        leg.SetHeader("gg #rightarrow X(0^{+}) #rightarrow b#bar{b}")  
+    leg = ROOT.TLegend(0.48,0.60,0.88,0.88, "","brNDC")
+    if overlay_obs:
+        leg.SetHeader("X #rightarrow b#bar{b}")  
     else:
-        leg.SetHeader("gg/q#bar{q} #rightarrow X(2^{+}) #rightarrow b#bar{b}")  
+        if "Spin0" in out_name:
+            leg.SetHeader("Spin-0, X #righarrow b#bar{b}")  
+        else:
+            leg.SetHeader("Spin-2, X #righarrow b#bar{b}")  
+
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -163,13 +183,19 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
 
     mg = ROOT.TMultiGraph()
     expected = ROOT.TGraphAsymmErrors()
+    expected2 = ROOT.TGraphAsymmErrors()
     onesigma = ROOT.TGraphAsymmErrors()
     twosigma = ROOT.TGraphAsymmErrors()
     observed = ROOT.TGraphAsymmErrors()
+    observed2 = ROOT.TGraphAsymmErrors()
 
     expected.SetLineColor(ROOT.kBlack)
     expected.SetLineStyle(ROOT.kSolid)
     expected.SetLineWidth(2)
+
+    expected2.SetLineColor(ROOT.kGray)
+    expected2.SetLineStyle(ROOT.kSolid)
+    expected2.SetLineWidth(2)
     
     onesigma.SetLineWidth(0)
     onesigma.SetFillColor(ROOT.kGreen)
@@ -185,6 +211,12 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
     observed.SetMarkerStyle(ROOT.kFullCircle)
     observed.SetMarkerColor(ROOT.kBlack)
 
+    observed2.SetLineColor(ROOT.kGray)
+    observed2.SetLineStyle(ROOT.kDashed)
+    observed2.SetLineWidth(2)
+    observed2.SetMarkerStyle(ROOT.kFullCircle)
+    observed2.SetMarkerColor(ROOT.kGray)
+
     for ires,res in enumerate(results):
         mass_name = res[0]
         mass_results = res[1]
@@ -196,42 +228,64 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
                 mass_results[ir] = r
 
         imass = float(mass_name.split('_')[-1][1:]) 
+        if not is_blind:
+            if overlay_obs:
+                if ires < len(results)/2:
+                    print "Fill observed ", imass, mass_results[5]
+                    observed.SetPoint(ires, imass, mass_results[5])
+                else:
+                    print "Fill observed2 ", imass, mass_results[5]
+                    observed2.SetPoint(ires-len(results)/2, imass, mass_results[5])
+                    expected2.SetPoint(ires-len(results)/2, imass, mass_results[2])
+                    continue
+            else:
+                observed.SetPoint(ires, imass, mass_results[5])
+                
         expected.SetPoint(ires, imass, mass_results[2])
         onesigma.SetPoint(ires, imass, mass_results[2])
         onesigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[1], mass_results[3]-mass_results[2])
         twosigma.SetPoint(ires, imass, mass_results[2])
         twosigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
-        if not is_blind:
-            observed.SetPoint(ires, imass, mass_results[5])
-
-    expected.Print("")
-    onesigma.Print("")
-    twosigma.Print("")
 
     if not is_blind:
-        leg.AddEntry(observed, "Observed", "LP")
-    leg.AddEntry(expected, "Expected", "L")
-    leg.AddEntry(onesigma, "Expected (68%)", "F")
-    leg.AddEntry(twosigma, "Expected (95%)", "F")
+        if overlay_obs:        
+            leg.AddEntry(observed, "Observed (Spin-0)", "LP")
+            leg.AddEntry(observed2, "Observed (Spin-2)", "LP")
+            leg.AddEntry(expected, "Expected (Spin-0)", "L")
+            #leg.AddEntry(expected2, "Expected (Spin-2)", "L")
+            leg.AddEntry(onesigma, "1#sigma", "F")
+            leg.AddEntry(twosigma, "2#sigma", "F")
+        else:
+            leg.AddEntry(observed, "Observed", "LP")
+            leg.AddEntry(expected, "Expected", "L")
+            leg.AddEntry(onesigma, "1#sigma", "F")
+            leg.AddEntry(twosigma, "2#sigma", "F")
 
     mg.Add(twosigma)
     mg.Add(onesigma)
     mg.Add(expected)
+    #if overlay_obs:
+    #    mg.Add(expected2)
     if not is_blind:
         mg.Add(observed)
+        if overlay_obs:
+            mg.Add(observed2)
 
     if do_acceptance: 
         mg.SetMinimum(0.01)
         mg.SetMaximum(10.)
     else:
         mg.SetMinimum(1.)
-        mg.SetMaximum(25.)
+        mg.SetMaximum(30.)
 
     mg.Draw("ALP3")
 
+    ROOT.TGaxis.SetMaxDigits(2)
+    mg.GetXaxis().SetLabelSize(0.04)
+    mg.GetYaxis().SetLabelSize(0.04)
     mg.GetXaxis().SetTitleSize(0.05)
     mg.GetYaxis().SetTitleSize(0.05)
-    mg.GetYaxis().SetTitleOffset(0.85)
+    mg.GetYaxis().SetTitleOffset(1.0)
     mg.GetXaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitle("m_{X} (GeV)")
     if do_acceptance:
@@ -240,7 +294,7 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
         mg.GetYaxis().SetTitle("95% CL limit on #sigma #times BR(X#rightarrow b#bar{b}) (pb)")
 
     c.Update()
-    pave_lumi = ROOT.TPaveText(0.46,0.90,0.90,0.96, "NDC")
+    pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
     pave_lumi.SetFillStyle(0);
     pave_lumi.SetBorderSize(0);
     pave_lumi.SetTextAlign(32)
@@ -248,20 +302,24 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
 
     pave_lumi.Draw()
-    pave_cms = ROOT.TPaveText(0.09,0.90,0.40,0.96, "NDC")
+    pave_cms = ROOT.TPaveText(0.124,0.83,0.43,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
     pave_cms.SetTextSize(0.035)
-    pave_cms.AddText("CMS preliminary")
+    pave_cms.AddText("CMS Preliminary")
     pave_cms.Draw()
     leg.Draw()
     c.Modified()
+    c.Draw()
 
     if wait_for_plot:
         raw_input()
 
     save_name = "limit_"+out_name
+    if overlay_obs:
+        save_name += "_together"
+
     if is_blind:
         save_name += "_blind"
     if do_acceptance:
@@ -272,10 +330,16 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
 
 ############################################################################################
 
-def make_limit_plot(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False):
+def make_limit_plot(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False, overlay_obs=False):
 
-    sgns = ['Spin'+str(spin)+'_M550', 'Spin'+str(spin)+'_M600', 'Spin'+str(spin)+'_M650', 'Spin'+str(spin)+'_M700', 'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200']
-        
+    sgns = []
+    for s in [0,2]:
+        if not overlay_obs and s!=spin:
+            continue
+        for m in [550,600,650,700,750,800,850,900,1000,1100,1200]:
+            sgns.append( 'Spin'+str(s)+'_M'+str(m) )
+
+   
     tests = []
     results = []
     for cat_btag in ['Had_MT']:
@@ -310,7 +374,7 @@ def make_limit_plot(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptan
         if len(res)>0:
             results.append([test.split('_')[-1],res, eff])
             
-    make_canvas( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance)
+    make_canvas( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
 
 ############################################################################################
 
@@ -318,7 +382,9 @@ def make_fits(pdf='dijet', spin=0, save_dir=""):
 
     sgns = [#'Spin'+str(spin)+'_M550', 
             'Spin'+str(spin)+'_M600', 
-            #'Spin'+str(spin)+'_M650', 'Spin'+str(spin)+'_M700', 'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200'
+            #'Spin'+str(spin)+'_M650', 
+            #'Spin'+str(spin)+'_M700', 
+            #'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200'
             ]
         
     tests = []
@@ -348,7 +414,7 @@ def make_fits(pdf='dijet', spin=0, save_dir=""):
             
 ############################################################################################
 
-def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True):
+def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True, show_chi2=False):
 
     c1 = ROOT.TCanvas("c1", "canvas", 600, 600) 
     
@@ -392,7 +458,7 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     pdf_bkg = w_s.pdf("shapeBkg_bkg_"+in_name)
     n_bkg_fit = w_s.obj("n_exp_final_bin"+in_name+"_proc_bkg")
     pdf_bkg_b = w_b.pdf("shapeBkg_bkg_"+in_name)
-    n_bkg_fit_b = w_b.obj("n_exp_final_bin"+in_name+"_proc_bkg")
+    n_bkg_fit_b = res_b.floatParsFinal().find("shapeBkg_bkg_"+in_name+"__norm")
     
     n_sgn = ROOT.RooRealVar("n_sgn", "", n_sgn_fit.getVal())
     n_bkg = ROOT.RooRealVar("n_bkg", "", n_bkg_fit.getVal())
@@ -400,12 +466,13 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
 
     pdf_comb_ext = ROOT.RooAddPdf("pdf_comb_ext","", ROOT.RooArgList(pdf_sgn,pdf_bkg),  ROOT.RooArgList(n_sgn,n_bkg))
 
-    h_rebinned = data_obs.createHistogram("h_data_obs_rebinned", x, RooFit.Binning( int((x.getMax()-x.getMin())/binWidth) , x.getMin(), x.getMax()) )
+    new_binning = int(( "%.0f" % ((x.getMax()-x.getMin())/binWidth)))    
+    h_rebinned = data_obs.createHistogram("h_data_obs_rebinned", x, RooFit.Binning( new_binning , x.getMin(), x.getMax()) )
     data_rebinned = ROOT.RooDataHist("data_obs_rebinned","", ROOT.RooArgList(x), h_rebinned, 1.0)
     
     frame1 = x.frame(RooFit.Name("frame1"))
     frame1.SetTitle("")
-    frame1.GetYaxis().SetTitle(("Events / %.1f GeV" % binWidth))
+    frame1.GetYaxis().SetTitle(("Events / %.1f GeV" % h_rebinned.GetBinWidth(1)))
     frame1.GetYaxis().SetTitleSize(24)
     frame1.GetYaxis().SetTitleFont(43)
     frame1.GetYaxis().SetTitleOffset(1.18)
@@ -462,9 +529,14 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     data_rebinned.plotOn(frame1, RooFit.Name("data_obs"))
     print "END plotting"
     chi2_s = frame1.chiSquare(pdf_comb_ext.GetName(), "data_obs", 2+1 if bkg_pdf=='dijet' else 3+1 )
-    chi2_b = frame1.chiSquare(pdf_comb_ext.GetName(), "data_obs", 2 if bkg_pdf=='dijet' else 3 )
+    chi2_b = frame1.chiSquare(pdf_bkg_b.GetName(), "data_obs", 2 if bkg_pdf=='dijet' else 3 )
+    ndof = (data_rebinned.numEntries()-(2 if bkg_pdf=='dijet' else 3))
+    print ROOT.TMath.Prob(chi2_b*ndof, ndof)
     leg.AddEntry(frame1.findObject("data_obs"), "Data", "PE")
-    leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg. (#chi^{2}=%.2f)" % chi2_b), "L")
+    if show_chi2:
+        leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg. (#chi^{2}=%.2f)" % chi2_b), "L")
+    else:
+        leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg."), "L")
     leg.AddEntry(h1sigmaU, "1#sigma bkg. unc.", "F")
     leg.AddEntry(h2sigmaU, "2#sigma bkg. unc.", "F")
     leg.AddEntry(frame1.getCurve(pdf_comb_ext.GetName()), ("Bkg. + signal"), "L")
@@ -475,22 +547,6 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     print "Drawing frame1..."
     frame1.Draw()
 
-    #ROOT.gPad.Update()
-    #sigma2 = frame1.getCurve(pdf_bkg_b.GetName()+"_2sigma")
-    #sigma1 = frame1.getCurve(pdf_bkg_b.GetName()+"_1sigma")
-    #nominal = frame1.getCurve(pdf_bkg_b.GetName())
-    #n2sigma = n.zeros(2sigma.GetN(), dtype=float)
-    #nominalX = nominal.GetX()
-    #nominalY = nominal.GetY()
-    #n1sigmaY = sigma1.GetY()
-    #n2sigmaY = sigma2.GetY()
-    #for i in xrange(nominal.GetN()):
-    #    if i%3!=0:
-    #        continue
-    #    print ("%.1f: %.1f [%.1f, %.1f]" % (nominalX[i], nominalY[i], n1sigmaY[i], n1sigmaY[2*nominal.GetN()-i-1] ))
-    #    print ("     :       [%.1f, %.1f]" % (n2sigmaY[i], n2sigmaY[2*nominal.GetN()-i-1] ))
-    #for obj in ROOT.gPad.GetListOfPrimitives():
-    #    print obj.GetName()        
 
     pave_lumi = ROOT.TPaveText(0.484,0.90,0.92,0.96, "NDC")
     pave_lumi.SetFillStyle(0);
@@ -539,20 +595,6 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     frame2.GetXaxis().SetLabelSize(20)            
     hresid = frame1.pullHist("data_obs", pdf_bkg_b.GetName())
     hresid.GetYaxis().SetRangeUser(-4,4)
-    #hresid2.SetLineStyle(ROOT.kSolid)
-    #hresid2.SetLineColor(ROOT.kRed)
-    #hresid2.SetLineWidth(2)
-    #hresid2.GetYaxis().SetRangeUser(-4,4)
-    #h_hresid2 = ROOT.TH1F("h_hresid2", "", frame2.GetNbinsX(), frame2.GetXaxis().GetXmin(), frame2.GetXaxis().GetXmax())
-    #hresid2 = frame1.pullHist("data_obs", pdf_bkg_b.GetName())
-    #pdf_comb_ext_int = pdf_comb_ext.createIntegral(ROOT.RooArgSet(x), "MassFSR").getVal() 
-    #for b in xrange(frame2.GetNbinsX()):
-    #    n_data = h_rebinned.GetBinContent(b+1)
-    #    x.setVal( h_rebinned.GetBinCenter(b+1) )        
-    #    sb = pdf_comb_ext.getVal()/pdf_comb_ext_int * (n_sgn.getVal()+n_bkg.getVal()) * h_rebinned.GetBinWidth(b+1)
-    #    hresid2.SetBinContent(b+1, (-sb+n_data)/math.sqrt(n_data))
-    #    print n_data, sb
-    #    h_hresid2.SetBinContent(b+1, hresid2.Eval( frame2.GetXaxis().GetBinCenter(b+1) ) )
 
     sigma2 = frame1.getCurve(pdf_bkg_b.GetName()+"_2sigma")
     sigma1 = frame1.getCurve(pdf_bkg_b.GetName()+"_1sigma")
@@ -594,9 +636,11 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     c1.Draw()
 
     print "Press ENTER to continue"
-    raw_input()
+    #raw_input()
 
-    #c1.SaveAs("tmp.png")
+    for ext in ["png", "pdf"]:
+        c1.SaveAs("plot_"+in_name+"_"+"MassFSR"+"_"+sgn+out_name+"."+ext)
+
     ROOT.gDirectory.Remove(h1sigmaU)
     ROOT.gDirectory.Remove(h1sigmaD)
     ROOT.gDirectory.Remove(h2sigmaU)
@@ -609,16 +653,76 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
 
 ############################################################################################
 
+def make_fit_plots(spin=0, pdf='dijet', save_dir=""):
 
-#make_fits(pdf='dijet', spin=2, save_dir="../PostPreApproval/")
+    sgns = ['Spin'+str(spin)+'_M550', 
+            'Spin'+str(spin)+'_M600', 
+            'Spin'+str(spin)+'_M650', 
+            'Spin'+str(spin)+'_M700', 
+            'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200'
+            ]
+        
+    sgn_to_binWidth = {
+        '550' : 12.5,
+        '600' : 12.5,
+        '650' : 12.5,
+        '700' : 12.5,
+        '750' : 12.5,
+        '800' : 12.5,
+        '850' : 12.5,
+        '900' : 12.5,
+        '1000' : 12.5,
+        '1100' : 12.5,
+        '1200' : 12.5,
+    }
 
-make_fit_plot()
+    sgn_to_xsec_vis = {
+        '550' : 200,
+        '600' : 150,
+        '650' : 100,
+        '700' : 75,
+        '750' : 50,
+        '800' : 50,
+        '850' : 30,
+        '900' : 30,
+        '1000' : 20,
+        '1100' : 15,
+        '1200' : 10,
+    }
+
+
+
+    tests = []
+    results = []
+    for cat_btag in ['Had_MT']:
+        for cat_kin in ['MinPt100_DH1p6']:        
+            for pdf_s in ['buk']:
+                for pdf_b in [pdf]:
+                    for mass in ['MassFSR']:
+                        for sgn in sgns:        
+                            mX = float(sgn.split('_')[-1][1:])
+                            if use_fixed_ranges:
+                                range_name = signal_to_range[sgn]
+                            elif use_sliding_edges:
+                                edges = get_sliding_edges(mass=mX)
+                                range_name = ("%.0fto%.0f" % (edges[0],edges[1]))            
+                            if "M550" in sgn:
+                                pdf_b = "polydijet"
+                            else:
+                                pdf_b = pdf
+                            make_fit_plot( in_name=cat_btag+"_"+cat_kin, x_name=mass, x_range=range_name, sgn=sgn, bkg_pdf=pdf_b, out_name="", save_dir=save_dir, binWidth=sgn_to_binWidth[("%.0f" % mX)], xsec_vis=sgn_to_xsec_vis[("%.0f" % mX)], plot_bands=True)
+
+############################################################################################
+
+for spin in [0,2]:
+    #make_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                        
+    #make_fit_plots(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
+    print "Ciao"
 
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
-#make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False)
+make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False, overlay_obs=True)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False)
-
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=True)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=True)
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=True)
