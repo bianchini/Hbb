@@ -8,6 +8,7 @@ import os
 import string
 import os.path
 import math
+import numpy as n
 
 import ROOT
 from ROOT import RooFit
@@ -347,7 +348,7 @@ def make_fits(pdf='dijet', spin=0, save_dir=""):
             
 ############################################################################################
 
-def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100.):
+def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True):
 
     c1 = ROOT.TCanvas("c1", "canvas", 600, 600) 
     
@@ -358,11 +359,11 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     pad1.Draw()      
     pad1.cd()    
 
-    leg = ROOT.TLegend(0.38,0.60,0.85,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.50,0.48,0.85,0.88, "","brNDC")
     if "Spin0" in sgn:
-        leg.SetHeader("gg #rightarrow X(0^{+}) #rightarrow b#bar{b}")  
+        leg.SetHeader(("Spin-0, m_{X}=%.0f GeV" % (float(sgn.split('_')[-1][1:]))))  
     else:
-        leg.SetHeader("gg/q#bar{q} #rightarrow X(2^{+}) #rightarrow b#bar{b}")  
+        leg.SetHeader(("Spin-2, m_{X}=%.0f GeV" % (float(sgn.split('_')[-1][1:]))))  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.06)
@@ -380,7 +381,6 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
 
     w_s = ws_file.Get("MaxLikelihoodFitResult")
     w_b = ws_file_nobias.Get("MaxLikelihoodFitResult")
-    #w.Print()
 
     x = w_s.var("x")
     r = w_s.var("r")
@@ -417,37 +417,82 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     frame1.GetXaxis().SetLabelSize(0)
     #ROOT.TGaxis.SetMaxDigits(2)
 
+    h1sigmaU = ROOT.TH1F("h1sigmaU", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
+    h1sigmaU.SetFillColor(ROOT.kGreen)
+    h1sigmaU.SetFillStyle(1001)
+
+    h1sigmaD = ROOT.TH1F("h1sigmaD", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
+    h1sigmaD.SetFillColor(ROOT.kGreen)
+    h1sigmaD.SetFillStyle(1001)
+
+    h2sigmaU = ROOT.TH1F("h2sigmaU", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
+    h2sigmaU.SetFillColor(ROOT.kYellow)
+    h2sigmaU.SetFillStyle(1001)
+
+    h2sigmaD = ROOT.TH1F("h2sigmaD", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
+    h2sigmaD.SetFillColor(ROOT.kYellow)
+    h2sigmaD.SetFillStyle(1001)
+
+    print "START plotting"
+    print "\tPlot data_obs..."
     data_rebinned.plotOn(frame1, RooFit.Name("data_obs"))
-    pdf_bkg_b.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), 
+    if plot_bands:
+        print "\tPlot bkg +/- 2 sigma..."
+        pdf_bkg_b.plotOn(frame1, 
+                         RooFit.VisualizeError(res_b, 2, ROOT.kTRUE), 
+                         RooFit.LineColor(ROOT.kBlue), 
+                         RooFit.LineStyle(ROOT.kSolid), 
+                         RooFit.FillColor(ROOT.kYellow), RooFit.Name(pdf_bkg_b.GetName()+"_2sigma"), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent), RooFit.MoveToBack() )
+        print "\tPlot bkg +/- 1 sigma..."
+        pdf_bkg_b.plotOn(frame1, 
+                         RooFit.VisualizeError(res_b, 1, ROOT.kTRUE), 
+                         RooFit.LineColor(ROOT.kBlue), 
+                         RooFit.LineStyle(ROOT.kSolid), 
+                         RooFit.FillColor(ROOT.kGreen), RooFit.Name(pdf_bkg_b.GetName()+"_1sigma") , RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
+    print "\tPlot bkg..."
+    pdf_bkg_b.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kBlue), RooFit.LineStyle(ROOT.kSolid), 
                      RooFit.Name(pdf_bkg_b.GetName()), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
+    print "\tPlot sgn+bkg..."
+    pdf_comb_ext.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf_comb_ext.GetName()) )
+    print "\tPlot sgn..."
     pdf_sgn.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kMagenta), RooFit.LineStyle(ROOT.kDashed), 
                    RooFit.Name(pdf_sgn.GetName()), RooFit.Normalization(pdf_sgn_norm.getVal()*xsec_vis , ROOT.RooAbsReal.NumEvent) )
-    pdf_comb_ext.plotOn(frame1, 
-                        RooFit.VisualizeError(res_s, 1, ROOT.kFALSE), 
-                        RooFit.LineColor(ROOT.kGreen), 
-                        RooFit.LineStyle(ROOT.kSolid), 
-                        RooFit.FillColor(ROOT.kGreen), RooFit.Name(pdf_comb_ext.GetName()+"_1sigma") , RooFit.MoveToBack() )
-    pdf_comb_ext.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kBlue), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf_comb_ext.GetName()) )
 
+    print "\tPlot data_obs..."
+    data_rebinned.plotOn(frame1, RooFit.Name("data_obs"))
+    print "END plotting"
     chi2_s = frame1.chiSquare(pdf_comb_ext.GetName(), "data_obs", 2+1 if bkg_pdf=='dijet' else 3+1 )
     chi2_b = frame1.chiSquare(pdf_comb_ext.GetName(), "data_obs", 2 if bkg_pdf=='dijet' else 3 )
     leg.AddEntry(frame1.findObject("data_obs"), "Data", "PE")
-    leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("B, #chi^{2}=%.2f" % chi2_b), "L")
-    leg.AddEntry(frame1.getCurve(pdf_comb_ext.GetName()), ("S+B"), "L")
-    leg.AddEntry(frame1.getCurve(pdf_sgn.GetName()), ("m_{X}=%.0f GeV, #sigma=%.0f pb" % (float(sgn.split('_')[-1][1:]), xsec_vis) ), "L")
-    frame1.SetMaximum( h_rebinned.GetMaximum()*1.2 )
+    leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg. (#chi^{2}=%.2f)" % chi2_b), "L")
+    leg.AddEntry(h1sigmaU, "1#sigma bkg. unc.", "F")
+    leg.AddEntry(h2sigmaU, "2#sigma bkg. unc.", "F")
+    leg.AddEntry(frame1.getCurve(pdf_comb_ext.GetName()), ("Bkg. + signal"), "L")
+    leg.AddEntry(frame1.getCurve(pdf_sgn.GetName()), ("Signal, #sigma=%.0f pb" % xsec_vis ), "L")
+    frame1.SetMaximum( h_rebinned.GetMaximum()*2.0 )
     frame1.SetMinimum( h_rebinned.GetMinimum()*0.8 )
     pad1.SetLogy()
+    print "Drawing frame1..."
     frame1.Draw()
 
     #ROOT.gPad.Update()
-    #print frame1.getCurve(pdf_comb_ext.GetName()+"_1sigma").Eval(600.)
-    #print frame1.getCurve(pdf_comb_ext.GetName()+"_0p5sigma").Eval(600.)
-    #print frame1.getCurve(pdf_comb_ext.GetName()).Eval(600.)
+    #sigma2 = frame1.getCurve(pdf_bkg_b.GetName()+"_2sigma")
+    #sigma1 = frame1.getCurve(pdf_bkg_b.GetName()+"_1sigma")
+    #nominal = frame1.getCurve(pdf_bkg_b.GetName())
+    #n2sigma = n.zeros(2sigma.GetN(), dtype=float)
+    #nominalX = nominal.GetX()
+    #nominalY = nominal.GetY()
+    #n1sigmaY = sigma1.GetY()
+    #n2sigmaY = sigma2.GetY()
+    #for i in xrange(nominal.GetN()):
+    #    if i%3!=0:
+    #        continue
+    #    print ("%.1f: %.1f [%.1f, %.1f]" % (nominalX[i], nominalY[i], n1sigmaY[i], n1sigmaY[2*nominal.GetN()-i-1] ))
+    #    print ("     :       [%.1f, %.1f]" % (n2sigmaY[i], n2sigmaY[2*nominal.GetN()-i-1] ))
     #for obj in ROOT.gPad.GetListOfPrimitives():
     #    print obj.GetName()        
 
-    pave_lumi = ROOT.TPaveText(0.46,0.90,0.90,0.96, "NDC")
+    pave_lumi = ROOT.TPaveText(0.484,0.90,0.92,0.96, "NDC")
     pave_lumi.SetFillStyle(0);
     pave_lumi.SetBorderSize(0);
     pave_lumi.SetTextAlign(32)
@@ -456,13 +501,13 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
     pave_lumi.Draw()
 
-    pave_cms = ROOT.TPaveText(0.11,0.90,0.40,0.96, "NDC")
+    pave_cms = ROOT.TPaveText(0.13,0.83,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
     pave_cms.SetTextSize(0.05)
     #pave_cms.SetTextFont(43)
-    pave_cms.AddText("CMS preliminary")
+    pave_cms.AddText("CMS Preliminary")
     pave_cms.Draw()    
     leg.Draw()
     c1.Modified()
@@ -492,7 +537,7 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     frame2.GetXaxis().SetTitleOffset(3.5)
     frame2.GetXaxis().SetLabelFont(43) 
     frame2.GetXaxis().SetLabelSize(20)            
-    hresid = frame1.pullHist("data_obs", pdf_comb_ext.GetName())
+    hresid = frame1.pullHist("data_obs", pdf_bkg_b.GetName())
     hresid.GetYaxis().SetRangeUser(-4,4)
     #hresid2.SetLineStyle(ROOT.kSolid)
     #hresid2.SetLineColor(ROOT.kRed)
@@ -509,25 +554,58 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     #    print n_data, sb
     #    h_hresid2.SetBinContent(b+1, hresid2.Eval( frame2.GetXaxis().GetBinCenter(b+1) ) )
 
+    sigma2 = frame1.getCurve(pdf_bkg_b.GetName()+"_2sigma")
+    sigma1 = frame1.getCurve(pdf_bkg_b.GetName()+"_1sigma")
+    nominal = frame1.getCurve(pdf_bkg_b.GetName())
+    nominalX = nominal.GetX()
+    nominalY = nominal.GetY()
+    n1sigmaY = sigma1.GetY()
+    n2sigmaY = sigma2.GetY()
+    for i in xrange(nominal.GetN()): 
+        x_i = nominalX[i]
+        n_i = nominalY[i]
+        n_1up_i = n1sigmaY[2*nominal.GetN()-i-1]
+        n_1down_i = n1sigmaY[i]
+        n_2up_i = n2sigmaY[2*nominal.GetN()-i-1]
+        n_2down_i = n2sigmaY[i]
+        bin_i = h1sigmaU.FindBin( x_i )
+        if bin_i<=0 or bin_i>h1sigmaU.GetNbinsX(): 
+            continue
+        bin_width_i = h_rebinned.GetBinWidth( bin_i )
+        n_data_i = h_rebinned.GetBinContent( bin_i )
+        h1sigmaU.SetBinContent( bin_i, (-n_i+n_1up_i)/math.sqrt( n_data_i ) )
+        h1sigmaD.SetBinContent( bin_i, (-n_i+n_1down_i)/math.sqrt( n_data_i ) )
+        h2sigmaU.SetBinContent( bin_i, (-n_i+n_2up_i)/math.sqrt( n_data_i ) )
+        h2sigmaD.SetBinContent( bin_i, (-n_i+n_2down_i)/math.sqrt( n_data_i ) )
+    frame2.addTH1(h2sigmaU, "HIST")
+    frame2.addTH1(h2sigmaD, "HIST")
+    frame2.addTH1(h1sigmaU, "HIST")
+    frame2.addTH1(h1sigmaD, "HIST")
+
     frame2.addPlotable(hresid,"pE1")
-    #frame2.addPlotable(hresid2,"HISTSAME")
+
+    print "Drawing frame2..."
     frame2.Draw()
     frame2.GetYaxis().SetRangeUser(-4,4)    
 
     ROOT.TGaxis.SetMaxDigits(2)
+    print "Drawing canvas..."
     c1.cd()
     c1.Draw()
 
+    print "Press ENTER to continue"
     raw_input()
 
     #c1.SaveAs("tmp.png")
+    ROOT.gDirectory.Remove(h1sigmaU)
+    ROOT.gDirectory.Remove(h1sigmaD)
+    ROOT.gDirectory.Remove(h2sigmaU)
+    ROOT.gDirectory.Remove(h2sigmaD)
     ROOT.gDirectory.Remove(c1)
     ws_file.Close()
     mlfit_file.Close()
     ws_file_nobias.Close()
     mlfit_file_nobias.Close()
-    #
-    #return
 
 ############################################################################################
 
