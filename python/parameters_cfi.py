@@ -1,6 +1,6 @@
 import copy
 
-luminosity = 2.63
+luminosity = 2.69
 
 FitSgnCfg = {
     "Spin0_M550" : {
@@ -560,7 +560,8 @@ FitBkgCfg_data = {
         "deg2": {
 
             # bias formula
-            "bias_formula" : "0.246*TMath::Power((x-500)/1200, -0.789)",
+            #"bias_formula" : "0.246*TMath::Power((x-500)/1200, -0.789)",
+            "bias_formula" : "37.5165 -0.126157*x + 0.00016355*x*x -9.35427e-08*x*x*x + 1.97991e-11*x*x*x*x",
 
             # mass ranges
             "default" : {                
@@ -874,7 +875,8 @@ FitBkgCfg_data = {
         "any": {
 
             # bias formula
-            "bias_formula" : "0.353*TMath::Power((x-500)/1200, -0.669)",
+            #"bias_formula" : "0.353*TMath::Power((x-500)/1200, -0.669)",
+            "bias_formula" : "37.5165 -0.126157*x + 0.00016355*x*x -9.35427e-08*x*x*x + 1.97991e-11*x*x*x*x",
 
             # mass ranges
             "default" : {                

@@ -53,15 +53,42 @@ class XbbFactory:
 
         #return
         c1 = ROOT.TCanvas("c1_"+self.get_save_name()+"_"+title,"c1",600,600)
-        #if add_pulls:
+
+        pave_cms = ROOT.TPaveText(0.09,0.94,0.40,0.97)
+        pave_cms.SetFillStyle(0);
+        pave_cms.SetBorderSize(0);
+        pave_cms.SetTextAlign(12)
+        pave_cms.SetTextSize(0.035)
+        if "Spin" in header:
+            pave_cms.AddText("CMS simulation")
+        else:
+            pave_cms.AddText("CMS preliminary")
+        pave_lumi = ROOT.TPaveText(0.46,0.94,0.90,0.97)
+        pave_lumi.SetFillStyle(0);
+        pave_lumi.SetBorderSize(0);
+        pave_lumi.SetTextAlign(32)
+        pave_lumi.SetTextSize(0.035)
+        pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
+
         pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
         pad1.SetBottomMargin(0) 
-        #pad1.SetGridx()  
         pad1.Draw()      
+        pave_cms.Draw("same")
+        pave_lumi.Draw("same")
         pad1.cd()    
 
-        leg = ROOT.TLegend(0.12,0.55,0.45,0.88, "","brNDC")
-        leg.SetHeader(header)  
+        align_left = True
+        new_header = header
+        if "Spin" in header:
+            hsplit = header.split("_")
+            spin = int(hsplit[0][-1])
+            mX = float(hsplit[-1][1:])
+            if mX<=750:
+                align_left = False
+            new_header = ("m_{X}(J=%d)=%.0f GeV" % (spin, mX) )
+
+        leg = ROOT.TLegend((0.12 if align_left else 0.55) ,0.55, (0.45 if align_left else 0.85),0.88, "","brNDC")
+        leg.SetHeader(new_header)  
         leg.SetFillStyle(0)
         leg.SetBorderSize(0)
         leg.SetTextSize(0.06)
@@ -69,7 +96,8 @@ class XbbFactory:
 
         frame = self.x.frame()
         frame.SetName("frame")
-        frame.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV")
+        #frame.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV")
+        frame.SetTitle("")
         frame.GetYaxis().SetTitleSize(20)
         frame.GetYaxis().SetTitleFont(43)
         frame.GetYaxis().SetTitleOffset(1.35)
@@ -85,7 +113,7 @@ class XbbFactory:
             frame.GetYaxis().SetTitle("Events / "+str(data.binVolume())+" GeV")
         else:
             frame.GetYaxis().SetTitle("1/GeV")
-            frame.GetXaxis().SetTitle("mass (GeV)")
+            frame.GetXaxis().SetTitle("dijet mass [GeV]")
 
         for p,pdf in enumerate(pdfs):
             opt_color = RooFit.LineColor(ROOT.kRed)
@@ -124,15 +152,13 @@ class XbbFactory:
             c1.cd()
             pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
             pad2.SetTopMargin(0)
-            pad2.SetBottomMargin(0.2)
+            pad2.SetBottomMargin(0.3)
             #pad2.SetGridx()   
             pad2.SetGridy() 
             pad2.Draw()
             pad2.cd()       
             frame2 = self.x.frame()
             frame2.SetName("frame2")
-            hresid = frame.pullHist()
-            hresid.GetYaxis().SetRangeUser(-4,4)
             frame2.SetTitle("") 
             frame2.GetYaxis().SetTitle("Pulls")
             frame2.GetYaxis().SetNdivisions(505)
@@ -141,15 +167,21 @@ class XbbFactory:
             frame2.GetYaxis().SetTitleOffset(1.35)
             frame2.GetYaxis().SetLabelFont(43) 
             frame2.GetYaxis().SetLabelSize(15)
-            frame2.GetXaxis().SetTitle("mass (GeV)")
+            frame2.GetXaxis().SetTitle("dijet mass [GeV]")
             frame2.GetXaxis().SetTitleSize(20)
             frame2.GetXaxis().SetTitleFont(43)
-            frame2.GetXaxis().SetTitleOffset(3.0)
+            frame2.GetXaxis().SetTitleOffset(2.9)
             frame2.GetXaxis().SetLabelFont(43) 
             frame2.GetXaxis().SetLabelSize(15)            
-            frame2.addPlotable(hresid,"P")
-            frame2.Draw()
-            frame2.GetYaxis().SetRangeUser(-4,4)
+            if data!=None:
+                hresid = frame.pullHist()
+                hresid.GetYaxis().SetRangeUser(-4,4)
+                frame2.addPlotable(hresid,"P")
+                frame2.Draw()
+                frame2.GetYaxis().SetRangeUser(-4,4)
+            else:
+                frame2.Draw()
+                frame2.GetYaxis().SetRangeUser(-4,4)                
 
         for ext in self.save_ext:
             c1.SaveAs(self.save_dir+self.ws_name+"_"+self.get_save_name()+"_"+title+"."+ext)
@@ -254,7 +286,7 @@ class XbbFactory:
         #self.imp(bias)
 
     # add signal systematics to ws
-    def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, spin_symmetric=False):
+    def add_syst_to_ws(self, sgn_name="Spin0_M750", rebin_factor=1.0, spin_symmetric=False, add_stat_error=True):
 
         # start with nominal pdf...
         pdfs = [self.w.pdf("buk_pdf_sgn_"+sgn_name)]
@@ -373,6 +405,10 @@ class XbbFactory:
         jec_norm = max( abs(shifts["JECUp"][2]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()), 
                         abs(shifts["JECDown"][2]-self.w.var("buk_pdf_sgn_"+sgn_name+"_norm").getVal()))
 
+        if add_stat_error:
+            jec = math.sqrt( math.pow(jec,2) + math.pow(self.w.var("mean_sgn_"+sgn_name).getError(),2) )
+            jer = math.sqrt( math.pow(jer,2) + math.pow(self.w.var("sigma_sgn_"+sgn_name).getError(),2) )
+
         csv_shift = ROOT.RooRealVar("CSV_shift_"+sgn_name, "", csv )
         hlt_shift =  ROOT.RooRealVar("HLTKin_shift_"+sgn_name, "", hlt_norm )
         mean_shift = ROOT.RooRealVar("mean_shift_"+sgn_name, "", jec )
@@ -401,7 +437,7 @@ class XbbFactory:
                 gc.setVal( self.w.var("sigma_sgn_"+sgn_name).getVal()-jer )
 
         self.x.setRange( FitSgnCfg[sgn_name]['fit_range'][0], FitSgnCfg[sgn_name]['fit_range'][1] )
-        self.plot(data=None, pdfs=pdfs, res=None, add_pulls=False, legs=["Nominal", "JEC up", "JEC down", "JER up", "JER down"], ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER", header=sgn_name)
+        self.plot(data=None, pdfs=pdfs, res=None, add_pulls=True, legs=["Nominal", "JEC up", "JEC down", "JER up", "JER down"], ran=sgn_name, n_par=5, title=sgn_name+"_JEC-JER", header=sgn_name)
 
     # Add background pdf to ws.
     # A preliminary fit is done. 
@@ -409,6 +445,7 @@ class XbbFactory:
     def add_bkg_to_ws(self, pdf_names=["dijet"], rebin_factor=1.0, set_param_const=False):
 
         hname = "background_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
+        #hname = "top_all_"+self.cat_btag+"_"+self.cat_kin+"_"+self.x_name
         print hname
         h = self.file.Get(self.cat_btag+"_"+self.cat_kin+"/"+hname).Clone(hname+"_clone")
         if rebin_factor>1. :
@@ -547,7 +584,7 @@ class XbbFactory:
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=100, set_param_const=True, spin_symmetric=False)
-            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=10, spin_symmetric=False)
+            self.add_syst_to_ws(sgn_name=sgn, rebin_factor=10, spin_symmetric=False, add_stat_error=True)
         
         if debug_sgn:            
             self.file.Close()
@@ -569,26 +606,26 @@ class XbbFactory:
 cfg_cat_btag = argv[1] if len(argv)>=2 else "Had_MT"
 cfg_cat_kin = argv[2] if len(argv)>=3 else "MinPt100_DH1p6" 
 cfg_name = argv[3] if len(argv)>=4 else "MassFSR"
-cfg_xmin = float(argv[4]) if len(argv)>=5 else 550.
+cfg_xmin = float(argv[4]) if len(argv)>=5 else 400.
 cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
 signals = []
 for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
-#for mass in [600]:
-    for spin in [0,2]:
+#for mass in []:
+    for spin in [0]:
         sample = ("Spin%d_M%d" % (spin, mass))
         "Adding signal sample....", sample
         signals.append(sample)
 
-xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/V7/", save_dir="./plots/V7/", save_ext=['png','pdf'], blind_plot=True)
+xbbfact = XbbFactory(fname="plot.root", ws_name="Xbb_workspace", read_dir="./plots/PostPreApproval/", save_dir="./plots/PostPreApproval/", save_ext=['png','pdf'], blind_plot=True)
 xbbfact.add_category(cat_btag=cfg_cat_btag, cat_kin=cfg_cat_kin)
 xbbfact.create_mass(name=cfg_name, xmin=cfg_xmin, xmax=cfg_xmax)
 xbbfact.create_workspace( signals=signals,
                           #signals=["Spin0_M750"],    
-                          #pdf_names=["polydijet", "dijet"],
-                          pdf_names=["dijet", "polydijet"],
+                          pdf_names=["polydijet", "dijet"],
+                          #pdf_names=["dijet"],
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
-                          debug_sgn=False
+                          debug_sgn=True
                           )
 
 for gc in gcs:

@@ -7,15 +7,21 @@ argv.remove( '-b-' )
 import math
 import sys
 sys.path.append('./')
+sys.path.append('../python/')
+
+from parameters_cfi import luminosity
 
 def is_blind():
     return False
 
 def k_factor_QCD():
-    return 1.56
+    return 1.53
+    #return 1.
 
 def get_extra_SF():
-    return 1.0
+    # this is to match new lumi 2.69/2.63
+    return 1.0228
+    #return 1.
 
 def get_samples():
     samples = ["Run2015",
@@ -70,15 +76,21 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         table = open( "/scratch/bianchi/"+version+"/yield_"+dir_name+".txt", 'w')
 
     s = ROOT.THStack("stack_background_"+h_name,"")
-    #s.SetTitle("CMS Preliminary 2016 #sqrt{s}=13 TeV")
     s.SetTitle("")
 
-    leg = ROOT.TLegend(0.42,0.52,0.80,0.88, "","brNDC");
-    #leg.SetHeader("L=2.63 fb^{-1}")
+    leg = ROOT.TLegend(0.48,0.52,0.86,0.88, "","brNDC");
     leg.SetFillStyle(0);
     leg.SetBorderSize(0);
     leg.SetTextSize(0.05);
     leg.SetFillColor(10);
+    region = ""
+    if "Had_LT" in dir_name:
+        region = "X #rightarrow b#bar{b}, preselection"
+    elif "Had_MT" in dir_name:
+        region = "X #rightarrow b#bar{b}, signal region"
+    elif "Lep_LT" in dir_name:
+        region = "X #rightarrow b#bar{b}, top sideband"    
+    leg.SetHeader(region)
 
     hdata = []
     hsignal = []
@@ -91,20 +103,20 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     new_bin_width = 1
     if "Lep" in dir_name and "Mass" in h_name and ("toMass" not in h_name and "vsMass" not in h_name):
         do_rebin = True
-        new_ranges = [400,2000]
+        new_ranges = [374,2002]
         new_bin_width = 37
     if "Had_LT" in dir_name and "Mass" in h_name and ("toMass" not in h_name and "vsMass" not in h_name):
         do_rebin = True
-        new_ranges = [400,4000]
+        new_ranges = [374,4000]
         new_bin_width = 37*2
     if "Had_MT" in dir_name and "Mass" in h_name and ("toMass" not in h_name and "vsMass" not in h_name) and is_blind():
         do_rebin = True
-        new_ranges = [400,4000]
+        new_ranges = [374,4000]
         new_bin_width = 37
     if "vsMass" in h_name:
         do_rebin = True
         new_ranges = [0,2000]
-        new_bin_width = 80
+        new_bin_width = 40 #80
 
     for ns,sample in enumerate( get_samples() ):
         
@@ -164,8 +176,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         elif "TT_" in sample or "ST_" in sample:
             top = h_sample.Clone("top_"+h_name)
             top.SetDirectory(0)
-            top.SetFillColor(ROOT.kMagenta)
-            top.SetLineColor(ROOT.kMagenta)
+            top.SetFillColor(ROOT.kBlue-7)
+            top.SetLineColor(ROOT.kBlue-7)
             top.SetLineWidth(0) 
             top.SetFillStyle(1001)
             s.Add(top)
@@ -178,22 +190,26 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
 
         print "Processed sample n.%.0f %s: %.1f" % (ns,sample, h_sample.Integral()) 
 
+    if need_to_blind:
+        leg.AddEntry(data, "Data = Bkg. (blinded)", "PE")
+    else:
+        leg.AddEntry(data, "Data", "PE")
 
     qcd = hqcd[0].Clone("qcd_all_"+h_name)
     qcd.SetLineColor(33)
     qcd.SetLineWidth(1)
     qcd.SetFillColor(33);
     qcd.SetFillStyle(1001);
-    leg.AddEntry(qcd, "QCD (#times%.2f)" % k_factor_QCD(), "F");
+    leg.AddEntry(qcd, "Multi-jet (#times%.2f)" % k_factor_QCD(), "F");
     qcd.Reset();
     for h in hqcd:
         qcd.Add(h,1.0)
 
     top = htop[0].Clone("top_all_"+h_name)
-    top.SetLineColor(ROOT.kMagenta)
+    top.SetLineColor(ROOT.kBlue-7)
     top.SetLineWidth(2)
     #top.SetFillColor(0);
-    leg.AddEntry(top, "top", "F");
+    leg.AddEntry(top, "Top", "F");
     top.Reset();
     for h in htop:
         top.Add(h,1.0)
@@ -205,26 +221,74 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     background.SetMarkerSize(0.)
     background.SetFillColor(ROOT.kBlue)
     background.SetFillStyle(3004);
-    leg.AddEntry(background, "MC stat. unc.", "F");
+    leg.AddEntry(background, "Bkg. stat. unc.", "F");
     background.Reset();
     for h in hbackground:
         background.Add(h,1.0)
 
     c = ROOT.TCanvas("c_"+dir_name+"_"+h_name, "canvas", 600, 600) 
 
-    pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)    
-    pave_cms = ROOT.TPaveText(0.09,0.93,0.40,0.96)
+    pad1 = ROOT.TPad("pad1", "pad1", 0.02, 0.30, 1, 1.0)    
+    pad1.SetLeftMargin(0.13)
+    pad1.SetBottomMargin(0.02)
+    pad1.Draw()
+    pad1.cd()    
+
+    s.SetMinimum( hsignal[0][0].GetMinimum()*0.5 + 0.01 )
+    s.SetMaximum( max(data.GetMaximum(), background.GetMaximum())*(2.0 if option_shape=="Shape" else math.exp(2*math.log(max(data.GetMaximum(), background.GetMaximum())) ) ) )
+    s.Draw("HIST")
+    if(s.GetHistogram()!=None):
+        s.GetHistogram().SetXTitle(h_name.split('_')[-1])
+        s.GetHistogram().SetYTitle("Events/bin")
+        s.GetHistogram().SetTitle(dir_name)
+        if do_rebin:
+            s.GetHistogram().GetXaxis().SetLimits(new_ranges[0],new_ranges[1])
+        s.GetHistogram().GetYaxis().SetTitleSize(24)
+        s.GetHistogram().GetYaxis().SetTitleFont(43)
+        s.GetHistogram().GetYaxis().SetTitleOffset(1.24)
+        s.GetHistogram().GetYaxis().SetLabelFont(43)
+        s.GetHistogram().GetYaxis().SetLabelSize(20)
+        s.GetHistogram().GetXaxis().SetLabelSize(0)
+
+    for signal in hsignal:
+        mass = float(signal[1][7:])
+        spin = float(signal[1][4])
+        if "M750" not in signal[1]:
+            continue
+        #if "Lep" in dir_name and option_shape=="Shape":
+        if "Lep" in dir_name:
+            continue
+        if option_shape=="Shape":
+            signal[0].Scale(background.Integral()/signal[0].Integral() if signal[0].Integral()>0. else 1.0)
+            #leg.AddEntry(signal[0], ('Spin-%.0f, m_{X}=%.0f GeV' % (spin,mass))+" norm. to bkg.", "L") 
+            leg.AddEntry(signal[0], ('Spin-%.0f, m_{X}=%.0f GeV' % (spin,mass)), "L") 
+        else:
+            #leg_entry = leg.AddEntry(signal[0], ('Spin-%.0f, m_{X}=%.0f GeV' % (spin,mass))+", #sigma=1pb", "L")
+            leg_entry = leg.AddEntry(signal[0], ('Spin-%.0f, m_{X}=%.0f GeV' % (spin,mass)), "L")
+        signal[0].Draw(option_signal+"SAME")
+
+    background.Draw(option_bkg+"E2SAME")
+    if need_to_blind:
+        data.Reset()
+        data.Add(background, 1.0)
+    data.Draw(option_data+"SAME")
+
+    #if s.GetHistogram()!=None :
+    #    s.GetHistogram().GetYaxis().SetTitleSize(20)
+    #    s.GetHistogram().GetYaxis().SetTitleFont(43)
+    #    s.GetHistogram().GetYaxis().SetTitleOffset(1.35)
+    pave_cms = ROOT.TPaveText(0.13,0.83,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
-    pave_cms.SetTextSize(0.035)
-    pave_cms.AddText("CMS preliminary")
-    pave_lumi = ROOT.TPaveText(0.46,0.93,0.90,0.96)
+    pave_cms.SetTextSize(0.045)
+    pave_cms.AddText("CMS Preliminary")
+    pave_lumi = ROOT.TPaveText(0.484,0.90,0.92,0.96, "NDC")
     pave_lumi.SetFillStyle(0);
     pave_lumi.SetBorderSize(0);
     pave_lumi.SetTextAlign(32)
-    pave_lumi.SetTextSize(0.035)
-    pave_lumi.AddText("2.56 fb^{-1} (2015)")
+    pave_lumi.SetTextSize(0.045)
+    pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
 
     if option_shape!="Shape":
         pad1.SetLogy(1)
@@ -233,55 +297,14 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     pad1.Draw()      
     pave_cms.Draw("same")
     pave_lumi.Draw("same")
-    pad1.cd()    
-
-
-    s.SetMinimum( hsignal[0][0].GetMinimum()*0.5 + 0.01 )
-    s.SetMaximum( max(data.GetMaximum(), background.GetMaximum())*2.0 )
-    s.Draw("HIST")
-    if(s.GetHistogram()!=None):
-        s.GetHistogram().SetXTitle(h_name.split('_')[-1])
-        s.GetHistogram().SetYTitle("Events/bin")
-        s.GetHistogram().SetTitleOffset(1.25)
-        s.GetHistogram().SetTitle(dir_name)
-        if do_rebin:
-            s.GetHistogram().GetXaxis().SetLimits(new_ranges[0],new_ranges[1])
-
-    for signal in hsignal:
-        mass = float(signal[1][7:])
-        spin = float(signal[1][4])
-        if "M750" not in signal[1]:
-            continue
-        if "Lep" in dir_name and option_shape=="Shape":
-            continue
-        if option_shape=="Shape":
-            signal[0].Scale(background.Integral()/signal[0].Integral() if signal[0].Integral()>0. else 1.0)
-            leg.AddEntry(signal[0], ('m_{X}(J=%.0f)=%.0f' % (spin,mass))+" norm. to bkg.", "L") 
-        else:
-            leg_entry = leg.AddEntry(signal[0], ('m_{X}(J=%.0f)=%.0f' % (spin,mass))+" , #sigma=1.0 pb", "L")
-        signal[0].Draw(option_signal+"SAME")
-
-    background.Draw(option_bkg+"E2SAME")
-    if need_to_blind:
-        data.Reset()
-        data.Add(background, 1.0)
-        leg.AddEntry(data, "data = MC (blinded)", "PE")
-    else:
-        leg.AddEntry(data, "data", "PE")
-    data.Draw(option_data+"SAME")
-
-    if s.GetHistogram()!=None :
-        s.GetHistogram().GetYaxis().SetTitleSize(20)
-        s.GetHistogram().GetYaxis().SetTitleFont(43)
-        s.GetHistogram().GetYaxis().SetTitleOffset(1.25)
-  
     leg.Draw();
+    c.Modified()
 
     c.cd() 
-    pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
-    pad2.SetTopMargin(0)
-    pad2.SetBottomMargin(0.2)
-    #pad2.SetGridx()   
+    pad2 = ROOT.TPad("pad2", "pad2", 0.02, 0.02, 1, 0.28)
+    pad2.SetTopMargin(0.04)
+    pad2.SetBottomMargin(0.37)
+    pad2.SetLeftMargin(0.13)
     pad2.SetGridy() 
     pad2.Draw()
     pad2.cd()       
@@ -292,24 +315,26 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     hratio.SetMaximum(2) 
     hratio.SetStats(0) 
     hratio.Divide(background)
-    hratio.SetMarkerStyle(21)
+    hratio.SetMarkerStyle(ROOT.kFullCircle)
     if do_rebin:
         hratio.GetXaxis().SetRangeUser(new_ranges[0],new_ranges[1])
     hratio.Draw("ep") 
     hratio.SetTitle("") 
-    hratio.GetYaxis().SetTitle("Data/MC")
+    hratio.GetYaxis().CenterTitle()
+    hratio.GetYaxis().SetTitle("Data/Bkg.")
     hratio.GetYaxis().SetNdivisions(505)
-    hratio.GetYaxis().SetTitleSize(20)
+    hratio.GetYaxis().SetTitleSize(25)
     hratio.GetYaxis().SetTitleFont(43)
-    hratio.GetYaxis().SetTitleOffset(1.35)
+    hratio.GetYaxis().SetTitleOffset(1.18)
     hratio.GetYaxis().SetLabelFont(43) 
-    hratio.GetYaxis().SetLabelSize(15)
+    hratio.GetYaxis().SetLabelSize(20)
     hratio.GetXaxis().SetTitle(var_name)
-    hratio.GetXaxis().SetTitleSize(20)
+    hratio.GetXaxis().SetTitleSize(25)
     hratio.GetXaxis().SetTitleFont(43)
-    hratio.GetXaxis().SetTitleOffset(2.6)
+    hratio.GetXaxis().SetTitleOffset(3.5)
     hratio.GetXaxis().SetLabelFont(43) 
-    hratio.GetXaxis().SetLabelSize(15)
+    hratio.GetXaxis().SetLabelSize(20)
+
     hratioErr = background.Clone("hratioErr")
     for b in range(hratioErr.GetNbinsX()+1):
         val = hratioErr.GetBinContent(b+1)
@@ -319,6 +344,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     if do_rebin:
         hratioErr.GetXaxis().SetRangeUser(new_ranges[0],new_ranges[1])
     hratioErr.Draw(option_bkg+"E2SAME")
+
+    #raw_input()
 
     for ext in ["png", "pdf"]:
         c.SaveAs("/scratch/bianchi/"+version+"/"+h_name+postfix+"."+ext)  
@@ -402,16 +429,16 @@ def plot_all( version = "V7" ):
     for cat_btag in ["Had_LT", 
                      "Had_MT", 
                      #"Had_TT",
-                     #"Lep_LT",
-                     "All"
+                     "Lep_LT",
+                     #"All"
                      ]:
         for cat_kin in [
             #"MinPt150_DH2p0", 
             #"MinPt150_DH1p6", 
-            #"MinPt100_DH2p0", 
+            "MinPt100_DH2p0", 
             "MinPt100_DH1p6", 
-            "MinPt100_HLTKinUp_DH1p6", 
-            "MinPt100_HLTKinDown_DH1p6", 
+            #"MinPt100_HLTKinUp_DH1p6", 
+            #"MinPt100_HLTKinDown_DH1p6", 
             #"MinMaxPt100150_DH1p6"
             #"MinPt150_DH1p1",
             #"MinPt175_DH2p0", "MinPt175_DH1p6", "MinPt175_DH1p1",
@@ -438,33 +465,33 @@ def plot_all( version = "V7" ):
                     continue
 
                 for hist in [    
-                    #["Eff_HLTHigh_vsMassFSR", "dijet mass (HLT-high & !HLT-low) [GeV]"],
-                    ["MassFSR", "dijet mass [GeV]"],
-                    ["MassFSR_JECUp", "dijet mass JEC up [GeV]"],
-                    ["MassFSR_JECDown","dijetmass JEC down [GeV]"],
-                    ["MassFSR_JERUp","dijet JER up GeV)"],
-                    ["MassFSR_JERDown","dijet JER down [GeV]"],
-                    #["MassFSRProjMET", "dijet mass (FSR + MET) [GeV]"],
-                    #["MinJetPt", "min(p_{T}^{j1}, p_{T}^{j2}) [GeV]"],
-                    #["MaxJetPt", "max(p_{T}^{j1}, p_{T}^{j2}) [GeV]"],
-                    #["Mass", "dijet mass (R=0.4) [GeV]"],
-                    #["MassAK08", "dijet mass (R=0.8) [GeV]"],
-                    #["Pt", "dijet p_{T} [GeV]"],
-                    #["Eta","dijet #eta"],
-                    #["DeltaPhi","#Delta#phi_{jj}"],
-                    #["MaxJetCSV","max(CSV_{j1},CSV_{j2})"],
-                    #["MinJetCSV","min(CSV_{j1},CSV_{j2})"],
-                    #["Vtype","event type"],
-                    #["njet30","multiplicity of jets with p_{T}>30 GeV"],
-                    #["njet50","multiplicity of jets with p_{T}>50 GeV"],
-                    #["njet70","multiplicity of jets with p_{T}>70 GeV"],
-                    #["njet100","multiplicity of jets with p_{T}>100 GeV"],
-                    #["MET","E_{T}^{miss} [GeV]"],
-                    #["PtBalance","(p_{T}^{j1}-p_{T}^{j2})/(p_{T}^{j1}+p_{T}^{j2})"],
-                    #["MaxJetPtoMass", "max(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
-                    #["MinJetPtoMass","min(p_{T}^{j1}, p_{T}^{j2})/m_{jj}"],
-                    #["MaxEta","max(#eta^{j1}, #eta^{j2})"],
-                    #["DeltaEta","|#Delta#eta_{jj}|"],
+                    ["Eff_HLTHigh_vsMassFSR", "m_{b#bar{b}} (HLT-high & !HLT-low) (GeV)"],
+                    ["MassFSR", "m_{b#bar{b}} (GeV)"],
+                    ["MassFSR_JECUp", "m_{b#bar{b}} JEC up (GeV)"],
+                    ["MassFSR_JECDown","m_{b#bar{b}} JEC down (GeV)"],
+                    ["MassFSR_JERUp","m_{b#bar{b}} JER up GeV)"],
+                    ["MassFSR_JERDown","m_{b#bar{b}} JER down (GeV)"],
+                    ["MassFSRProjMET", "m_{b#bar{b}} (FSR + MET) (GeV)"],
+                    ["MinJetPt", "Min(p_{T}^{b1}, p_{T}^{b2}) (GeV)"],
+                    ["MaxJetPt", "Max(p_{T}^{b1}, p_{T}^{b2}) (GeV)"],
+                    ["Mass", "m_{b#bar{b}} (R=0.4) (GeV)"],
+                    ["MassAK08", "m_{b#bar{b}} (R=0.8) (GeV)"],
+                    ["Pt", "p_{T}^{X} (GeV)"],
+                    ["Eta","#eta^{X}"],
+                    ["DeltaPhi","#Delta#phi_{b#bar{b}}"],
+                    ["MaxJetCSV","max(CSV_{b1},CSV_{b2})"],
+                    ["MinJetCSV","min(CSV_{b1},CSV_{b2})"],
+                    ["Vtype","event type"],
+                    ["njet30","Multiplicity of jets with p_{T}>30 GeV"],
+                    ["njet50","Multiplicity of jets with p_{T}>50 GeV"],
+                    ["njet70","Multiplicity of jets with p_{T}>70 GeV"],
+                    ["njet100","Multiplicity of jets with p_{T}>100 GeV"],
+                    ["MET","E_{T}^{miss} (GeV)"],
+                    ["PtBalance","|p_{T}^{b1}-p_{T}^{b2}|/(p_{T}^{b1}+p_{T}^{b2})"],
+                    ["MaxJetPtoMass", "Max(p_{T}^{b1}, p_{T}^{b2})/m_{b#bar{b}}"],
+                    ["MinJetPtoMass","Min(p_{T}^{b1}, p_{T}^{b2})/m_{b#bar{b}}"],
+                    ["MaxEta","Max(#eta^{b1}, #eta^{b2})"],
+                    ["DeltaEta","|#Delta#eta_{b#bar{b}}|"],
                     ]:
 
                     if (("_JEC" in hist[0]) or ("_JER" in hist[0])) and (syst!="" or cat_btag!="Had_MT" or cat_kin!="MinPt100_DH1p6"):
@@ -475,12 +502,13 @@ def plot_all( version = "V7" ):
                     cat = cat_btag+syst+"_"+cat_kin if cat_btag!="All" else cat_btag
                     print cat
                     plot(files=files, dir_name=cat, h_name=cat+"_"+hist[0], var_name=hist[1], postfix="",       option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="",      out_name="plot", version=version)
-                    plot(files=files, dir_name=cat, h_name=cat+"_"+hist[0], var_name=hist[1], postfix="_shape", option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="Shape", out_name="plot", version=version)
                     #exit(1)
+                    plot(files=files, dir_name=cat, h_name=cat+"_"+hist[0], var_name=hist[1], postfix="_shape", option_signal="HIST", option_bkg="PE", option_data="PE", option_shape="Shape", out_name="plot", version=version)
+
 
     for f in files.keys():
         files[f].Close()
 
 #############################
 
-plot_all()
+plot_all( version = "PostPreApproval/" )

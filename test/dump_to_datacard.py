@@ -38,6 +38,8 @@ def make_datacard( ws_name='Xbb_workspace',
     #bias = ws.var('bias_sgn_'+sgn).getVal()    
     bias = ("%.2f" % get_bias(mass=sgn[7:], pdf_name=pdf_bkg, deg=FTestCfg[pdf_bkg]['MaxOrder'][x_range], is_data=is_data) )
 
+    signal_group = []
+
     f = open( save_dir+'/'+outname+postfix+'.txt','w')
     f.write('imax 1 number of bins\n')
     f.write('jmax 2 number of processes minus 1\n')
@@ -61,6 +63,10 @@ def make_datacard( ws_name='Xbb_workspace',
     f.write('lumi_13TeV              lnN    1.027                      1.027                       -\n')
     f.write('pdf_gg_13TeV            lnN    1.06                       1.06                        -\n')
 
+    signal_group.append('CMS_Xbb_trigger_btag')
+    signal_group.append('lumi_13TeV')
+    signal_group.append('pdf_gg_13TeV')
+
     sgn_norm = ws.var(pdf_sgn+'_pdf_sgn_'+sgn+'_norm').getVal()    
 
     if ws.var('CSV_shift_'+sgn) != None:
@@ -68,16 +74,22 @@ def make_datacard( ws_name='Xbb_workspace',
         print "\tadding CMS_btag....lnN", shift
         if (shift-1)>=0.01:
             f.write('CMS_btag                lnN    '+("%.2f" % shift)+'                       '+("%.2f" % shift)+'                      -\n')      
+            signal_group.append('CMS_btag')
+
     if ws.var('HLTKin_shift_'+sgn) != None:
         shift = 1 + ws.var('HLTKin_shift_'+sgn).getVal()/sgn_norm
         print "\tadding CMS_Xbb_trigger_kin....lnN", shift
         if (shift-1)>=0.01:
             f.write('CMS_Xbb_trigger_kin     lnN    '+("%.2f" % shift)+'                       '+("%.2f" % shift)+'                      -\n')      
+            signal_group.append('CMS_Xbb_trigger_kin')
+
     if ws.var('jec_norm_shift_'+sgn) != None:
         shift = 1 + ws.var('jec_norm_shift_'+sgn).getVal()/sgn_norm
         print "\tadding CMS_scale_j....lnN", shift
         if (shift-1)>=0.01:
             f.write('CMS_scale_j                 lnN    '+("%.3f" % shift)+'                  '+("%.3f" % shift)+'                      -\n')      
+            signal_group.append('CMS_scale_j')
+
     f.write('\n')
 
     for p in xrange(FTestCfg[pdf_bkg]['ndof'][x_range]):        
@@ -87,6 +99,7 @@ def make_datacard( ws_name='Xbb_workspace',
         f.write(param+'  flatParam \n')
     
     f.write('bias_sgn_'+sgn+'   param  0.0 '+bias+'\n')
+    signal_group.append('bias_sgn_'+sgn)
     f.write('\n')
 
     mean = ws.var('mean_sgn_'+sgn).getVal()
@@ -97,8 +110,17 @@ def make_datacard( ws_name='Xbb_workspace',
     if pdf_sgn=='buk':
         if not ws.var('mean_sgn_'+sgn).getAttribute("Constant"):
             f.write('mean_sgn_'+sgn+'   param  '+( "%.3E" % mean) + ("  %.1f" % d_mean) + '\n')
+            signal_group.append('mean_sgn_'+sgn)
         if not ws.var('sigma_sgn_'+sgn).getAttribute("Constant"):
             f.write('sigma_sgn_'+sgn+'  param  '+( "%.2E" % sigma) + ("  %.1f" % d_sigma) + '\n')
+            signal_group.append('sigma_sgn_'+sgn)
+
+    if len(signal_group)>0:
+        f.write('\n')    
+        f.write('signal group = ')
+        for nu in signal_group:
+            f.write(nu+' ')
+        f.write('\n')        
 
     f.close()
     ws_file.Close()
@@ -186,7 +208,7 @@ for cat_btag in [
                         mX = float(sgn.split('_')[-1][1:])
                         edges = get_sliding_edges(mass=mX)
                         range_name = ("%.0fto%.0f" % (edges[0],edges[1]))
-                    make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, range_name, sgn, 'buk', pdf, 'data_obs', './plots/V7/', is_data=True)
+                    make_datacard('Xbb_workspace', cat_btag+"_"+cat_kin, mass, range_name, sgn, 'buk', pdf, 'data_obs', './plots/PostPreApproval/', is_data=True)
                         
                     
                         

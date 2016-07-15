@@ -15,6 +15,7 @@ from ROOT import RooFit
 
 import sys
 sys.path.append('../../../python/')
+sys.path.append('../../../../python/')
 from utilities import get_sliding_edges
 from parameters_cfi import luminosity
 
@@ -74,7 +75,7 @@ signal_to_parameters = {
 use_fixed_ranges = False
 use_sliding_edges = True
 
-wait_for_plot = True
+wait_for_plot = False
 
 ############################################################################################
 
@@ -172,9 +173,9 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
         leg.SetHeader("X #rightarrow b#bar{b}")  
     else:
         if "Spin0" in out_name:
-            leg.SetHeader("Spin-0, X #righarrow b#bar{b}")  
+            leg.SetHeader("Spin-0, X #rightarrow b#bar{b}")  
         else:
-            leg.SetHeader("Spin-2, X #righarrow b#bar{b}")  
+            leg.SetHeader("Spin-2, X #rightarrow b#bar{b}")  
 
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
@@ -247,12 +248,18 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
         twosigma.SetPoint(ires, imass, mass_results[2])
         twosigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
 
+    print "Expected (1)"
+    expected.Print()
+    print "Observed (1)"
+    observed.Print()
+
+
     if not is_blind:
         if overlay_obs:        
             leg.AddEntry(observed, "Observed (Spin-0)", "LP")
             leg.AddEntry(observed2, "Observed (Spin-2)", "LP")
             leg.AddEntry(expected, "Expected (Spin-0)", "L")
-            #leg.AddEntry(expected2, "Expected (Spin-2)", "L")
+            leg.AddEntry(expected2, "Expected (Spin-2)", "L")
             leg.AddEntry(onesigma, "1#sigma", "F")
             leg.AddEntry(twosigma, "2#sigma", "F")
         else:
@@ -264,8 +271,8 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
     mg.Add(twosigma)
     mg.Add(onesigma)
     mg.Add(expected)
-    #if overlay_obs:
-    #    mg.Add(expected2)
+    if overlay_obs:
+        mg.Add(expected2)
     if not is_blind:
         mg.Add(observed)
         if overlay_obs:
@@ -276,7 +283,7 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
         mg.SetMaximum(10.)
     else:
         mg.SetMinimum(1.)
-        mg.SetMaximum(30.)
+        mg.SetMaximum(40.)
 
     mg.Draw("ALP3")
 
@@ -435,15 +442,15 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     leg.SetTextSize(0.06)
     leg.SetFillColor(10)    
 
-    mlfit_file = ROOT.TFile.Open("mlfit_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+".root")
-    mlfit_file_nobias = ROOT.TFile.Open("mlfit_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+"_nobias.root")
+    mlfit_file = ROOT.TFile.Open(save_dir+"mlfit_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+".root")
+    mlfit_file_nobias = ROOT.TFile.Open(save_dir+"mlfit_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+"_nobias.root")
 
     res_s = mlfit_file.Get("fit_s")    
     res_b = mlfit_file_nobias.Get("fit_b")    
 
     ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
-    ws_file = ROOT.TFile.Open("workspace_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+".root")
-    ws_file_nobias = ROOT.TFile.Open("workspace_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+"_nobias.root")
+    ws_file = ROOT.TFile.Open(save_dir+"workspace_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+".root")
+    ws_file_nobias = ROOT.TFile.Open(save_dir+"workspace_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+"_nobias.root")
 
     w_s = ws_file.Get("MaxLikelihoodFitResult")
     w_b = ws_file_nobias.Get("MaxLikelihoodFitResult")
@@ -522,7 +529,7 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
     print "\tPlot sgn+bkg..."
     pdf_comb_ext.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf_comb_ext.GetName()) )
     print "\tPlot sgn..."
-    pdf_sgn.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kMagenta), RooFit.LineStyle(ROOT.kDashed), 
+    pdf_sgn.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(46), RooFit.LineStyle(ROOT.kDashed), 
                    RooFit.Name(pdf_sgn.GetName()), RooFit.Normalization(pdf_sgn_norm.getVal()*xsec_vis , ROOT.RooAbsReal.NumEvent) )
 
     print "\tPlot data_obs..."
@@ -537,10 +544,10 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
         leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg. (#chi^{2}=%.2f)" % chi2_b), "L")
     else:
         leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg."), "L")
-    leg.AddEntry(h1sigmaU, "1#sigma bkg. unc.", "F")
-    leg.AddEntry(h2sigmaU, "2#sigma bkg. unc.", "F")
     leg.AddEntry(frame1.getCurve(pdf_comb_ext.GetName()), ("Bkg. + signal"), "L")
     leg.AddEntry(frame1.getCurve(pdf_sgn.GetName()), ("Signal, #sigma=%.0f pb" % xsec_vis ), "L")
+    leg.AddEntry(h1sigmaU, "1#sigma bkg. unc.", "F")
+    leg.AddEntry(h2sigmaU, "2#sigma bkg. unc.", "F")
     frame1.SetMaximum( h_rebinned.GetMaximum()*2.0 )
     frame1.SetMinimum( h_rebinned.GetMinimum()*0.8 )
     pad1.SetLogy()
@@ -719,9 +726,16 @@ for spin in [0,2]:
     #make_fit_plots(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "Ciao"
 
+
+for spin in [0,2]:
+    for is_blind in [False]:
+        for do_acceptance in [True,False]:
+            for overlay_obs in [True, False]:
+                make_limit_plot(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
+
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
-make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False, overlay_obs=True)
+#make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False, overlay_obs=True)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False)
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=True)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=True)
