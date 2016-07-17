@@ -75,7 +75,7 @@ signal_to_parameters = {
 use_fixed_ranges = False
 use_sliding_edges = True
 
-wait_for_plot = False
+wait_for_plot = True
 
 ############################################################################################
 
@@ -83,7 +83,7 @@ def get_eff(datacard="", sgn=""):
     f = ROOT.TFile.Open(datacard+".root", "READ")
     w = f.Get("Xbb_workspace")
     n = w.var("buk_pdf_sgn_"+sgn+"_norm").getVal()
-    n /= 2630.
+    n /= (luminosity*1000)
     f.Close()
     return n
 
@@ -162,7 +162,7 @@ def run_combine(datacard='', what='limit', params=[], is_blind=True):
 
 ############################################################################################
 
-def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False, overlay_obs=False):
+def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False, overlay_obs=False):
 
     c = ROOT.TCanvas("c", "canvas", 600, 600) 
     c.SetLeftMargin(0.13)
@@ -335,9 +335,95 @@ def make_canvas( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=Tr
     for ext in ["png", "pdf"]:
             c.SaveAs(save_dir+"/"+save_name+"."+ext)
 
+
 ############################################################################################
 
-def make_limit_plot(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False, overlay_obs=False):
+def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
+
+    c = ROOT.TCanvas("c", "canvas", 600, 600) 
+    c.SetLeftMargin(0.13)
+    ROOT.TGaxis.SetMaxDigits(2)
+    #c.SetLogy()
+    
+    leg = ROOT.TLegend(0.66,0.65,0.88,0.88, "","brNDC")
+    leg.SetHeader("X #rightarrow b#bar{b}")  
+    leg.SetFillStyle(0)
+    leg.SetBorderSize(0)
+    leg.SetTextSize(0.04)
+    leg.SetFillColor(10)    
+
+    mg = ROOT.TMultiGraph()
+    expected = ROOT.TGraphAsymmErrors()
+    expected2 = ROOT.TGraphAsymmErrors()
+
+    expected.SetLineColor(ROOT.kBlack)
+    expected.SetLineStyle(ROOT.kSolid)
+    expected.SetLineWidth(3)
+
+    expected2.SetLineColor(ROOT.kGray)
+    expected2.SetLineStyle(ROOT.kDashed)
+    expected2.SetLineWidth(3)
+    
+    for ires,res in enumerate(results):
+        mass_name = res[0]
+        accept = res[2]*100
+        imass = float(mass_name.split('_')[-1][1:]) 
+        if ires < len(results)/2:            
+            expected.SetPoint(ires, imass, accept)
+        else:
+            expected2.SetPoint(ires-len(results)/2, imass, accept)
+
+    leg.AddEntry(expected, "Spin-0", "L")
+    leg.AddEntry(expected2, "Spin-2", "L")
+
+    mg.Add(expected)
+    mg.Add(expected2)
+
+    mg.SetMinimum(0.0)
+    mg.SetMaximum(20)
+
+    mg.Draw("ALP3")
+
+    mg.GetXaxis().SetLabelSize(0.04)
+    mg.GetYaxis().SetLabelSize(0.04)
+    mg.GetXaxis().SetTitleSize(0.05)
+    mg.GetYaxis().SetTitleSize(0.05)
+    mg.GetYaxis().SetTitleOffset(1.1)
+    mg.GetXaxis().SetTitleOffset(0.85)
+    mg.GetXaxis().SetTitle("m_{X} (GeV)")
+    mg.GetYaxis().SetTitle("#epsilon #times A (%)")
+
+    c.Update()
+    pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
+    pave_lumi.SetFillStyle(0);
+    pave_lumi.SetBorderSize(0);
+    pave_lumi.SetTextAlign(32)
+    pave_lumi.SetTextSize(0.035)
+    pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
+
+    pave_lumi.Draw()
+    pave_cms = ROOT.TPaveText(0.135,0.83,0.43,0.89, "NDC")
+    pave_cms.SetFillStyle(0);
+    pave_cms.SetBorderSize(0);
+    pave_cms.SetTextAlign(12)
+    pave_cms.SetTextSize(0.035)
+    pave_cms.AddText("CMS Simulation")
+    pave_cms.Draw()
+    leg.Draw()
+    c.Modified()
+    c.Draw()
+
+    if wait_for_plot:
+        raw_input()
+
+    save_name = "acceptance_"+out_name
+    for ext in ["png", "pdf"]:
+            c.SaveAs(save_dir+"/"+save_name+"."+ext)
+
+
+############################################################################################
+
+def make_limits(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False, overlay_obs=False):
 
     sgns = []
     for s in [0,2]:
@@ -381,11 +467,12 @@ def make_limit_plot(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptan
         if len(res)>0:
             results.append([test.split('_')[-1],res, eff])
             
-    make_canvas( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
+    #make_canvas_limit( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
+    make_canvas_acceptance( results=results, out_name="together", save_dir=save_dir)
 
 ############################################################################################
 
-def make_fits(pdf='dijet', spin=0, save_dir=""):
+def run_fits(pdf='dijet', spin=0, save_dir=""):
 
     sgns = [#'Spin'+str(spin)+'_M550', 
             'Spin'+str(spin)+'_M600', 
@@ -418,10 +505,89 @@ def make_fits(pdf='dijet', spin=0, save_dir=""):
     print tests
     for itest,test in enumerate(tests):
         run_combine("Xbb_workspace_"+test, what='fit', params=signal_to_parameters[test.split('_')[-2]+'_'+test.split('_')[-1]], is_blind=False)
+
+############################################################################################
+
+def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=[ ["425to800","Spin2_M600"] ], sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/"):
+
+    c = ROOT.TCanvas("c", "canvas", 600, 600) 
+    c.SetLeftMargin(0.13)
+    ROOT.TGaxis.SetMaxDigits(2)
+    
+    leg = ROOT.TLegend(0.42,0.62,0.88,0.80, "","brNDC")
+    leg.SetHeader("X #rightarrow b#bar{b}, m_{X}=%.0f...%.0f GeV" % (float(signals[0][1].split("_")[-1][1:]),float(signals[-2][1].split("_")[-1][1:]) ))  
+    leg.SetFillStyle(0)
+    leg.SetBorderSize(0)
+    leg.SetTextSize(0.04)
+    leg.SetFillColor(10)    
+
+    pdfs = []
+    for isgn,sgn in enumerate(signals):
+        ws_file = ROOT.TFile.Open(save_dir+"Xbb_workspace_"+in_name+"_"+x_name+"_"+sgn[0]+".root")
+        ws = ws_file.Get("Xbb_workspace")
+        pdf = ws.pdf(sgn_pdf+"_pdf_sgn_"+sgn[1])
+        pdfs.append(pdf)
+
+    print pdfs
+
+    frame1 = ROOT.RooPlot()
+    ws_file = ROOT.TFile.Open(save_dir+"Xbb_workspace_"+in_name+"_"+x_name+"_"+signals[0][0]+".root")
+    ws = ws_file.Get("Xbb_workspace")
+    x = ws.var("x")
+    x.setRange(400., 1400.)
+    frame1 = x.frame(RooFit.Name("frame1"))
+    frame1.SetTitle("")
+    frame1.GetYaxis().SetTitle("Signal pdf (1/GeV)")
+    frame1.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
+    frame1.GetYaxis().SetTitleSize(0.05)
+    frame1.GetYaxis().SetTitleOffset(1.1)
+    frame1.GetXaxis().SetTitleOffset(0.85)
+    frame1.GetYaxis().SetLabelSize(0.04)
+    frame1.GetXaxis().SetTitleSize(0.05)
+    frame1.GetXaxis().SetLabelSize(0.04)    
+
+    for ipdf,pdf in enumerate(pdfs):
+        [x_l, x_h] = [ float(signals[ipdf][0][:3]), float(signals[ipdf][0][5:]) ]
+        color = ROOT.kRed-ipdf/2 if ipdf%2==0 else ROOT.kBlue-ipdf/2
+        style = ROOT.kSolid if ipdf%2==0 else ROOT.kDashed
+        pdf.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(color), RooFit.LineStyle(style),RooFit.Name(pdf.GetName()),
+                   RooFit.Range(x_l,x_h))
+        #leg.AddEntry( frame1.getCurve(pdf.GetName()),("m_{X}=%.0f GeV" % float(signals[ipdf][1].split("_")[-1][1:])) , "L" )
+        if ipdf==0:
+            leg.AddEntry( frame1.getCurve(pdf.GetName()), "Spin-0"  , "L" )
+        elif ipdf==1:
+            leg.AddEntry( frame1.getCurve(pdf.GetName()), "Spin-2"  , "L" )
+
+    frame1.SetMaximum(0.08)
+    frame1.Draw()        
+    leg.Draw()
+    pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
+    pave_lumi.SetFillStyle(0);
+    pave_lumi.SetBorderSize(0);
+    pave_lumi.SetTextAlign(32)
+    pave_lumi.SetTextSize(0.035)
+    pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
+
+    pave_lumi.Draw()
+    pave_cms = ROOT.TPaveText(0.135,0.83,0.43,0.89, "NDC")
+    pave_cms.SetFillStyle(0);
+    pave_cms.SetBorderSize(0);
+    pave_cms.SetTextAlign(12)
+    pave_cms.SetTextSize(0.035)
+    pave_cms.AddText("CMS Simulation")
+    pave_cms.Draw()
+
+    print "Press ENTER to continue"
+    #raw_input()
+
+    save_name = "shapes_"+out_name
+    for ext in ["png", "pdf"]:
+            c.SaveAs(save_dir+"/"+save_name+"."+ext)
+
             
 ############################################################################################
 
-def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True, show_chi2=False):
+def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True, show_chi2=False):
 
     c1 = ROOT.TCanvas("c1", "canvas", 600, 600) 
     
@@ -660,7 +826,7 @@ def make_fit_plot( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="4
 
 ############################################################################################
 
-def make_fit_plots(spin=0, pdf='dijet', save_dir=""):
+def make_fits(spin=0, pdf='dijet', save_dir=""):
 
     sgns = ['Spin'+str(spin)+'_M550', 
             'Spin'+str(spin)+'_M600', 
@@ -717,21 +883,38 @@ def make_fit_plots(spin=0, pdf='dijet', save_dir=""):
                                 pdf_b = "polydijet"
                             else:
                                 pdf_b = pdf
-                            make_fit_plot( in_name=cat_btag+"_"+cat_kin, x_name=mass, x_range=range_name, sgn=sgn, bkg_pdf=pdf_b, out_name="", save_dir=save_dir, binWidth=sgn_to_binWidth[("%.0f" % mX)], xsec_vis=sgn_to_xsec_vis[("%.0f" % mX)], plot_bands=True)
+                            make_canvas_fit( in_name=cat_btag+"_"+cat_kin, x_name=mass, x_range=range_name, sgn=sgn, bkg_pdf=pdf_b, out_name="", save_dir=save_dir, binWidth=sgn_to_binWidth[("%.0f" % mX)], xsec_vis=sgn_to_xsec_vis[("%.0f" % mX)], plot_bands=True)
 
 ############################################################################################
 
 for spin in [0,2]:
-    #make_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                        
-    #make_fit_plots(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
+    #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                        
+    #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "Ciao"
 
 
-for spin in [0,2]:
+for spin in [0]:
     for is_blind in [False]:
-        for do_acceptance in [True,False]:
-            for overlay_obs in [True, False]:
-                make_limit_plot(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
+        for do_acceptance in [False]:
+            for overlay_obs in [True]:
+                #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
+                print "Ciao"
+
+make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", 
+                    signals=[ ["400to750", "Spin0_M550"], ["400to750","Spin2_M550"], 
+                              ["425to800", "Spin0_M600"], ["425to800","Spin2_M600"], 
+                              ["450to850", "Spin0_M650"], ["450to850","Spin2_M650"], 
+                              ["475to900", "Spin0_M700"], ["475to900","Spin2_M700"], 
+                              ["500to950", "Spin0_M750"], ["500to950","Spin2_M750"], 
+                              ["525to1000", "Spin0_M800"], ["525to1000","Spin2_M800"], 
+                              ["550to1050", "Spin0_M850"], ["550to1050","Spin2_M850"], 
+                              ["575to1100", "Spin0_M900"], ["575to1100","Spin2_M900"], 
+                              ["625to1200", "Spin0_M1000"], ["625to1200","Spin2_M1000"], 
+                              ["675to1300", "Spin0_M1100"], ["675to1300","Spin2_M1100"], 
+                              ["725to1400", "Spin0_M1200"], ["725to1400", "Spin2_M1200"] 
+
+                              ], 
+                    sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
 
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
