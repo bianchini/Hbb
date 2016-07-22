@@ -11,6 +11,7 @@ import math
 import numpy as n
 
 import ROOT
+
 from ROOT import RooFit
 
 import sys
@@ -75,7 +76,10 @@ signal_to_parameters = {
 use_fixed_ranges = False
 use_sliding_edges = True
 
-wait_for_plot = True
+wait_for_plot = False
+
+if not wait_for_plot:
+    ROOT.gROOT.SetBatch(True)
 
 ############################################################################################
 
@@ -168,15 +172,16 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     c.SetLeftMargin(0.13)
     c.SetLogy()
     
-    leg = ROOT.TLegend(0.48,0.60,0.88,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.42,0.58,0.88,0.88, "","brNDC")
     if overlay_obs:
-        leg.SetHeader("X #rightarrow b#bar{b}")  
+        leg.SetHeader("X #rightarrow b#bar{b}, 95% CL upper limits")  
     else:
         if "Spin0" in out_name:
             leg.SetHeader("Spin-0, X #rightarrow b#bar{b}")  
         else:
             leg.SetHeader("Spin-2, X #rightarrow b#bar{b}")  
 
+            
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -191,19 +196,19 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     observed2 = ROOT.TGraphAsymmErrors()
 
     expected.SetLineColor(ROOT.kBlack)
-    expected.SetLineStyle(ROOT.kSolid)
+    expected.SetLineStyle(ROOT.kDashed)
     expected.SetLineWidth(2)
 
-    expected2.SetLineColor(ROOT.kGray)
-    expected2.SetLineStyle(ROOT.kSolid)
+    expected2.SetLineColor(ROOT.kBlue)
+    expected2.SetLineStyle(ROOT.kDashed)
     expected2.SetLineWidth(2)
     
     onesigma.SetLineWidth(0)
-    onesigma.SetFillColor(ROOT.kGreen)
+    onesigma.SetFillColor(ROOT.kGreen+1)
     onesigma.SetFillStyle(1001)
     
     twosigma.SetLineWidth(0)
-    twosigma.SetFillColor(ROOT.kYellow)
+    twosigma.SetFillColor(ROOT.kOrange)
     twosigma.SetFillStyle(1001)
 
     observed.SetLineColor(ROOT.kBlack)
@@ -212,11 +217,11 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     observed.SetMarkerStyle(ROOT.kFullCircle)
     observed.SetMarkerColor(ROOT.kBlack)
 
-    observed2.SetLineColor(ROOT.kGray)
-    observed2.SetLineStyle(ROOT.kDashed)
+    observed2.SetLineColor(ROOT.kBlue)
+    observed2.SetLineStyle(ROOT.kSolid)
     observed2.SetLineWidth(2)
-    observed2.SetMarkerStyle(ROOT.kFullCircle)
-    observed2.SetMarkerColor(ROOT.kGray)
+    observed2.SetMarkerStyle(ROOT.kFullSquare)
+    observed2.SetMarkerColor(ROOT.kBlue)
 
     for ires,res in enumerate(results):
         mass_name = res[0]
@@ -260,13 +265,13 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
             leg.AddEntry(observed2, "Observed (Spin-2)", "LP")
             leg.AddEntry(expected, "Expected (Spin-0)", "L")
             leg.AddEntry(expected2, "Expected (Spin-2)", "L")
-            leg.AddEntry(onesigma, "1#sigma", "F")
-            leg.AddEntry(twosigma, "2#sigma", "F")
+            leg.AddEntry(onesigma, "#pm1 std. deviation", "F")
+            leg.AddEntry(twosigma, "#pm2 std. deviation", "F")
         else:
             leg.AddEntry(observed, "Observed", "LP")
             leg.AddEntry(expected, "Expected", "L")
-            leg.AddEntry(onesigma, "1#sigma", "F")
-            leg.AddEntry(twosigma, "2#sigma", "F")
+            leg.AddEntry(onesigma, "#pm1 std. deviation", "F")
+            leg.AddEntry(twosigma, "#pm2 std. deviation", "F")
 
     mg.Add(twosigma)
     mg.Add(onesigma)
@@ -283,7 +288,7 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         mg.SetMaximum(10.)
     else:
         mg.SetMinimum(1.)
-        mg.SetMaximum(40.)
+        mg.SetMaximum(50.)
 
     mg.Draw("ALP3")
 
@@ -296,30 +301,42 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     mg.GetXaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitle("m_{X} (GeV)")
     if do_acceptance:
-        mg.GetYaxis().SetTitle("95% CL limit on #sigma #times A #times #epsilon (pb)")
+        mg.GetYaxis().SetTitle("#sigma #times A #times #epsilon (pb)")
     else:
-        mg.GetYaxis().SetTitle("95% CL limit on #sigma #times BR(X#rightarrow b#bar{b}) (pb)")
+        mg.GetYaxis().SetTitle("#sigma #times BR(X#rightarrow b#bar{b}) (pb)")
 
     c.Update()
-    pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
+    pave_lumi = ROOT.TPaveText(0.484,0.89,0.92,0.96, "NDC")
     pave_lumi.SetFillStyle(0);
     pave_lumi.SetBorderSize(0);
     pave_lumi.SetTextAlign(32)
-    pave_lumi.SetTextSize(0.035)
+    pave_lumi.SetTextSize(0.04)
+    pave_lumi.SetTextFont(42)
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
-
     pave_lumi.Draw()
-    pave_cms = ROOT.TPaveText(0.124,0.83,0.43,0.89, "NDC")
+
+    pave_cms = ROOT.TPaveText(0.16,0.82,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
-    pave_cms.SetTextSize(0.035)
-    pave_cms.AddText("CMS Preliminary")
+    pave_cms.SetTextSize(0.05)
+    pave_cms.AddText("CMS")
     pave_cms.Draw()
+
+    pave_prel = ROOT.TPaveText(0.16,0.78,0.42,0.82, "NDC")
+    pave_prel.SetFillStyle(0);
+    pave_prel.SetBorderSize(0);
+    pave_prel.SetTextAlign(12)
+    pave_prel.SetTextSize(0.04)
+    pave_prel.SetTextFont(52)
+    pave_prel.AddText("Preliminary")
+    pave_prel.Draw()
+
     leg.Draw()
     c.Modified()
     c.Draw()
 
+    print "Press ENTER to continue"
     if wait_for_plot:
         raw_input()
 
@@ -345,7 +362,7 @@ def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
     ROOT.TGaxis.SetMaxDigits(2)
     #c.SetLogy()
     
-    leg = ROOT.TLegend(0.66,0.65,0.88,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.65,0.70,0.88,0.88, "","brNDC")
     leg.SetHeader("X #rightarrow b#bar{b}")  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
@@ -356,13 +373,13 @@ def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
     expected = ROOT.TGraphAsymmErrors()
     expected2 = ROOT.TGraphAsymmErrors()
 
-    expected.SetLineColor(ROOT.kBlack)
+    expected.SetLineColor(ROOT.kRed)
     expected.SetLineStyle(ROOT.kSolid)
-    expected.SetLineWidth(3)
+    expected.SetLineWidth(4)
 
-    expected2.SetLineColor(ROOT.kGray)
+    expected2.SetLineColor(ROOT.kBlue)
     expected2.SetLineStyle(ROOT.kDashed)
-    expected2.SetLineWidth(3)
+    expected2.SetLineWidth(4)
     
     for ires,res in enumerate(results):
         mass_name = res[0]
@@ -400,19 +417,30 @@ def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
     pave_lumi.SetTextAlign(32)
     pave_lumi.SetTextSize(0.035)
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
+    #pave_lumi.Draw()
 
-    pave_lumi.Draw()
-    pave_cms = ROOT.TPaveText(0.135,0.83,0.43,0.89, "NDC")
+    pave_cms = ROOT.TPaveText(0.16,0.82,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
-    pave_cms.SetTextSize(0.035)
-    pave_cms.AddText("CMS Simulation")
+    pave_cms.SetTextSize(0.05)
+    pave_cms.AddText("CMS")
     pave_cms.Draw()
+
+    pave_prel = ROOT.TPaveText(0.16,0.78,0.42,0.82, "NDC")
+    pave_prel.SetFillStyle(0);
+    pave_prel.SetBorderSize(0);
+    pave_prel.SetTextAlign(12)
+    pave_prel.SetTextSize(0.04)
+    pave_prel.SetTextFont(52)
+    pave_prel.AddText("Simulation")
+    pave_prel.Draw()
+
     leg.Draw()
     c.Modified()
     c.Draw()
 
+    print "Press ENTER to continue"
     if wait_for_plot:
         raw_input()
 
@@ -510,12 +538,14 @@ def run_fits(pdf='dijet', spin=0, save_dir=""):
 
 def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=[ ["425to800","Spin2_M600"] ], sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/"):
 
+    print signals
+
     c = ROOT.TCanvas("c", "canvas", 600, 600) 
     c.SetLeftMargin(0.13)
     ROOT.TGaxis.SetMaxDigits(2)
     
-    leg = ROOT.TLegend(0.42,0.62,0.88,0.80, "","brNDC")
-    leg.SetHeader("X #rightarrow b#bar{b}, m_{X}=%.0f...%.0f GeV" % (float(signals[0][1].split("_")[-1][1:]),float(signals[-2][1].split("_")[-1][1:]) ))  
+    leg = ROOT.TLegend(0.42,0.70,0.88,0.88, "","brNDC")
+    leg.SetHeader("X #rightarrow b#bar{b}, m_{X}=%.0f...%.0f GeV" % (float((signals[0][1]).split("_")[-1][1:]),float((signals[-2][1]).split("_")[-1][1:]) ))  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -558,7 +588,7 @@ def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signa
         elif ipdf==1:
             leg.AddEntry( frame1.getCurve(pdf.GetName()), "Spin-2"  , "L" )
 
-    frame1.SetMaximum(0.08)
+    frame1.SetMaximum(0.095)
     frame1.Draw()        
     leg.Draw()
     pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
@@ -567,18 +597,147 @@ def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signa
     pave_lumi.SetTextAlign(32)
     pave_lumi.SetTextSize(0.035)
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
+    #pave_lumi.Draw()
 
-    pave_lumi.Draw()
-    pave_cms = ROOT.TPaveText(0.135,0.83,0.43,0.89, "NDC")
+    pave_cms = ROOT.TPaveText(0.16,0.82,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
-    pave_cms.SetTextSize(0.035)
-    pave_cms.AddText("CMS Simulation")
+    pave_cms.SetTextSize(0.05)
+    pave_cms.AddText("CMS")
     pave_cms.Draw()
 
+    pave_prel = ROOT.TPaveText(0.16,0.78,0.42,0.82, "NDC")
+    pave_prel.SetFillStyle(0);
+    pave_prel.SetBorderSize(0);
+    pave_prel.SetTextAlign(12)
+    pave_prel.SetTextSize(0.04)
+    pave_prel.SetTextFont(52)
+    pave_prel.AddText("Simulation")
+    pave_prel.Draw()
+
     print "Press ENTER to continue"
-    #raw_input()
+    if wait_for_plot:
+        raw_input()
+
+    save_name = "shapes_"+out_name
+    for ext in ["png", "pdf"]:
+            c.SaveAs(save_dir+"/"+save_name+"."+ext)
+
+
+############################################################################################
+
+def make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR" , signals=[ ["425to800","Spin0_M750"] ], sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/"):
+
+    c = ROOT.TCanvas("c", "canvas", 600, 600) 
+    c.SetLeftMargin(0.13)
+    ROOT.TGaxis.SetMaxDigits(2)
+    
+    leg = ROOT.TLegend(0.36,0.84,0.85,0.88, "","brNDC")
+    leg.SetHeader(("X #rightarrow b#bar{b}, spin-0"))  
+    leg.SetFillStyle(0)
+    leg.SetBorderSize(0)
+    leg.SetTextSize(0.035)
+    leg.SetFillColor(10)    
+
+    leg1 = ROOT.TLegend(0.36,0.68,0.85,0.83, "","brNDC")
+    leg1.SetHeader(("Without FSR-recovery"))  
+    leg1.SetFillStyle(0)
+    leg1.SetBorderSize(0)
+    leg1.SetTextSize(0.035)
+    leg1.SetFillColor(10)    
+
+    leg2 = ROOT.TLegend(0.36,0.52,0.85,0.67, "","brNDC")
+    leg2.SetHeader(("With FSR-recovery"))  
+    leg2.SetFillStyle(0)
+    leg2.SetBorderSize(0)
+    leg2.SetTextSize(0.035)
+    leg2.SetFillColor(10)    
+
+    pdfs = []
+    means = []
+    sigmas = []
+    for isgn,sgn in enumerate(signals):
+        ws_file = ROOT.TFile.Open(save_dir+"Xbb_workspace_"+in_name+"_"+(x_name1 if isgn%2==0 else x_name2)+"_"+sgn[0]+".root")
+        ws = ws_file.Get("Xbb_workspace")
+        pdf = ws.pdf(sgn_pdf+"_pdf_sgn_"+sgn[1])
+        means.append( ws.var("mean_sgn_"+sgn[1]).getVal() )
+        sigmas.append( ws.var("sigma_sgn_"+sgn[1]).getVal() )
+        pdfs.append(pdf)
+
+    print pdfs
+    print means
+    print sigmas
+
+    frame1 = ROOT.RooPlot()
+    ws_file = ROOT.TFile.Open(save_dir+"Xbb_workspace_"+in_name+"_"+x_name1+"_"+signals[0][0]+".root")
+    ws = ws_file.Get("Xbb_workspace")
+    x = ws.var("x")
+    x.setRange(400., 1400.)
+    frame1 = x.frame(RooFit.Name("frame1"))
+    frame1.SetTitle("")
+    frame1.GetYaxis().SetTitle("Signal pdf (1/GeV)")
+    frame1.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
+    frame1.GetYaxis().SetTitleSize(0.05)
+    frame1.GetYaxis().SetTitleOffset(1.1)
+    frame1.GetXaxis().SetTitleOffset(0.85)
+    frame1.GetYaxis().SetLabelSize(0.04)
+    frame1.GetXaxis().SetTitleSize(0.05)
+    frame1.GetXaxis().SetLabelSize(0.04)    
+
+    for ipdf,pdf in enumerate(pdfs):
+        [x_l, x_h] = [ float(signals[(ipdf+1 if ipdf%2==0 else ipdf)][0][:3]), float(signals[(ipdf+1 if ipdf%2==0 else ipdf)][0][5:]) ]
+        color = ROOT.kRed-ipdf/2 if ipdf%2==0 else ROOT.kRed-ipdf/2
+        style = ROOT.kSolid if ipdf%2==1 else ROOT.kDashed
+        pdf.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(color), RooFit.LineStyle(style),RooFit.Name(pdf.GetName()),
+                   RooFit.Range(x_l,x_h))
+        #if ipdf%2==1:
+            #delta = (sigmas[ipdf-1]/means[ipdf-1] - sigmas[ipdf]/means[ipdf])/(sigmas[ipdf]/means[ipdf])*100
+        delta = (sigmas[ipdf]/means[ipdf])*100
+        if ipdf%2==0:
+            leg1.AddEntry( frame1.getCurve(pdf.GetName()),
+                           ("m_{X}=%s%.0f GeV, #sigma_{m}/#mu_{m}=%.1f%%" % ("" if float(signals[ipdf][1].split("_")[-1][1:])>=1000. else " ", float(signals[ipdf][1].split("_")[-1][1:]), delta  )) , "L" )
+        else:
+            leg2.AddEntry( frame1.getCurve(pdf.GetName()),
+                           ("m_{X}=%s%.0f GeV, #sigma_{m}/#mu_{m}=%.1f%%" % ("" if float(signals[ipdf][1].split("_")[-1][1:])>=1000. else " ", float(signals[ipdf][1].split("_")[-1][1:]), delta  )) , "L" )
+        #if ipdf==0:
+        #    leg.AddEntry( frame1.getCurve(pdf.GetName()), "w/o FSR"  , "L" )
+        #elif ipdf==1:
+        #    leg.AddEntry( frame1.getCurve(pdf.GetName()), "w/ FSR"  , "L" )
+
+    frame1.SetMaximum(0.105)
+    frame1.Draw()        
+    leg.Draw()
+    leg1.Draw()
+    leg2.Draw()
+    pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
+    pave_lumi.SetFillStyle(0);
+    pave_lumi.SetBorderSize(0);
+    pave_lumi.SetTextAlign(32)
+    pave_lumi.SetTextSize(0.035)
+    pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
+    #pave_lumi.Draw()
+
+    pave_cms = ROOT.TPaveText(0.16,0.82,0.42,0.89, "NDC")
+    pave_cms.SetFillStyle(0);
+    pave_cms.SetBorderSize(0);
+    pave_cms.SetTextAlign(12)
+    pave_cms.SetTextSize(0.05)
+    pave_cms.AddText("CMS")
+    pave_cms.Draw()
+
+    pave_prel = ROOT.TPaveText(0.16,0.78,0.42,0.82, "NDC")
+    pave_prel.SetFillStyle(0);
+    pave_prel.SetBorderSize(0);
+    pave_prel.SetTextAlign(12)
+    pave_prel.SetTextSize(0.04)
+    pave_prel.SetTextFont(52)
+    pave_prel.AddText("Simulation")
+    pave_prel.Draw()
+
+    print "Press ENTER to continue"
+    if wait_for_plot:
+        raw_input()
 
     save_name = "shapes_"+out_name
     for ext in ["png", "pdf"]:
@@ -598,14 +757,14 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     pad1.Draw()      
     pad1.cd()    
 
-    leg = ROOT.TLegend(0.50,0.48,0.85,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.55,0.48,0.88,0.88, "","brNDC")
     if "Spin0" in sgn:
         leg.SetHeader(("Spin-0, m_{X}=%.0f GeV" % (float(sgn.split('_')[-1][1:]))))  
     else:
         leg.SetHeader(("Spin-2, m_{X}=%.0f GeV" % (float(sgn.split('_')[-1][1:]))))  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
-    leg.SetTextSize(0.06)
+    leg.SetTextSize(0.05)
     leg.SetFillColor(10)    
 
     mlfit_file = ROOT.TFile.Open(save_dir+"mlfit_Xbb_workspace_"+in_name+"_"+x_name+"_"+x_range+"_buk_"+bkg_pdf+"_"+sgn+".root")
@@ -658,19 +817,19 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     #ROOT.TGaxis.SetMaxDigits(2)
 
     h1sigmaU = ROOT.TH1F("h1sigmaU", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
-    h1sigmaU.SetFillColor(ROOT.kGreen)
+    h1sigmaU.SetFillColor(ROOT.kGreen+1)
     h1sigmaU.SetFillStyle(1001)
 
     h1sigmaD = ROOT.TH1F("h1sigmaD", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
-    h1sigmaD.SetFillColor(ROOT.kGreen)
+    h1sigmaD.SetFillColor(ROOT.kGreen+1)
     h1sigmaD.SetFillStyle(1001)
 
     h2sigmaU = ROOT.TH1F("h2sigmaU", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
-    h2sigmaU.SetFillColor(ROOT.kYellow)
+    h2sigmaU.SetFillColor(ROOT.kOrange)
     h2sigmaU.SetFillStyle(1001)
 
     h2sigmaD = ROOT.TH1F("h2sigmaD", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
-    h2sigmaD.SetFillColor(ROOT.kYellow)
+    h2sigmaD.SetFillColor(ROOT.kOrange)
     h2sigmaD.SetFillStyle(1001)
 
     print "START plotting"
@@ -682,13 +841,13 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
                          RooFit.VisualizeError(res_b, 2, ROOT.kTRUE), 
                          RooFit.LineColor(ROOT.kBlue), 
                          RooFit.LineStyle(ROOT.kSolid), 
-                         RooFit.FillColor(ROOT.kYellow), RooFit.Name(pdf_bkg_b.GetName()+"_2sigma"), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent), RooFit.MoveToBack() )
+                         RooFit.FillColor(ROOT.kOrange), RooFit.Name(pdf_bkg_b.GetName()+"_2sigma"), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent), RooFit.MoveToBack() )
         print "\tPlot bkg +/- 1 sigma..."
         pdf_bkg_b.plotOn(frame1, 
                          RooFit.VisualizeError(res_b, 1, ROOT.kTRUE), 
                          RooFit.LineColor(ROOT.kBlue), 
                          RooFit.LineStyle(ROOT.kSolid), 
-                         RooFit.FillColor(ROOT.kGreen), RooFit.Name(pdf_bkg_b.GetName()+"_1sigma") , RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
+                         RooFit.FillColor(ROOT.kGreen+1), RooFit.Name(pdf_bkg_b.GetName()+"_1sigma") , RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
     print "\tPlot bkg..."
     pdf_bkg_b.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kBlue), RooFit.LineStyle(ROOT.kSolid), 
                      RooFit.Name(pdf_bkg_b.GetName()), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
@@ -712,32 +871,40 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
         leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg."), "L")
     leg.AddEntry(frame1.getCurve(pdf_comb_ext.GetName()), ("Bkg. + signal"), "L")
     leg.AddEntry(frame1.getCurve(pdf_sgn.GetName()), ("Signal, #sigma=%.0f pb" % xsec_vis ), "L")
-    leg.AddEntry(h1sigmaU, "1#sigma bkg. unc.", "F")
-    leg.AddEntry(h2sigmaU, "2#sigma bkg. unc.", "F")
+    leg.AddEntry(h1sigmaU, "#pm1 std. deviation", "F")
+    leg.AddEntry(h2sigmaU, "#pm2 std. deviation", "F")
     frame1.SetMaximum( h_rebinned.GetMaximum()*2.0 )
     frame1.SetMinimum( h_rebinned.GetMinimum()*0.8 )
     pad1.SetLogy()
     print "Drawing frame1..."
     frame1.Draw()
 
-
-    pave_lumi = ROOT.TPaveText(0.484,0.90,0.92,0.96, "NDC")
+    pave_lumi = ROOT.TPaveText(0.484,0.91,0.92,0.96, "NDC")
     pave_lumi.SetFillStyle(0);
     pave_lumi.SetBorderSize(0);
     pave_lumi.SetTextAlign(32)
-    pave_lumi.SetTextSize(0.045)
-    #pave_lumi.SetTextFont(43)
+    pave_lumi.SetTextSize(0.05)
+    pave_lumi.SetTextFont(42)
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
     pave_lumi.Draw()
 
-    pave_cms = ROOT.TPaveText(0.13,0.83,0.42,0.89, "NDC")
+    pave_cms = ROOT.TPaveText(0.16,0.82,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
-    pave_cms.SetTextSize(0.05)
-    #pave_cms.SetTextFont(43)
-    pave_cms.AddText("CMS Preliminary")
-    pave_cms.Draw()    
+    pave_cms.SetTextSize(0.06)
+    pave_cms.AddText("CMS")
+    pave_cms.Draw()
+
+    pave_prel = ROOT.TPaveText(0.16,0.76,0.42,0.82, "NDC")
+    pave_prel.SetFillStyle(0);
+    pave_prel.SetBorderSize(0);
+    pave_prel.SetTextAlign(12)
+    pave_prel.SetTextSize(0.05)
+    pave_prel.SetTextFont(52)
+    pave_prel.AddText("Preliminary")
+    pave_prel.Draw()
+
     leg.Draw()
     c1.Modified()
 
@@ -809,7 +976,8 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     c1.Draw()
 
     print "Press ENTER to continue"
-    #raw_input()
+    if wait_for_plot:
+        raw_input()
 
     for ext in ["png", "pdf"]:
         c1.SaveAs("plot_"+in_name+"_"+"MassFSR"+"_"+sgn+out_name+"."+ext)
@@ -888,8 +1056,8 @@ def make_fits(spin=0, pdf='dijet', save_dir=""):
 ############################################################################################
 
 for spin in [0,2]:
-    #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                        
-    #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
+    #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                            
+    make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "Ciao"
 
 
@@ -900,21 +1068,38 @@ for spin in [0]:
                 #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
                 print "Ciao"
 
-make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", 
-                    signals=[ ["400to750", "Spin0_M550"], ["400to750","Spin2_M550"], 
-                              ["425to800", "Spin0_M600"], ["425to800","Spin2_M600"], 
-                              ["450to850", "Spin0_M650"], ["450to850","Spin2_M650"], 
-                              ["475to900", "Spin0_M700"], ["475to900","Spin2_M700"], 
-                              ["500to950", "Spin0_M750"], ["500to950","Spin2_M750"], 
-                              ["525to1000", "Spin0_M800"], ["525to1000","Spin2_M800"], 
-                              ["550to1050", "Spin0_M850"], ["550to1050","Spin2_M850"], 
-                              ["575to1100", "Spin0_M900"], ["575to1100","Spin2_M900"], 
-                              ["625to1200", "Spin0_M1000"], ["625to1200","Spin2_M1000"], 
-                              ["675to1300", "Spin0_M1100"], ["675to1300","Spin2_M1100"], 
-                              ["725to1400", "Spin0_M1200"], ["725to1400", "Spin2_M1200"] 
 
-                              ], 
-                    sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
+
+signals_and_ranges=[ ["400to750", "Spin0_M550"], ["400to750","Spin2_M550"], 
+                     ["425to800", "Spin0_M600"], ["425to800","Spin2_M600"], 
+                     ["450to850", "Spin0_M650"], ["450to850","Spin2_M650"], 
+                     ["475to900", "Spin0_M700"], ["475to900","Spin2_M700"], 
+                     ["500to950", "Spin0_M750"], ["500to950","Spin2_M750"], 
+                     ["525to1000", "Spin0_M800"], ["525to1000","Spin2_M800"], 
+                     ["550to1050", "Spin0_M850"], ["550to1050","Spin2_M850"], 
+                     ["575to1100", "Spin0_M900"], ["575to1100","Spin2_M900"], 
+                     ["625to1200", "Spin0_M1000"], ["625to1200","Spin2_M1000"], 
+                     ["675to1300", "Spin0_M1100"], ["675to1300","Spin2_M1100"], 
+                     ["725to1400", "Spin0_M1200"], ["725to1400", "Spin2_M1200"] 
+                     ]
+
+#make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
+
+
+signals_and_ranges_massComp=[ ["400to1200", "Spin0_M550"], ["400to750","Spin0_M550"], 
+                              #["400to1200", "Spin0_M600"], ["425to800","Spin0_M600"], 
+                              #["400to1200", "Spin0_M650"], ["450to850","Spin0_M650"], 
+                              #["400to1200", "Spin0_M700"], ["475to900","Spin0_M700"], 
+                              ["400to1200", "Spin0_M750"], ["500to950","Spin0_M750"], 
+                              #["400to1200", "Spin0_M800"], ["525to1000","Spin0_M800"], 
+                              #["400to1200", "Spin0_M850"], ["550to1050","Spin0_M850"], 
+                              #["400to1200", "Spin0_M900"], ["575to1100","Spin0_M900"], 
+                              #["400to1200", "Spin0_M1000"], ["625to1200","Spin0_M1000"], 
+                              #["400to1200", "Spin0_M1100"], ["675to1300","Spin0_M1100"], 
+                              ["400to1200", "Spin0_M1200"], ["725to1400", "Spin0_M1200"] 
+                              ]
+
+#make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
 
 #make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
 #make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
