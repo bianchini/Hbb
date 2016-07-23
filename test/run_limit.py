@@ -76,10 +76,49 @@ signal_to_parameters = {
 use_fixed_ranges = False
 use_sliding_edges = True
 
-wait_for_plot = False
+wait_for_plot = True
 
 if not wait_for_plot:
     ROOT.gROOT.SetBatch(True)
+
+############################################################################################
+
+def get_RS_xsec(m=750, ktilde = 0.1):
+
+    xsec = 0.0
+    if m==550:
+        xsec = 484.26 * 0.0304
+    elif m==600:
+        xsec = 321.12 * 0.03037
+    elif m==650:
+        xsec = 219.297 * 0.0303
+    elif m==700:
+        xsec = 152.216 * 0.030299
+    elif m==750:
+        xsec = 108.498 * 0.03026
+    elif m==800:
+        xsec = 78.4962 * 0.03024
+    elif m==850:
+        xsec = 57.884 * 0.03021
+    elif m==900:
+        xsec = 43.08 * 0.03019
+    elif m==950:
+        xsec = 32.697 * 0.03018
+    elif m==1000:
+        xsec = 24.966 * 0.030165
+    elif m==1050:
+        xsec = 19.261 * 0.03015
+    elif m==1100:
+        xsec = 15.04 * 0.03013
+    elif m==1150:
+        xsec = 11.87 * 0.03012
+    elif m==1200:
+        xsec = 9.3917 * 0.03011
+    else:
+        xsec = 0.0
+
+    xsec *= math.pow(ktilde/0.1, 2)
+    return xsec
 
 ############################################################################################
 
@@ -166,13 +205,13 @@ def run_combine(datacard='', what='limit', params=[], is_blind=True):
 
 ############################################################################################
 
-def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False, overlay_obs=False):
+def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_blind=True, do_acceptance=False, overlay_obs=False, addRS=False):
 
     c = ROOT.TCanvas("c", "canvas", 600, 600) 
     c.SetLeftMargin(0.13)
     c.SetLogy()
     
-    leg = ROOT.TLegend(0.42,0.58,0.88,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.42,0.54,0.88,0.88, "","brNDC")
     if overlay_obs:
         leg.SetHeader("X #rightarrow b#bar{b}, 95% CL upper limits")  
     else:
@@ -194,6 +233,7 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     twosigma = ROOT.TGraphAsymmErrors()
     observed = ROOT.TGraphAsymmErrors()
     observed2 = ROOT.TGraphAsymmErrors()
+    theory = ROOT.TGraphAsymmErrors()
 
     expected.SetLineColor(ROOT.kBlack)
     expected.SetLineStyle(ROOT.kDashed)
@@ -222,6 +262,10 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     observed2.SetLineWidth(2)
     observed2.SetMarkerStyle(ROOT.kFullSquare)
     observed2.SetMarkerColor(ROOT.kBlue)
+
+    theory.SetLineColor(ROOT.kMagenta)
+    theory.SetLineStyle(ROOT.kSolid)
+    theory.SetLineWidth(4)
 
     for ires,res in enumerate(results):
         mass_name = res[0]
@@ -252,6 +296,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         onesigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[1], mass_results[3]-mass_results[2])
         twosigma.SetPoint(ires, imass, mass_results[2])
         twosigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
+        if addRS:
+            theory.SetPoint(ires, imass, get_RS_xsec(imass, 0.1))
 
     print "Expected (1)"
     expected.Print()
@@ -261,6 +307,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
 
     if not is_blind:
         if overlay_obs:        
+            if addRS:
+                leg.AddEntry(theory, "RS graviton, #tilde{#kappa}=0.1", "L")
             leg.AddEntry(observed, "Observed (Spin-0)", "LP")
             leg.AddEntry(observed2, "Observed (Spin-2)", "LP")
             leg.AddEntry(expected, "Expected (Spin-0)", "L")
@@ -268,6 +316,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
             leg.AddEntry(onesigma, "#pm1 std. deviation", "F")
             leg.AddEntry(twosigma, "#pm2 std. deviation", "F")
         else:
+            if addRS:
+                leg.AddEntry(theory, "RS graviton, #tilde{#kappa}=0.1", "L")
             leg.AddEntry(observed, "Observed", "LP")
             leg.AddEntry(expected, "Expected", "L")
             leg.AddEntry(onesigma, "#pm1 std. deviation", "F")
@@ -276,6 +326,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     mg.Add(twosigma)
     mg.Add(onesigma)
     mg.Add(expected)
+    if addRS:
+        mg.Add(theory)
     if overlay_obs:
         mg.Add(expected2)
     if not is_blind:
@@ -287,8 +339,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         mg.SetMinimum(0.01)
         mg.SetMaximum(10.)
     else:
-        mg.SetMinimum(1.)
-        mg.SetMaximum(50.)
+        mg.SetMinimum(1. if not addRS else 0.5)
+        mg.SetMaximum(50. if not addRS else 200)
 
     mg.Draw("ALP3")
 
@@ -297,7 +349,7 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
     mg.GetYaxis().SetLabelSize(0.04)
     mg.GetXaxis().SetTitleSize(0.05)
     mg.GetYaxis().SetTitleSize(0.05)
-    mg.GetYaxis().SetTitleOffset(1.0)
+    mg.GetYaxis().SetTitleOffset(1.15)
     mg.GetXaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitle("m_{X} (GeV)")
     if do_acceptance:
@@ -348,6 +400,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         save_name += "_blind"
     if do_acceptance:
         save_name += "_acc"
+    if addRS:
+        save_name += "_theory"
 
     for ext in ["png", "pdf"]:
             c.SaveAs(save_dir+"/"+save_name+"."+ext)
@@ -451,7 +505,7 @@ def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
 
 ############################################################################################
 
-def make_limits(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False, overlay_obs=False):
+def make_limits(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=False, overlay_obs=False, addRS=False):
 
     sgns = []
     for s in [0,2]:
@@ -495,8 +549,8 @@ def make_limits(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=F
         if len(res)>0:
             results.append([test.split('_')[-1],res, eff])
             
-    #make_canvas_limit( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
-    make_canvas_acceptance( results=results, out_name="together", save_dir=save_dir)
+    make_canvas_limit( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
+    #make_canvas_acceptance( results=results, out_name="together", save_dir=save_dir)
 
 ############################################################################################
 
@@ -1057,15 +1111,15 @@ def make_fits(spin=0, pdf='dijet', save_dir=""):
 
 for spin in [0,2]:
     #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                            
-    make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
+    #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "Ciao"
 
 
-for spin in [0]:
+for spin in [2]:
     for is_blind in [False]:
         for do_acceptance in [False]:
-            for overlay_obs in [True]:
-                #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs)
+            for overlay_obs in [False]:
+                make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=True)
                 print "Ciao"
 
 
