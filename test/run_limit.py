@@ -73,6 +73,33 @@ signal_to_parameters = {
     'Spin2_M1200' : [],
 }
 
+signals_and_ranges=[ ["400to750", "Spin0_M550"], ["400to750","Spin2_M550"], 
+                     ["425to800", "Spin0_M600"], ["425to800","Spin2_M600"], 
+                     ["450to850", "Spin0_M650"], ["450to850","Spin2_M650"], 
+                     ["475to900", "Spin0_M700"], ["475to900","Spin2_M700"], 
+                     ["500to950", "Spin0_M750"], ["500to950","Spin2_M750"], 
+                     ["525to1000", "Spin0_M800"], ["525to1000","Spin2_M800"], 
+                     ["550to1050", "Spin0_M850"], ["550to1050","Spin2_M850"], 
+                     ["575to1100", "Spin0_M900"], ["575to1100","Spin2_M900"], 
+                     ["625to1200", "Spin0_M1000"], ["625to1200","Spin2_M1000"], 
+                     ["675to1300", "Spin0_M1100"], ["675to1300","Spin2_M1100"], 
+                     ["725to1400", "Spin0_M1200"], ["725to1400", "Spin2_M1200"] 
+                     ]
+
+
+signals_and_ranges_massComp=[ ["400to1200", "Spin0_M550"], ["400to750","Spin0_M550"], 
+                              #["400to1200", "Spin0_M600"], ["425to800","Spin0_M600"], 
+                              #["400to1200", "Spin0_M650"], ["450to850","Spin0_M650"], 
+                              #["400to1200", "Spin0_M700"], ["475to900","Spin0_M700"], 
+                              ["400to1200", "Spin0_M750"], ["500to950","Spin0_M750"], 
+                              #["400to1200", "Spin0_M800"], ["525to1000","Spin0_M800"], 
+                              #["400to1200", "Spin0_M850"], ["550to1050","Spin0_M850"], 
+                              ["400to1200", "Spin0_M900"], ["575to1100","Spin0_M900"], 
+                              #["400to1200", "Spin0_M1000"], ["625to1200","Spin0_M1000"], 
+                              #["400to1200", "Spin0_M1100"], ["675to1300","Spin0_M1100"], 
+                              ["400to1200", "Spin0_M1200"], ["725to1400", "Spin0_M1200"] 
+                              ]
+
 use_fixed_ranges = False
 use_sliding_edges = True
 
@@ -80,6 +107,34 @@ wait_for_plot = True
 
 if not wait_for_plot:
     ROOT.gROOT.SetBatch(True)
+
+############################################################################################
+
+def get_FWHM(pdf=None, x=ROOT.RooRealVar(), mass=750., mean=0., sigma=0.):
+    xmin = mass-500.#x.getMin()
+    xmax = mass+250.#x.getMax()
+    step = (xmax-xmin)/1000
+    xL = -1.
+    xH = -1.
+    maxval = 0.    
+    xatmax = 0.
+    for i in xrange(1000):
+        x.setVal(step*i+xmin)
+        val = pdf.getVal()
+        if val>=maxval:
+            maxval = val
+            xatmax = x.getVal()
+
+    for i in xrange(1000):
+        x.setVal(step*i+xmin)
+        val = pdf.getVal()
+        if val>=maxval/2 and xL<0.:
+            xL = x.getVal()
+        if val<=maxval/2 and xH<0. and xL>0.:
+            xH = x.getVal()
+    print pdf.GetName()
+    #print ("\tMax at %.1f; FWHM = [%.1f,%.1f] = %.0f" % (xatmax,xL,xH, xH-xL))
+    print ("\tMean at %.1f; sigma = %0.f" % (mean,sigma))
 
 ############################################################################################
 
@@ -694,14 +749,14 @@ def make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass"
     leg.SetTextSize(0.035)
     leg.SetFillColor(10)    
 
-    leg1 = ROOT.TLegend(0.36,0.68,0.85,0.83, "","brNDC")
+    leg1 = ROOT.TLegend(0.36,0.65,0.85,0.83, "","brNDC")
     leg1.SetHeader(("Without FSR-recovery"))  
     leg1.SetFillStyle(0)
     leg1.SetBorderSize(0)
     leg1.SetTextSize(0.035)
     leg1.SetFillColor(10)    
 
-    leg2 = ROOT.TLegend(0.36,0.52,0.85,0.67, "","brNDC")
+    leg2 = ROOT.TLegend(0.36,0.46,0.85,0.64, "","brNDC")
     leg2.SetHeader(("With FSR-recovery"))  
     leg2.SetFillStyle(0)
     leg2.SetBorderSize(0)
@@ -715,8 +770,12 @@ def make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass"
         ws_file = ROOT.TFile.Open(save_dir+"Xbb_workspace_"+in_name+"_"+(x_name1 if isgn%2==0 else x_name2)+"_"+sgn[0]+".root")
         ws = ws_file.Get("Xbb_workspace")
         pdf = ws.pdf(sgn_pdf+"_pdf_sgn_"+sgn[1])
-        means.append( ws.var("mean_sgn_"+sgn[1]).getVal() )
-        sigmas.append( ws.var("sigma_sgn_"+sgn[1]).getVal() )
+        xi = ws.var("x")
+        mean = ws.var("mean_sgn_"+sgn[1]).getVal()
+        sigma = ws.var("sigma_sgn_"+sgn[1]).getVal()
+        #get_FWHM(pdf=pdf,x=xi,mass=float(sgn[1].split("_")[-1][1:]), mean=mean, sigma=sigma)
+        means.append( mean )
+        sigmas.append( sigma )
         pdfs.append(pdf)
 
     print pdfs
@@ -730,7 +789,7 @@ def make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass"
     x.setRange(400., 1400.)
     frame1 = x.frame(RooFit.Name("frame1"))
     frame1.SetTitle("")
-    frame1.GetYaxis().SetTitle("Signal pdf (1/GeV)")
+    frame1.GetYaxis().SetTitle("pdf (1/GeV)")
     frame1.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
     frame1.GetYaxis().SetTitleSize(0.05)
     frame1.GetYaxis().SetTitleOffset(1.1)
@@ -745,21 +804,21 @@ def make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass"
         style = ROOT.kSolid if ipdf%2==1 else ROOT.kDashed
         pdf.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(color), RooFit.LineStyle(style),RooFit.Name(pdf.GetName()),
                    RooFit.Range(x_l,x_h))
-        #if ipdf%2==1:
-            #delta = (sigmas[ipdf-1]/means[ipdf-1] - sigmas[ipdf]/means[ipdf])/(sigmas[ipdf]/means[ipdf])*100
         delta = (sigmas[ipdf]/means[ipdf])*100
+        if ipdf%2==0:
+            print float(signals[ipdf][1].split("_")[-1][1:])
+            print ("\tdelta-mu   : %.3f" % ((means[ipdf+1]-means[ipdf])/means[ipdf]))
+            print ("\tdelta-sigma: %.3f" % ((sigmas[ipdf+1]-sigmas[ipdf])/sigmas[ipdf]))
+
         if ipdf%2==0:
             leg1.AddEntry( frame1.getCurve(pdf.GetName()),
                            ("m_{X}=%s%.0f GeV, #sigma_{m}/#mu_{m}=%.1f%%" % ("" if float(signals[ipdf][1].split("_")[-1][1:])>=1000. else " ", float(signals[ipdf][1].split("_")[-1][1:]), delta  )) , "L" )
         else:
             leg2.AddEntry( frame1.getCurve(pdf.GetName()),
                            ("m_{X}=%s%.0f GeV, #sigma_{m}/#mu_{m}=%.1f%%" % ("" if float(signals[ipdf][1].split("_")[-1][1:])>=1000. else " ", float(signals[ipdf][1].split("_")[-1][1:]), delta  )) , "L" )
-        #if ipdf==0:
-        #    leg.AddEntry( frame1.getCurve(pdf.GetName()), "w/o FSR"  , "L" )
-        #elif ipdf==1:
-        #    leg.AddEntry( frame1.getCurve(pdf.GetName()), "w/ FSR"  , "L" )
 
-    frame1.SetMaximum(0.105)
+    #frame1.SetMaximum(0.105)
+    frame1.SetMaximum(0.12)
     frame1.Draw()        
     leg.Draw()
     leg1.Draw()
@@ -1112,54 +1171,15 @@ def make_fits(spin=0, pdf='dijet', save_dir=""):
 for spin in [0,2]:
     #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                            
     #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
-    print "Ciao"
-
+    print "make_fits() for spin", spin
 
 for spin in [2]:
     for is_blind in [False]:
         for do_acceptance in [False]:
             for overlay_obs in [False]:
-                make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=True)
-                print "Ciao"
-
-
-
-signals_and_ranges=[ ["400to750", "Spin0_M550"], ["400to750","Spin2_M550"], 
-                     ["425to800", "Spin0_M600"], ["425to800","Spin2_M600"], 
-                     ["450to850", "Spin0_M650"], ["450to850","Spin2_M650"], 
-                     ["475to900", "Spin0_M700"], ["475to900","Spin2_M700"], 
-                     ["500to950", "Spin0_M750"], ["500to950","Spin2_M750"], 
-                     ["525to1000", "Spin0_M800"], ["525to1000","Spin2_M800"], 
-                     ["550to1050", "Spin0_M850"], ["550to1050","Spin2_M850"], 
-                     ["575to1100", "Spin0_M900"], ["575to1100","Spin2_M900"], 
-                     ["625to1200", "Spin0_M1000"], ["625to1200","Spin2_M1000"], 
-                     ["675to1300", "Spin0_M1100"], ["675to1300","Spin2_M1100"], 
-                     ["725to1400", "Spin0_M1200"], ["725to1400", "Spin2_M1200"] 
-                     ]
+                #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=True)
+                print "make_limits() for spin", spin
 
 #make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
 
-
-signals_and_ranges_massComp=[ ["400to1200", "Spin0_M550"], ["400to750","Spin0_M550"], 
-                              #["400to1200", "Spin0_M600"], ["425to800","Spin0_M600"], 
-                              #["400to1200", "Spin0_M650"], ["450to850","Spin0_M650"], 
-                              #["400to1200", "Spin0_M700"], ["475to900","Spin0_M700"], 
-                              ["400to1200", "Spin0_M750"], ["500to950","Spin0_M750"], 
-                              #["400to1200", "Spin0_M800"], ["525to1000","Spin0_M800"], 
-                              #["400to1200", "Spin0_M850"], ["550to1050","Spin0_M850"], 
-                              #["400to1200", "Spin0_M900"], ["575to1100","Spin0_M900"], 
-                              #["400to1200", "Spin0_M1000"], ["625to1200","Spin0_M1000"], 
-                              #["400to1200", "Spin0_M1100"], ["675to1300","Spin0_M1100"], 
-                              ["400to1200", "Spin0_M1200"], ["725to1400", "Spin0_M1200"] 
-                              ]
-
-#make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
-
-#make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
-#make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=False)
-#make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False, overlay_obs=True)
-#make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=False)
-#make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=True)
-#make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=True, do_acceptance=True)
-#make_limit_plot(pdf="dijet", spin=0, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=True)
-#make_limit_plot(pdf="dijet", spin=2, save_dir="../PostPreApproval/", is_blind=False, do_acceptance=True)
+make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
