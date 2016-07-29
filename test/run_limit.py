@@ -103,7 +103,7 @@ signals_and_ranges_massComp=[ ["400to1200", "Spin0_M550"], ["400to750","Spin0_M5
 use_fixed_ranges = False
 use_sliding_edges = True
 
-wait_for_plot = True
+wait_for_plot = False
 
 if not wait_for_plot:
     ROOT.gROOT.SetBatch(True)
@@ -326,13 +326,15 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         mass_name = res[0]
         mass_results = res[1]
         accept = res[2]
+        imass = float(mass_name.split('_')[-1][1:]) 
+        xsec_th = get_RS_xsec(imass, 0.1)
         if do_acceptance:
+            xsec_th *= accept
             for ir,r in enumerate(mass_results):
                 #print ("%.3f --> %.3f" % (r, r*accept))
                 r *= accept
                 mass_results[ir] = r
 
-        imass = float(mass_name.split('_')[-1][1:]) 
         if not is_blind:
             if overlay_obs:
                 if ires < len(results)/2:
@@ -352,7 +354,7 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         twosigma.SetPoint(ires, imass, mass_results[2])
         twosigma.SetPointError(ires, 0.0, 0.0, mass_results[2]-mass_results[0], mass_results[4]-mass_results[2])
         if addRS:
-            theory.SetPoint(ires, imass, get_RS_xsec(imass, 0.1))
+            theory.SetPoint(ires, imass, xsec_th)
 
     print "Expected (1)"
     expected.Print()
@@ -364,12 +366,12 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
         if overlay_obs:        
             if addRS:
                 leg.AddEntry(theory, "RS graviton, #tilde{#kappa}=0.1", "L")
-            leg.AddEntry(observed, "Observed (Spin-0)", "LP")
-            leg.AddEntry(observed2, "Observed (Spin-2)", "LP")
-            leg.AddEntry(expected, "Expected (Spin-0)", "L")
-            leg.AddEntry(expected2, "Expected (Spin-2)", "L")
+            leg.AddEntry(observed, "Observed (spin-0)", "LP")
+            leg.AddEntry(expected, "Expected (spin-0)", "L")
             leg.AddEntry(onesigma, "#pm1 std. deviation", "F")
             leg.AddEntry(twosigma, "#pm2 std. deviation", "F")
+            leg.AddEntry(observed2, "Observed (spin-2)", "LP")
+            leg.AddEntry(expected2, "Expected (spin-2)", "L")
         else:
             if addRS:
                 leg.AddEntry(theory, "RS graviton, #tilde{#kappa}=0.1", "L")
@@ -391,7 +393,7 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
             mg.Add(observed2)
 
     if do_acceptance: 
-        mg.SetMinimum(0.01)
+        mg.SetMinimum(0.05)
         mg.SetMaximum(10.)
     else:
         mg.SetMinimum(1. if not addRS else 0.5)
@@ -471,7 +473,7 @@ def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
     ROOT.TGaxis.SetMaxDigits(2)
     #c.SetLogy()
     
-    leg = ROOT.TLegend(0.65,0.70,0.88,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.60,0.70,1.06,0.88, "","brNDC")
     leg.SetHeader("X #rightarrow b#bar{b}")  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
@@ -611,11 +613,11 @@ def make_limits(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=F
 
 def run_fits(pdf='dijet', spin=0, save_dir=""):
 
-    sgns = [#'Spin'+str(spin)+'_M550', 
+    sgns = ['Spin'+str(spin)+'_M550', 
             'Spin'+str(spin)+'_M600', 
-            #'Spin'+str(spin)+'_M650', 
-            #'Spin'+str(spin)+'_M700', 
-            #'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200'
+            'Spin'+str(spin)+'_M650', 
+            'Spin'+str(spin)+'_M700', 
+            'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200'
             ]
         
     tests = []
@@ -676,7 +678,7 @@ def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signa
     x.setRange(400., 1400.)
     frame1 = x.frame(RooFit.Name("frame1"))
     frame1.SetTitle("")
-    frame1.GetYaxis().SetTitle("Signal pdf (1/GeV)")
+    frame1.GetYaxis().SetTitle("pdf (1/GeV)")
     frame1.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
     frame1.GetYaxis().SetTitleSize(0.05)
     frame1.GetYaxis().SetTitleOffset(1.1)
@@ -859,7 +861,7 @@ def make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass"
             
 ############################################################################################
 
-def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True, show_chi2=False):
+def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range="425to800", sgn="Spin2_M600", bkg_pdf="dijet", out_name="", save_dir="../PostPreApproval/", binWidth=5.0, xsec_vis=100., plot_bands=True, show_chi2=False, plot_2sigmas_only=False):
 
     c1 = ROOT.TCanvas("c1", "canvas", 600, 600) 
     
@@ -870,7 +872,7 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     pad1.Draw()      
     pad1.cd()    
 
-    leg = ROOT.TLegend(0.55,0.48,0.88,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.55,(0.48 if plot_bands else (0.55 if not plot_2sigmas_only else 0.52)),0.88,0.88, "","brNDC")
     if "Spin0" in sgn:
         leg.SetHeader(("Spin-0, m_{X}=%.0f GeV" % (float(sgn.split('_')[-1][1:]))))  
     else:
@@ -929,6 +931,14 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     frame1.GetXaxis().SetLabelSize(0)
     #ROOT.TGaxis.SetMaxDigits(2)
 
+    hdummy = ROOT.TH1F("hdummy", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
+
+    hbkg = ROOT.TH1F("hbkg", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
+    hbkg.SetFillColor(ROOT.kAzure+1)
+    hbkg.SetLineColor(ROOT.kAzure+1)
+    hbkg.SetLineWidth(0)
+    hbkg.SetFillStyle(3001)
+
     h1sigmaU = ROOT.TH1F("h1sigmaU", "", h_rebinned.GetNbinsX(), h_rebinned.GetXaxis().GetXmin(), h_rebinned.GetXaxis().GetXmax())
     h1sigmaU.SetFillColor(ROOT.kGreen+1)
     h1sigmaU.SetFillStyle(1001)
@@ -948,19 +958,18 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     print "START plotting"
     print "\tPlot data_obs..."
     data_rebinned.plotOn(frame1, RooFit.Name("data_obs"))
-    if plot_bands:
-        print "\tPlot bkg +/- 2 sigma..."
-        pdf_bkg_b.plotOn(frame1, 
-                         RooFit.VisualizeError(res_b, 2, ROOT.kTRUE), 
-                         RooFit.LineColor(ROOT.kBlue), 
-                         RooFit.LineStyle(ROOT.kSolid), 
-                         RooFit.FillColor(ROOT.kOrange), RooFit.Name(pdf_bkg_b.GetName()+"_2sigma"), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent), RooFit.MoveToBack() )
-        print "\tPlot bkg +/- 1 sigma..."
-        pdf_bkg_b.plotOn(frame1, 
-                         RooFit.VisualizeError(res_b, 1, ROOT.kTRUE), 
-                         RooFit.LineColor(ROOT.kBlue), 
-                         RooFit.LineStyle(ROOT.kSolid), 
-                         RooFit.FillColor(ROOT.kGreen+1), RooFit.Name(pdf_bkg_b.GetName()+"_1sigma") , RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
+    print "\tPlot bkg +/- 2 sigma..."
+    pdf_bkg_b.plotOn(frame1, 
+                     RooFit.VisualizeError(res_b, 2, ROOT.kTRUE), 
+                     RooFit.LineColor(ROOT.kBlue), 
+                     RooFit.LineStyle(ROOT.kSolid), 
+                     RooFit.FillColor(ROOT.kOrange), RooFit.Name(pdf_bkg_b.GetName()+"_2sigma"), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent), RooFit.MoveToBack() )
+    print "\tPlot bkg +/- 1 sigma..."
+    pdf_bkg_b.plotOn(frame1, 
+                     RooFit.VisualizeError(res_b, 1, ROOT.kTRUE), 
+                     RooFit.LineColor(ROOT.kBlue), 
+                     RooFit.LineStyle(ROOT.kSolid), 
+                     RooFit.FillColor(ROOT.kGreen+1), RooFit.Name(pdf_bkg_b.GetName()+"_1sigma") , RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
     print "\tPlot bkg..."
     pdf_bkg_b.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kBlue), RooFit.LineStyle(ROOT.kSolid), 
                      RooFit.Name(pdf_bkg_b.GetName()), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
@@ -982,10 +991,14 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
         leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg. (#chi^{2}=%.2f)" % chi2_b), "L")
     else:
         leg.AddEntry(frame1.getCurve(pdf_bkg_b.GetName()),  ("Bkg."), "L")
+    if plot_bands:
+        leg.AddEntry(h1sigmaU, "#pm1 std. deviation", "F")
+        leg.AddEntry(h2sigmaU, "#pm2 std. deviation", "F")
+    elif plot_2sigmas_only:
+        leg.AddEntry(h2sigmaU, "#pm2 std. deviation", "F")
+        
     leg.AddEntry(frame1.getCurve(pdf_comb_ext.GetName()), ("Bkg. + signal"), "L")
     leg.AddEntry(frame1.getCurve(pdf_sgn.GetName()), ("Signal, #sigma=%.0f pb" % xsec_vis ), "L")
-    leg.AddEntry(h1sigmaU, "#pm1 std. deviation", "F")
-    leg.AddEntry(h2sigmaU, "#pm2 std. deviation", "F")
     frame1.SetMaximum( h_rebinned.GetMaximum()*2.0 )
     frame1.SetMinimum( h_rebinned.GetMinimum()*0.8 )
     pad1.SetLogy()
@@ -1033,7 +1046,10 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     frame2 = x.frame(RooFit.Name("frame2"))
     frame2.SetTitle("")
     frame2.GetYaxis().CenterTitle()
-    frame2.GetYaxis().SetTitle("#frac{Data-Bkg.}{#sqrt{Data}}")
+    if plot_bands: 
+        frame2.GetYaxis().SetTitle("#frac{Data-Bkg.}{#sqrt{Bkg.}}")
+    else:
+         frame2.GetYaxis().SetTitle("#frac{Data-Bkg.}{#sigma_{Bkg.}}")
     frame2.GetYaxis().SetNdivisions(505)
     frame2.GetYaxis().SetTitleSize(24)
     frame2.GetYaxis().SetTitleFont(43)
@@ -1068,20 +1084,59 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
             continue
         bin_width_i = h_rebinned.GetBinWidth( bin_i )
         n_data_i = h_rebinned.GetBinContent( bin_i )
-        h1sigmaU.SetBinContent( bin_i, (-n_i+n_1up_i)/math.sqrt( n_data_i ) )
-        h1sigmaD.SetBinContent( bin_i, (-n_i+n_1down_i)/math.sqrt( n_data_i ) )
-        h2sigmaU.SetBinContent( bin_i, (-n_i+n_2up_i)/math.sqrt( n_data_i ) )
-        h2sigmaD.SetBinContent( bin_i, (-n_i+n_2down_i)/math.sqrt( n_data_i ) )
-    frame2.addTH1(h2sigmaU, "HIST")
-    frame2.addTH1(h2sigmaD, "HIST")
-    frame2.addTH1(h1sigmaU, "HIST")
-    frame2.addTH1(h1sigmaD, "HIST")
+        #h1sigmaU.SetBinContent( bin_i, (-n_i+n_1up_i)/math.sqrt( n_data_i ) )
+        #h1sigmaD.SetBinContent( bin_i, (-n_i+n_1down_i)/math.sqrt( n_data_i ) )
+        #h2sigmaU.SetBinContent( bin_i, (-n_i+n_2up_i)/math.sqrt( n_data_i ) )
+        #h2sigmaD.SetBinContent( bin_i, (-n_i+n_2down_i)/math.sqrt( n_data_i ) )
+        h1sigmaU.SetBinContent( bin_i, (-n_i+n_1up_i))
+        h1sigmaD.SetBinContent( bin_i, (-n_i+n_1down_i))
+        h2sigmaU.SetBinContent( bin_i, (-n_i+n_2up_i))
+        h2sigmaD.SetBinContent( bin_i, (-n_i+n_2down_i))
 
-    frame2.addPlotable(hresid,"pE1")
+    # redefine pulls here:
+    bkg_int = pdf_bkg_b.createIntegral(ROOT.RooArgSet(x), "MassFSR").getVal()
+    for bin_i in range(1,h_rebinned.GetNbinsX()+1):
+        n_data_i = h_rebinned.GetBinContent( bin_i )
+        x.setRange(("Bin%d" % bin_i), h_rebinned.GetBinLowEdge(bin_i), h_rebinned.GetBinLowEdge(bin_i)+bin_width_i)
+        bkg_int_i = pdf_bkg_b.createIntegral(ROOT.RooArgSet(x), ("Bin%d" % bin_i)).getVal() / bkg_int * n_bkg_fit_b.getVal()
+        pull_i = (n_data_i-bkg_int_i)/math.sqrt(bkg_int_i)
+        if not plot_bands:
+            new_err_i = math.sqrt(bkg_int_i + math.pow(h1sigmaU.GetBinContent( bin_i ),2))
+            pull_i *= (math.sqrt(bkg_int_i)/new_err_i)
+            print ("Error: %.3f --> %.3f" % (math.sqrt(bkg_int_i), new_err_i ))
+        print ("Data: %d ---- Bkg: %.1f" % (n_data_i,bkg_int_i))
+        hbkg.SetBinContent( bin_i, pull_i)
+        hbkg.SetBinError( bin_i, 0.)
+        hdummy.SetBinContent( bin_i, 0.)
+        hdummy.SetBinError( bin_i, 0.)        
+        h1sigmaU.SetBinContent( bin_i, h1sigmaU.GetBinContent( bin_i )/math.sqrt( bkg_int_i ) )
+        h1sigmaD.SetBinContent( bin_i, h1sigmaD.GetBinContent( bin_i )/math.sqrt( bkg_int_i ) )
+        h2sigmaU.SetBinContent( bin_i, h2sigmaU.GetBinContent( bin_i )/math.sqrt( bkg_int_i ) )
+        h2sigmaD.SetBinContent( bin_i, h2sigmaD.GetBinContent( bin_i )/math.sqrt( bkg_int_i ) )
+        
+    if plot_bands:
+        frame2.addTH1(h2sigmaU, "HIST")
+        frame2.addTH1(h2sigmaD, "HIST")
+        frame2.addTH1(h1sigmaU, "HIST")
+        frame2.addTH1(h1sigmaD, "HIST")
+    frame2.addTH1(hbkg, "HIST")
+    frame2.addTH1(hdummy, "HIST")
+    #frame2.addPlotable(hresid,"pE1")
 
     print "Drawing frame2..."
     frame2.Draw()
     frame2.GetYaxis().SetRangeUser(-4,4)    
+
+    if not plot_bands:
+        frame1.remove(pdf_bkg_b.GetName()+"_1sigma", ROOT.kFALSE)
+        if not plot_2sigmas_only:
+            frame1.remove(pdf_bkg_b.GetName()+"_2sigma", ROOT.kFALSE)
+        pad1.cd()
+        frame1.Draw()
+        pave_lumi.Draw()
+        pave_cms.Draw()
+        pave_prel.Draw()
+        leg.Draw()
 
     ROOT.TGaxis.SetMaxDigits(2)
     print "Drawing canvas..."
@@ -1099,6 +1154,8 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
     ROOT.gDirectory.Remove(h1sigmaD)
     ROOT.gDirectory.Remove(h2sigmaU)
     ROOT.gDirectory.Remove(h2sigmaD)
+    ROOT.gDirectory.Remove(hbkg)
+    ROOT.gDirectory.Remove(hdummy)
     ROOT.gDirectory.Remove(c1)
     ws_file.Close()
     mlfit_file.Close()
@@ -1113,7 +1170,8 @@ def make_fits(spin=0, pdf='dijet', save_dir=""):
             'Spin'+str(spin)+'_M600', 
             'Spin'+str(spin)+'_M650', 
             'Spin'+str(spin)+'_M700', 
-            'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 'Spin'+str(spin)+'_M1200'
+            'Spin'+str(spin)+'_M750', 'Spin'+str(spin)+'_M800', 'Spin'+str(spin)+'_M850', 'Spin'+str(spin)+'_M900', 'Spin'+str(spin)+'_M1000', 'Spin'+str(spin)+'_M1100', 
+        'Spin'+str(spin)+'_M1200'
             ]
         
     sgn_to_binWidth = {
@@ -1164,22 +1222,22 @@ def make_fits(spin=0, pdf='dijet', save_dir=""):
                                 pdf_b = "polydijet"
                             else:
                                 pdf_b = pdf
-                            make_canvas_fit( in_name=cat_btag+"_"+cat_kin, x_name=mass, x_range=range_name, sgn=sgn, bkg_pdf=pdf_b, out_name="", save_dir=save_dir, binWidth=sgn_to_binWidth[("%.0f" % mX)], xsec_vis=sgn_to_xsec_vis[("%.0f" % mX)], plot_bands=True)
+                            make_canvas_fit( in_name=cat_btag+"_"+cat_kin, x_name=mass, x_range=range_name, sgn=sgn, bkg_pdf=pdf_b, out_name="", save_dir=save_dir, binWidth=sgn_to_binWidth[("%.0f" % mX)], xsec_vis=sgn_to_xsec_vis[("%.0f" % mX)], plot_bands=False, plot_2sigmas_only=True)
 
 ############################################################################################
 
-for spin in [0,2]:
+for spin in [0]:
     #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                            
-    #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
+    make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "make_fits() for spin", spin
 
-for spin in [2]:
+for spin in [0,2]:
     for is_blind in [False]:
-        for do_acceptance in [False]:
-            for overlay_obs in [False]:
-                #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=True)
-                print "make_limits() for spin", spin
+        for do_acceptance in [True, False]:
+            for overlay_obs in [True, False]:
+                for addRS in [False, True]:
+                    #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
+                    print "make_limits() for spin", spin
 
 #make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
-
-make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
+#make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
