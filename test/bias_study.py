@@ -468,35 +468,35 @@ class BiasStudy:
 ########################
 
 test_pdfs= [
-    #"pol", 
-    #"exp", 
-    #"pow", 
-    #"polyexp", 
-    #"dijet",
+    "pol", 
+    "exp", 
+    "pow", 
+    "polyexp", 
+    "dijet",
     "polydijet",
     #"expdijet"
     ]
 
-cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to800"
-cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "polydijet"
-cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "polydijet"
+cfg_fname = argv[1] if len(argv)>=2 else "Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_425to800"
+cfg_pdf_alt_name = argv[2] if len(argv)>=3 else "dijet"
+cfg_pdf_fit_name = argv[3] if len(argv)>=4 else "dijet"
 cfg_n_bins = int(argv[4]) if len(argv)>=5 else 200
 cfg_pdf_sgn_name = argv[5] if len(argv)>=6 else "buk"
 cfg_sgn_name = argv[6] if len(argv)>=7 else "Spin0_M600"
-cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 15.
-cfg_ntoys = int(argv[8]) if len(argv)>=9 else 0
+cfg_sgn_xsec = float(argv[7]) if len(argv)>=8 else 0.
+cfg_ntoys = int(argv[8]) if len(argv)>=9 else 100
 cfg_nproc = int(argv[9]) if len(argv)>=10 else -1
 
 bs = BiasStudy(fname=cfg_fname, 
                ws_name="Xbb_workspace", 
                read_dir="./plots/V7/", 
-               save_dir="./plots/V7/", 
+               save_dir="./plots/PostPreApproval/", 
                save_ext=['png', 'pdf'], 
                blind_plot=True
                )
 
-bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default", add_fake_sgn=cfg_sgn_xsec, fake_sgn=cfg_sgn_name)
-#bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc, parameter_set="default")
+#bs.doFTest(data_name="data_obs", test_pdfs=test_pdfs, parameter_set="default", add_fake_sgn=cfg_sgn_xsec, fake_sgn=cfg_sgn_name)
+bs.doBiasStudy(pdf_alt_name=cfg_pdf_alt_name, pdf_fit_name=cfg_pdf_fit_name, data_name="data_obs", n_bins=cfg_n_bins, pdf_sgn_name=cfg_pdf_sgn_name, sgn_name=cfg_sgn_name, sgn_xsec=cfg_sgn_xsec, ntoys=cfg_ntoys, nproc=cfg_nproc, parameter_set="default")
 
 print FTestCfg_data
 #print(json.dumps(FTestCfg, indent = 4))
