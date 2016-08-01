@@ -11,7 +11,10 @@ import math
 
 f = ROOT.TFile.Open("./plots/V7/Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_400to1500.root")
 
-sgns = [ 'Spin0_M550','Spin0_M600', 'Spin0_M650', 'Spin0_M700', 'Spin0_M750', 'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200' ]
+sgns = [ 'Spin0_M550','Spin0_M600', 'Spin0_M650', 'Spin0_M700', 
+         'Spin0_M750', 
+         'Spin0_M800', 'Spin0_M850', 'Spin0_M900', 'Spin0_M1000', 'Spin0_M1100', 'Spin0_M1200' 
+         ]
 
 low = ROOT.TGraphAsymmErrors()
 low.SetLineColor(ROOT.kBlue)
@@ -35,12 +38,16 @@ for isgn,sgn in enumerate(sgns):
     mean = w.var('mean_sgn_'+sgn).getVal()
     x = w.var("x")
     x.setRange( "all", FitSgnCfg[sgn]['fit_range'][0], FitSgnCfg[sgn]['fit_range'][1] )
+    x.setRange( "right", mean, FitSgnCfg[sgn]['fit_range'][1] )
+    x.setRange( "left", FitSgnCfg[sgn]['fit_range'][0], mean)
     norm = pdf.createIntegral(ROOT.RooArgSet(x), "all").getVal() 
-    print norm
+    right = pdf.createIntegral(ROOT.RooArgSet(x), "right").getVal() 
+    left = pdf.createIntegral(ROOT.RooArgSet(x), "left").getVal() 
+    print norm, right, left
     step_size = 5
     ratio = 0.
     n_step = 0
-    while (ratio<(0.5 - quantile_high)):
+    while (ratio<(right/norm*(1-quantile_high))):
         x.setRange("q", mean, mean+n_step*step_size)
         ratio =  pdf.createIntegral(ROOT.RooArgSet(x), "q").getVal()/norm
         print ("Step %d [%.0f,%.0f]: %.3f" % (n_step, mean,  mean+n_step*step_size, ratio))
@@ -52,9 +59,9 @@ for isgn,sgn in enumerate(sgns):
 
     ratio = 0.
     n_step = 0
-    while (ratio<(1-quantile_low)):
+    while (ratio<(left/norm*(1-quantile_low))):
         x.setRange("q", mean-n_step*step_size, mean)
-        ratio =  pdf.createIntegral(ROOT.RooArgSet(x), "q").getVal()/norm + last_ratio
+        ratio =  pdf.createIntegral(ROOT.RooArgSet(x), "q").getVal()/norm #+ last_ratio
         print ("Step %d [%.0f,%.0f]: %.3f" % (n_step,  mean-n_step*step_size, mean, ratio))
         n_step += 1
         if (mean-n_step*step_size) < FitSgnCfg[sgn]['fit_range'][0]:

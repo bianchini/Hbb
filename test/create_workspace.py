@@ -584,6 +584,7 @@ class XbbFactory:
 
         for sgn in signals:
             self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=100, set_param_const=True, spin_symmetric=False)
+            #self.add_sgn_to_ws(sgn_name=sgn, rebin_factor=-1, set_param_const=True, spin_symmetric=False)
             self.add_syst_to_ws(sgn_name=sgn, rebin_factor=10, spin_symmetric=False, add_stat_error=True)
         
         if debug_sgn:            
@@ -611,8 +612,8 @@ cfg_xmax = float(argv[5]) if len(argv)>=6 else 1200.
 
 signals = []
 for mass in [550, 600, 650, 700, 750, 800, 850, 900, 1000, 1100, 1200]:
-#for mass in []:
-    for spin in [0]:
+#for mass in [600]:
+    for spin in [0,2]:
         sample = ("Spin%d_M%d" % (spin, mass))
         "Adding signal sample....", sample
         signals.append(sample)
@@ -625,7 +626,7 @@ xbbfact.create_workspace( signals=signals,
                           pdf_names=["polydijet", "dijet"],
                           #pdf_names=["dijet"],
                           #pdf_names=["dijet", "polydijet", "pol", "exp", "pow", "polyexp"] 
-                          debug_sgn=True
+                          debug_sgn=False
                           )
 
 for gc in gcs:

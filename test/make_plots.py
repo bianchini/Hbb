@@ -78,7 +78,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     s = ROOT.THStack("stack_background_"+h_name,"")
     s.SetTitle("")
 
-    leg = ROOT.TLegend(0.48,0.52,0.86,0.88, "","brNDC");
+    leg = ROOT.TLegend(0.46,0.44,0.85,0.88, "","brNDC");
     leg.SetFillStyle(0);
     leg.SetBorderSize(0);
     leg.SetTextSize(0.05);
@@ -89,7 +89,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     elif "Had_MT" in dir_name:
         region = "X #rightarrow b#bar{b}, signal region"
     elif "Lep_LT" in dir_name:
-        region = "X #rightarrow b#bar{b}, top sideband"    
+        region = "X #rightarrow b#bar{b}, top-quark sideband"    
     leg.SetHeader(region)
 
     hdata = []
@@ -157,7 +157,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
             signal = h_sample.Clone("signal_"+h_name+"_"+sample+option_shape)
             signal.SetDirectory(0)
             signal.SetLineColor(ROOT.kRed if "Spin0" in sample else ROOT.kBlue)
-            signal.SetLineStyle(ROOT.kDashed)
+            signal.SetLineStyle(ROOT.kSolid if "Spin0" in sample else ROOT.kDashed)
             signal.SetLineWidth(3)
             hsignal.append( [signal, sample] )
             
@@ -176,8 +176,10 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
         elif "TT_" in sample or "ST_" in sample:
             top = h_sample.Clone("top_"+h_name)
             top.SetDirectory(0)
-            top.SetFillColor(ROOT.kBlue-7)
-            top.SetLineColor(ROOT.kBlue-7)
+            #top.SetFillColor(ROOT.kBlue-7)
+            #top.SetLineColor(ROOT.kBlue-7)
+            top.SetFillColor(38)
+            top.SetLineColor(38)
             top.SetLineWidth(0) 
             top.SetFillStyle(1001)
             s.Add(top)
@@ -200,16 +202,17 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     qcd.SetLineWidth(1)
     qcd.SetFillColor(33);
     qcd.SetFillStyle(1001);
-    leg.AddEntry(qcd, "Multi-jet (#times%.2f)" % k_factor_QCD(), "F");
+    leg.AddEntry(qcd, "Multijet bkg. (#times%.2f)" % k_factor_QCD(), "F");
     qcd.Reset();
     for h in hqcd:
         qcd.Add(h,1.0)
 
     top = htop[0].Clone("top_all_"+h_name)
-    top.SetLineColor(ROOT.kBlue-7)
+    #top.SetLineColor(ROOT.kBlue-7)
+    top.SetLineColor(38)
     top.SetLineWidth(2)
     #top.SetFillColor(0);
-    leg.AddEntry(top, "Top", "F");
+    leg.AddEntry(top, "Top bkg.", "F");
     top.Reset();
     for h in htop:
         top.Add(h,1.0)
@@ -230,7 +233,7 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
 
     pad1 = ROOT.TPad("pad1", "pad1", 0.02, 0.30, 1, 1.0)    
     pad1.SetLeftMargin(0.13)
-    pad1.SetBottomMargin(0.02)
+    #pad1.SetBottomMargin(0.03)
     pad1.Draw()
     pad1.cd()    
 
@@ -239,13 +242,13 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     s.Draw("HIST")
     if(s.GetHistogram()!=None):
         s.GetHistogram().SetXTitle(h_name.split('_')[-1])
-        s.GetHistogram().SetYTitle("Events/bin")
+        s.GetHistogram().SetYTitle("Events/Bin")
         s.GetHistogram().SetTitle(dir_name)
         if do_rebin:
             s.GetHistogram().GetXaxis().SetLimits(new_ranges[0],new_ranges[1])
         s.GetHistogram().GetYaxis().SetTitleSize(24)
         s.GetHistogram().GetYaxis().SetTitleFont(43)
-        s.GetHistogram().GetYaxis().SetTitleOffset(1.24)
+        s.GetHistogram().GetYaxis().SetTitleOffset(1.32)
         s.GetHistogram().GetYaxis().SetLabelFont(43)
         s.GetHistogram().GetYaxis().SetLabelSize(20)
         s.GetHistogram().GetXaxis().SetLabelSize(0)
@@ -257,6 +260,8 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
             continue
         #if "Lep" in dir_name and option_shape=="Shape":
         if "Lep" in dir_name:
+            signal[0].SetLineColor(ROOT.kWhite)
+            leg.AddEntry(signal[0], " ", "L")
             continue
         if option_shape=="Shape":
             signal[0].Scale(background.Integral()/signal[0].Integral() if signal[0].Integral()>0. else 1.0)
@@ -277,35 +282,45 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     #    s.GetHistogram().GetYaxis().SetTitleSize(20)
     #    s.GetHistogram().GetYaxis().SetTitleFont(43)
     #    s.GetHistogram().GetYaxis().SetTitleOffset(1.35)
-    pave_cms = ROOT.TPaveText(0.13,0.83,0.42,0.89, "NDC")
+    pave_cms = ROOT.TPaveText(0.16,0.82,0.42,0.89, "NDC")
     pave_cms.SetFillStyle(0);
     pave_cms.SetBorderSize(0);
     pave_cms.SetTextAlign(12)
-    pave_cms.SetTextSize(0.045)
-    pave_cms.AddText("CMS Preliminary")
+    pave_cms.SetTextSize(0.06)
+    #pave_cms.SetTextFont(61)
+    pave_cms.AddText("CMS")
+    pave_prel = ROOT.TPaveText(0.16,0.75,0.42,0.82, "NDC")
+    pave_prel.SetFillStyle(0);
+    pave_prel.SetBorderSize(0);
+    pave_prel.SetTextAlign(12)
+    pave_prel.SetTextSize(0.045)
+    pave_prel.SetTextFont(52)
+    pave_prel.AddText("Preliminary")
     pave_lumi = ROOT.TPaveText(0.484,0.90,0.92,0.96, "NDC")
     pave_lumi.SetFillStyle(0);
     pave_lumi.SetBorderSize(0);
     pave_lumi.SetTextAlign(32)
-    pave_lumi.SetTextSize(0.045)
+    pave_lumi.SetTextSize(0.05)
+    pave_lumi.SetTextFont(42)
     pave_lumi.AddText(("%.2f fb^{-1} (2015)" % luminosity))
 
     if option_shape!="Shape":
         pad1.SetLogy(1)
-    pad1.SetBottomMargin(0) 
+    pad1.SetBottomMargin(0.01) 
 
     pad1.Draw()      
     pave_cms.Draw("same")
+    pave_prel.Draw("same")
     pave_lumi.Draw("same")
     leg.Draw();
     c.Modified()
 
     c.cd() 
     pad2 = ROOT.TPad("pad2", "pad2", 0.02, 0.02, 1, 0.28)
-    pad2.SetTopMargin(0.04)
+    pad2.SetTopMargin(0.05)
     pad2.SetBottomMargin(0.37)
     pad2.SetLeftMargin(0.13)
-    pad2.SetGridy() 
+    #pad2.SetGridy() 
     pad2.Draw()
     pad2.cd()       
 
@@ -344,6 +359,12 @@ def plot( files={}, dir_name = "Had_LT_MinPt150_DH2p0", h_name = "Pt", var_name=
     if do_rebin:
         hratioErr.GetXaxis().SetRangeUser(new_ranges[0],new_ranges[1])
     hratioErr.Draw(option_bkg+"E2SAME")
+
+    line = ROOT.TF1("line", "1.0", hratio.GetXaxis().GetXmin(), hratio.GetXaxis().GetXmax())
+    line.SetLineWidth(2)
+    line.SetLineStyle(ROOT.kDashed)
+    line.SetLineColor(ROOT.kBlack)
+    line.Draw("same")
 
     #raw_input()
 

@@ -55,17 +55,17 @@ fnames =  [
     #['Xbb_workspace_Had_MT_MinPt100_DH1p6_MassFSR_700to1400', ["Spin0_M1100"] ],
 ]
 
-sgns = [#'Spin0_M550', 
-        #'Spin0_M600', 
-        #'Spin0_M650', 
-        #'Spin0_M700', 
+sgns = ['Spin0_M550', 
+        'Spin0_M600', 
+        'Spin0_M650', 
+        'Spin0_M700', 
         'Spin0_M750', 
-        #'Spin0_M800', 
-        #'Spin0_M850', 
-        #'Spin0_M900', 
+        'Spin0_M800', 
+        'Spin0_M850', 
+        'Spin0_M900', 
         'Spin0_M1000', 
-        #'Spin0_M1100', 
-        #'Spin0_M1200'
+        'Spin0_M1100', 
+        'Spin0_M1200'
         ]
 for sgn in sgns:        
     mX = float(sgn.split('_')[-1][1:])
@@ -79,25 +79,25 @@ for sgn in sgns:
 for fname in fnames:
     for pdf_alt_name in [
         'dijet',
-        #'polydijet',
-        #'pow',
-        #'exp',
-        #'polyexp',
-        #'pol',        
+        'polydijet',
+        'pow',
+        'exp',
+        'polyexp',
+        'pol',        
         ]:
         for pdf_fit_name in [
             #'polyexp', 
-            #'polydijet', 
+            'polydijet', 
             'dijet'
             ]:
             for sgn_name in fname[1]:
-                for sgn_xsec in [1.0, 2.0, 3.0, 4.0, 5.0]:
-                    for nproc in xrange(20):
+                for sgn_xsec in [0.]:
+                    for nproc in xrange(1):
                         submit(cfg_fname=fname[0], cfg_pdf_alt_name=pdf_alt_name, cfg_pdf_fit_name=pdf_fit_name, 
                                cfg_n_bins=-1, 
                                cfg_pdf_sgn_name="buk", cfg_sgn_name=sgn_name, 
                                cfg_sgn_xsec=sgn_xsec,
                                #cfg_sgn_xsec=get_sgn_injected( float(sgn_name.split('_')[-1][1:])),
-                               cfg_ntoys=50, 
+                               cfg_ntoys=0, 
                                cfg_nproc=nproc)
                         #exit(1)

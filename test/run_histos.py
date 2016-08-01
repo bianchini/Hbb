@@ -5,10 +5,13 @@ ROOT.gROOT.SetBatch(True)
 argv.remove( '-b-' )
 from ROOT import TLorentzVector
 import math
+
 import sys
 sys.path.append('./')
 sys.path.append('../python/')
+
 from samples import *
+from parameters_cfi import luminosity
 
 
 class Xbb_trigger_corrector:
@@ -58,7 +61,6 @@ class Xbb_trigger_corrector:
         if abs(1-val)>0.3:
             print ("Large weight: pt=%.0f,%.0f, eta=%.1f,%.1f, hlt=%s, syst=%s ==> %.3f" % (pt1,pt2,eta1,eta2,hlt,syst,val))
         return val
-
 
     def get_switch(self):
         return self.switch
@@ -284,7 +286,6 @@ else:
     #f = ROOT.TFile("/afs/cern.ch/work/d/degrutto/private/Xbbanalysis/CMSSW_7_6_3_patch2/src/Hbb/files/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
     f = ROOT.TFile("/scratch/bianchi/"+argv[1]+"_"+argv[2]+"_"+argv[3]+".root", "RECREATE")
 
-luminosity = 2630.
 lumi_factor = sample_to_process[1]*luminosity/processed if processed>0 else -1
 print "Luminosity: %.0f pb-1 --- xsection: %.0f pb --- Processed: %.0f ==> Lumi factor: %.2f" % (luminosity, sample_to_process[1], processed, lumi_factor)
 
@@ -301,9 +302,9 @@ cuts_BTag = {
     ##"LT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
     ##"LT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
     ##"nMT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]<0.800 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.460) if len(ev.hJCidx)==2 else False,
-    "MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-    "MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
-    "MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+    #"MT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+    #"MT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
+    #"MT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.800) if len(ev.hJCidx)==2 else False,
     ##"TT" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
     ##"TT_CSVSFUp" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
     ##"TT_CSVSFDown" : lambda ev : (ev.Jet_btagCSV[ev.hJCidx[0]]>0.935 and ev.Jet_btagCSV[ev.hJCidx[1]]>0.935) if len(ev.hJCidx)==2 else False,
@@ -316,15 +317,15 @@ cuts_MinPt = {
     ##"MinPt150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
     "MinPt100" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
     #"MinPt100_HLT" : lambda ev :  (min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False) and (ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v | ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v),
-    "MinPt100_HLTKinUp" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
-    "MinPt100_HLTKinDown" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
+    #"MinPt100_HLTKinUp" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
+    #"MinPt100_HLTKinDown" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. if len(ev.hJCidx)==2 else False,
     ##"MinMaxPt100150" : lambda ev :  min(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>100. and  max(ev.Jet_pt[ev.hJCidx[0]], ev.Jet_pt[ev.hJCidx[1]])>150. if len(ev.hJCidx)==2 else False,
 }
 
 cuts_DH = {
     ##"All" :  lambda ev : True,
     "DH2p0" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<2.0  if len(ev.hJCidx)==2 else False,
-    "DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
+    #"DH1p6" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.6  if len(ev.hJCidx)==2 else False,
     #"DH1p1" :  lambda ev : abs(ev.Jet_eta[ev.hJCidx[0]]-ev.Jet_eta[ev.hJCidx[1]])<1.1  if len(ev.hJCidx)==2 else False,
 }
 
@@ -524,7 +525,25 @@ for iev in range( min(int(1e+9), chain.GetEntries()) ):
               #hlt = "high" if (ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() and ev.Jet_pt[ev.hJCidx[0]]>corrector.get_switch() ) else "low"
               #for ind in [0,1]:
               #    weight_kin *= corrector.eval( ev.Jet_pt[ev.hJCidx[ind]], ev.Jet_eta[ev.hJCidx[ind]], hlt, cut[0] )          
-              weight_kin *= corrector.eval_OR( pt1=ev.Jet_pt[ev.hJCidx[0]], eta1=ev.Jet_eta[ev.hJCidx[0]], pt2=ev.Jet_pt[ev.hJCidx[1]], eta2=ev.Jet_eta[ev.hJCidx[1]],
+
+              lead = 0.
+              trail= 0.
+              ilead = 0
+              itrail = 1
+              for ipt,pt in enumerate(ev.Jet_pt):
+                  if abs(ev.Jet_eta[ipt])<2.5:                      
+                      if pt>lead:
+                          lead = pt
+                          ilead = ipt
+              for ipt,pt in enumerate(ev.Jet_pt):
+                  if ipt==ilead:
+                      continue
+                  if abs(ev.Jet_eta[ipt])<2.5:                      
+                      if pt>trail:
+                          trail = pt
+                          itrail = ipt
+
+              weight_kin *= corrector.eval_OR( pt1=ev.Jet_pt[ilead], eta1=ev.Jet_eta[ilead], pt2=ev.Jet_pt[itrail], eta2=ev.Jet_eta[itrail],
                                                pass_low=ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p9_DoublePFJetsC100MaxDeta1p6_v,
                                                pass_high=ev.HLT_BIT_HLT_DoubleJetsC100_DoubleBTagCSV0p85_DoublePFJetsC160_v,
                                                syst=cut[0] )

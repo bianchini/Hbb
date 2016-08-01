@@ -78,7 +78,8 @@ for cfg_cat_btag in [
                         submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax)
                         #exit(1)
             elif use_sliding_edges:
-                for mass in [550,600,650,700,750,800,850,900,1000,1100,1200]:
+                #for mass in [550,600,650,700,750,800,850,900,1000,1100,1200]:
+                for mass in [600,650]:
                     [xmin,xmax] = get_sliding_edges(mass=mass)
                     submit(cfg_cat_btag, cfg_cat_kin, cfg_name, xmin, xmax) 
                     #exit(1)

@@ -655,8 +655,10 @@ def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signa
     c.SetLeftMargin(0.13)
     ROOT.TGaxis.SetMaxDigits(2)
     
-    leg = ROOT.TLegend(0.42,0.70,0.88,0.88, "","brNDC")
-    leg.SetHeader("X #rightarrow b#bar{b}, m_{X}=%.0f...%.0f GeV" % (float((signals[0][1]).split("_")[-1][1:]),float((signals[-2][1]).split("_")[-1][1:]) ))  
+    #leg = ROOT.TLegend(0.42,0.70,0.88,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.60,0.70,1.06,0.88, "","brNDC")
+    #leg.SetHeader("X #rightarrow b#bar{b}, m_{X}=%.0f...%.0f GeV" % (float((signals[0][1]).split("_")[-1][1:]),float((signals[-2][1]).split("_")[-1][1:]) ))  
+    leg.SetHeader("X #rightarrow b#bar{b}")  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -1228,7 +1230,7 @@ def make_fits(spin=0, pdf='dijet', save_dir=""):
 
 for spin in [0]:
     #run_fits(pdf='dijet', spin=spin, save_dir="../PostPreApproval/")                            
-    make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
+    #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "make_fits() for spin", spin
 
 for spin in [0,2]:
@@ -1239,5 +1241,5 @@ for spin in [0,2]:
                     #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
                     print "make_limits() for spin", spin
 
-#make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
+make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
 #make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
