@@ -1,4 +1,5 @@
 #!/bin/sh 
 
-echo "Copy to pattern $1 $2"
-scp $2/$1*png bianchi@cms.hep.kbfi.ee:~/web/Xbb_$2
+echo "Copy pattern $1.$3 to directory $2"
+#scp $2/$1*$3 bianchi@cms.hep.kbfi.ee:~/web/Xbb_$2
+scp /scratch/bianchi/$2/$1*$3 bianchi@cms.hep.kbfi.ee:~/web/Xbb_$2
