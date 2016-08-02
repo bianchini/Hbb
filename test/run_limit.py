@@ -278,7 +278,7 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
             
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
-    leg.SetTextSize(0.04)
+    leg.SetTextSize(0.035)
     leg.SetFillColor(10)    
 
     mg = ROOT.TMultiGraph()
@@ -368,8 +368,8 @@ def make_canvas_limit( results=[], out_name="", save_dir="./plots/Jun09/", is_bl
                 leg.AddEntry(theory, "RS graviton, #tilde{#kappa}=0.1", "L")
             leg.AddEntry(observed, "Observed (spin-0)", "LP")
             leg.AddEntry(expected, "Expected (spin-0)", "L")
-            leg.AddEntry(onesigma, "#pm1 std. deviation", "F")
-            leg.AddEntry(twosigma, "#pm2 std. deviation", "F")
+            leg.AddEntry(onesigma, "#pm1 std. deviation (spin-0)", "F")
+            leg.AddEntry(twosigma, "#pm2 std. deviation (spin-0)", "F")
             leg.AddEntry(observed2, "Observed (spin-2)", "LP")
             leg.AddEntry(expected2, "Expected (spin-2)", "L")
         else:
@@ -519,7 +519,7 @@ def make_canvas_acceptance( results=[], out_name="", save_dir="./plots/Jun09/"):
     mg.GetYaxis().SetTitleOffset(1.1)
     mg.GetXaxis().SetTitleOffset(0.85)
     mg.GetXaxis().SetTitle("m_{X} (GeV)")
-    mg.GetYaxis().SetTitle("#epsilon #times A (%)")
+    mg.GetYaxis().SetTitle("A #times #epsilon  (%)")
 
     c.Update()
     pave_lumi = ROOT.TPaveText(0.485,0.895,0.92,0.956, "NDC")
@@ -606,8 +606,8 @@ def make_limits(pdf='dijet', spin=0, save_dir="", is_blind=True, do_acceptance=F
         if len(res)>0:
             results.append([test.split('_')[-1],res, eff])
             
-    make_canvas_limit( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
-    #make_canvas_acceptance( results=results, out_name="together", save_dir=save_dir)
+    #make_canvas_limit( results=results, out_name=("Spin%d_%s" % (spin,pdf)), save_dir=save_dir, is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
+    make_canvas_acceptance( results=results, out_name="together", save_dir=save_dir)
 
 ############################################################################################
 
@@ -656,9 +656,9 @@ def make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signa
     ROOT.TGaxis.SetMaxDigits(2)
     
     #leg = ROOT.TLegend(0.42,0.70,0.88,0.88, "","brNDC")
-    leg = ROOT.TLegend(0.60,0.70,1.06,0.88, "","brNDC")
+    leg = ROOT.TLegend(0.50,0.65,1.06,0.88, "","brNDC")
     #leg.SetHeader("X #rightarrow b#bar{b}, m_{X}=%.0f...%.0f GeV" % (float((signals[0][1]).split("_")[-1][1:]),float((signals[-2][1]).split("_")[-1][1:]) ))  
-    leg.SetHeader("X #rightarrow b#bar{b}")  
+    leg.SetHeader("#splitline{X #rightarrow b#bar{b}}{With FSR-recovery}")  
     leg.SetFillStyle(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
@@ -973,12 +973,12 @@ def make_canvas_fit( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", x_range=
                      RooFit.LineStyle(ROOT.kSolid), 
                      RooFit.FillColor(ROOT.kGreen+1), RooFit.Name(pdf_bkg_b.GetName()+"_1sigma") , RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
     print "\tPlot bkg..."
-    pdf_bkg_b.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kBlue), RooFit.LineStyle(ROOT.kSolid), 
+    pdf_bkg_b.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(ROOT.kBlue), RooFit.LineStyle(ROOT.kSolid), 
                      RooFit.Name(pdf_bkg_b.GetName()), RooFit.Normalization(n_bkg_b.getVal() , ROOT.RooAbsReal.NumEvent) )
     print "\tPlot sgn+bkg..."
-    pdf_comb_ext.plotOn(frame1, RooFit.LineWidth(2), RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kSolid), RooFit.Name(pdf_comb_ext.GetName()) )
+    pdf_comb_ext.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(ROOT.kRed), RooFit.LineStyle(ROOT.kDashed), RooFit.Name(pdf_comb_ext.GetName()) )
     print "\tPlot sgn..."
-    pdf_sgn.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(46), RooFit.LineStyle(ROOT.kDashed), 
+    pdf_sgn.plotOn(frame1, RooFit.LineWidth(3), RooFit.LineColor(46), RooFit.LineStyle(ROOT.kDotted), 
                    RooFit.Name(pdf_sgn.GetName()), RooFit.Normalization(pdf_sgn_norm.getVal()*xsec_vis , ROOT.RooAbsReal.NumEvent) )
 
     print "\tPlot data_obs..."
@@ -1233,13 +1233,13 @@ for spin in [0]:
     #make_fits(spin=spin, pdf='dijet', save_dir="../PostPreApproval/")
     print "make_fits() for spin", spin
 
-for spin in [0,2]:
+for spin in [0]:
     for is_blind in [False]:
-        for do_acceptance in [True, False]:
-            for overlay_obs in [True, False]:
-                for addRS in [False, True]:
-                    #make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
+        for do_acceptance in [False]:
+            for overlay_obs in [True]:
+                for addRS in [True]:
+                    make_limits(pdf="dijet", spin=spin, save_dir="../PostPreApproval/", is_blind=is_blind, do_acceptance=do_acceptance, overlay_obs=overlay_obs, addRS=addRS)
                     print "make_limits() for spin", spin
 
-make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
+#make_canvas_shapes( in_name="Had_MT_MinPt100_DH1p6", x_name="MassFSR", signals=signals_and_ranges, sgn_pdf="buk", out_name="", save_dir="../PostPreApproval/")
 #make_canvas_shapes_massComp( in_name="Had_MT_MinPt100_DH1p6", x_name1="Mass", x_name2="MassFSR", signals=signals_and_ranges_massComp, sgn_pdf="buk", out_name="MassVsMassFSR", save_dir="../PostPreApproval/")
